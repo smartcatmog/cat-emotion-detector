@@ -1,4 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
+export const config = {
+  runtime: 'edge',
+};
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo and provide:
 1) Current emotional state (e.g. relaxed, alert, fearful, content, irritated)
@@ -20,7 +22,10 @@ Return ONLY valid JSON in this exact format:
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -42,45 +47,59 @@ export default async function handler(req: Request) {
       });
     }
 
-    const client = new Anthropic({ apiKey });
-
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: (mediaType || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-                data: image,
+    // Use fetch directly instead of SDK (Edge runtime compatible)
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType || 'image/jpeg',
+                  data: image,
+                },
               },
-            },
-            {
-              type: 'text',
-              text: PROMPT,
-            },
-          ],
-        },
-      ],
+              {
+                type: 'text',
+                text: PROMPT,
+              },
+            ],
+          },
+        ],
+      }),
     });
 
-    const content = message.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response type from Claude');
+    if (!response.ok) {
+      const err = await response.text();
+      return new Response(JSON.stringify({ error: err }), {
+        status: response.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Parse JSON from Claude's response
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+    const data = await response.json() as { content: Array<{ type: string; text: string }> };
+    const text = data.content[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
     if (!jsonMatch) {
-      throw new Error('Could not parse response from Claude');
+      return new Response(JSON.stringify({ error: 'Could not parse response' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const result = JSON.parse(jsonMatch[0]);
-
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
