@@ -36,7 +36,7 @@ async function callClaude(base64: string, mediaType: string) {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
       messages: [{
         role: 'user',
