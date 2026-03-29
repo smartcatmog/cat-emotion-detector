@@ -96,7 +96,7 @@ export function DataAnnotation() {
         img.timestamp,
       ]),
     ]
-      .map((row) => row.map((cell) => `"${cell}"`).join(','))
+      .map((row) => row.map((cell: string) => `"${cell}"`).join(','))
       .join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
