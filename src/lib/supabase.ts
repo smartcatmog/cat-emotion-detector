@@ -153,3 +153,13 @@ export function getPublicUrl(bucket: string, path: string) {
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data?.publicUrl;
 }
+
+export async function saveFeedback(analysisId: string, isAccurate: boolean, correctEmotion?: string) {
+  const { error } = await supabase.from('feedback').insert([{
+    analysis_id: analysisId,
+    is_accurate: isAccurate,
+    correct_emotion: correctEmotion || null,
+    created_at: new Date().toISOString(),
+  }]);
+  if (error) throw error;
+}

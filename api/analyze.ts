@@ -1,24 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-export const config = {
-  runtime: 'edge',
-};
+const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo and provide:
+1) Current emotional state (e.g. relaxed, alert, fearful, content, irritated)
+2) Key body language signals (ears, eyes, tail, body posture)
+3) Health notes (flag anything unusual)
+4) Owner advice (what should the owner do right now)
 
-const PROMPT = `你是一位专业的猫行为学专家。请分析这张照片中猫的状态，从以下维度给出判断：
-1）当前情绪（如：放松、警惕、恐惧、满足、烦躁等）；
-2）关键身体语言信号（耳朵、眼睛、尾巴、身体姿势）；
-3）健康提示（如有异常信号请指出）；
-4）铲屎官建议（现在应该怎么对待它）。
-语气友好，结果简洁，每项不超过两句话。
+Be friendly and concise. Max two sentences per item.
 
-请用以下 JSON 格式返回（不要有其他文字）：
+Return ONLY valid JSON in this exact format:
 {
-  "emotion": "主要情绪（一个词）",
+  "emotion": "one word emotion",
   "confidence": 85,
-  "body_language": "身体语言描述",
-  "health_note": "健康提示",
-  "advice": "铲屎官建议",
-  "summary": "一句话总结"
+  "body_language": "body language description",
+  "health_note": "health observation",
+  "advice": "owner advice",
+  "summary": "one sentence summary"
 }`;
 
 export default async function handler(req: Request) {

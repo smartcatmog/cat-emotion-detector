@@ -6,8 +6,71 @@ import { Upload } from './components/Upload';
 import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
 import { AnalysisResult } from './types';
+import { saveAnalysisResult } from './lib/supabase';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate';
+
+const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo and provide:
+1) Current emotional state (e.g. relaxed, alert, fearful, content, irritated)
+2) Key body language signals (ears, eyes, tail, body posture)
+3) Health notes (flag anything unusual)
+4) Owner advice (what should the owner do right now)
+
+Be friendly and concise. Max two sentences per item.
+
+Return ONLY valid JSON in this exact format:
+{
+  "emotion": "one word emotion",
+  "confidence": 85,
+  "body_language": "body language description",
+  "health_note": "health observation",
+  "advice": "owner advice",
+  "summary": "one sentence summary"
+}`;
+
+async function callClaude(base64: string, mediaType: string) {
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+
+  if (apiKey) {
+    // 本地开发：直接调用 Claude API
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              data: base64,
+            },
+          },
+          { type: 'text', text: PROMPT },
+        ],
+      }],
+    });
+    const text = message.content[0].type === 'text' ? message.content[0].text : '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('无法解析分析结果');
+    return JSON.parse(jsonMatch[0]);
+  } else {
+    // 生产环境：通过 Vercel Edge Function
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mediaType }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Analysis failed');
+    }
+    return response.json();
+  }
+}
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('upload');
@@ -27,222 +90,74 @@ function App() {
 
   const handleAnalyze = async () => {
     if (!selectedFile) return;
-
     setIsLoading(true);
     setError(null);
 
     try {
-      // Only support images for now (Vision API limitation)
-      if (!selectedFile.type.startsWith('image')) {
-        throw new Error('Video analysis coming soon. Please upload an image.');
+      if (!selectedFile.type.startsWith('image/')) {
+        throw new Error('视频分析即将上线，请先上传图片。');
       }
 
-      // Read file as base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          const base64 = result.split(',')[1];
-          resolve(base64);
+      // 压缩图片到 4MB 以内
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(selectedFile);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          // 缩放到最大 1600px
+          const maxSize = 1600;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) { height = Math.round(height * maxSize / width); width = maxSize; }
+            else { width = Math.round(width * maxSize / height); height = maxSize; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          URL.revokeObjectURL(url);
+          resolve(dataUrl.split(',')[1]);
         };
-        reader.onerror = reject;
+        img.onerror = reject;
+        img.src = url;
       });
 
-      reader.readAsDataURL(selectedFile);
-      const base64Image = await base64Promise;
+      const claudeResult = await callClaude(base64, 'image/jpeg');
 
-      // Call Google Vision API
-      const GOOGLE_VISION_API_KEY = 'AIzaSyC9yFMn5m826yEsnCoFlflYCVKOuryArIw';
-      const visionResponse = await fetch(
-        `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requests: [
-              {
-                image: { content: base64Image },
-                features: [
-                  { type: 'FACE_DETECTION', maxResults: 10 },
-                  { type: 'LABEL_DETECTION', maxResults: 10 },
-                  { type: 'IMAGE_PROPERTIES' },
-                ],
-              },
-            ],
-          }),
-        }
-      );
-
-      if (!visionResponse.ok) {
-        throw new Error('Failed to analyze image. Please try again.');
-      }
-
-      const visionData = await visionResponse.json();
-
-      // Check for errors in response
-      if (visionData.responses?.[0]?.error) {
-        throw new Error(visionData.responses[0].error.message || 'Failed to analyze image');
-      }
-
-      // Extract face data
-      const faceAnnotations = visionData.responses?.[0]?.faceAnnotations || [];
-      const labelAnnotations = visionData.responses?.[0]?.labelAnnotations || [];
-      
-      // Check if image contains cat-related labels
-      const hasCat = labelAnnotations.some((label: any) => 
-        label.description.toLowerCase().includes('cat') && label.score > 0.5
-      );
-      
-      if (faceAnnotations.length === 0 && !hasCat) {
-        throw new Error('No cat detected in the image. Please upload a clear image of a cat.');
-      }
-      
-      // If we detect a cat but no faces, use label-based emotion detection
-      if (faceAnnotations.length === 0 && hasCat) {
-        // Fallback: analyze based on image properties and labels
-        const imageProps = visionData.responses?.[0]?.imagePropertiesAnnotation || {};
-        const dominantColor = imageProps.dominantColors?.colors?.[0];
-        
-        // Simple heuristic: use image brightness and colors to guess emotion
-        const emotion = 'curious'; // Default for cat without clear face
-        const confidence = 65;
-        
-        const emotions = [{
-          type: emotion,
-          confidence,
-          region: { x: 0, y: 0, width: 100, height: 100 },
-        }];
-        
-        const interpretations: Record<string, string> = {
-          curious: 'Your cat is in the image! The angle or lighting makes it hard to detect facial expressions clearly. Try uploading a clearer photo of your cat\'s face.',
-        };
-        
-        const recommendations: Record<string, string[]> = {
-          curious: ['Take a photo with better lighting', 'Get closer to your cat\'s face', 'Try a different angle'],
-        };
-        
-        const result: AnalysisResult = {
-          id: Math.random().toString(36).substring(2, 11),
-          fileType: 'image',
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          uploadedAt: new Date().toISOString(),
-          emotions: emotions as any,
-          interpretation: interpretations[emotion],
-          recommendations: recommendations[emotion],
-          thumbnailUrl: preview || '',
-          originalFileUrl: preview || '',
-        };
-        
-        setAnalysisResult(result);
-        setCurrentView('results');
-        return;
-      }
-
-      // Map Vision API face data to emotions
-      const emotionMap: Record<string, string> = {
-        VERY_LIKELY: 'high',
-        LIKELY: 'medium',
-        POSSIBLE: 'medium',
-        UNLIKELY: 'low',
-        VERY_UNLIKELY: 'low',
-      };
-
-      const emotions: Array<{ type: string; confidence: number; region: any }> = [];
-      for (const face of faceAnnotations) {
-        let emotion: string = 'neutral';
-        let confidence = 50;
-
-        // Determine emotion based on face attributes with better thresholds
-        const joyScore = face.joyLikelihood === 'VERY_LIKELY' ? 4 : 
-                        face.joyLikelihood === 'LIKELY' ? 3 : 
-                        face.joyLikelihood === 'POSSIBLE' ? 2 : 0;
-        
-        const sorrowScore = face.sorrowLikelihood === 'VERY_LIKELY' ? 4 : 
-                           face.sorrowLikelihood === 'LIKELY' ? 3 : 
-                           face.sorrowLikelihood === 'POSSIBLE' ? 2 : 0;
-        
-        const angerScore = face.angerLikelihood === 'VERY_LIKELY' ? 4 : 
-                          face.angerLikelihood === 'LIKELY' ? 3 : 
-                          face.angerLikelihood === 'POSSIBLE' ? 2 : 0;
-        
-        const surpriseScore = face.surpriseLikelihood === 'VERY_LIKELY' ? 4 : 
-                             face.surpriseLikelihood === 'LIKELY' ? 3 : 
-                             face.surpriseLikelihood === 'POSSIBLE' ? 2 : 0;
-
-        // Determine dominant emotion
-        if (joyScore >= 3) {
-          emotion = 'happy';
-          confidence = 75 + (joyScore * 5);
-        } else if (angerScore >= 3) {
-          emotion = 'angry';
-          confidence = 75 + (angerScore * 5);
-        } else if (sorrowScore >= 3) {
-          emotion = 'anxious';
-          confidence = 70 + (sorrowScore * 5);
-        } else if (surpriseScore >= 3) {
-          emotion = 'curious';
-          confidence = 70 + (surpriseScore * 5);
-        } else {
-          emotion = 'neutral';
-          confidence = 60;
-        }
-
-        // Cap confidence at 100
-        confidence = Math.min(confidence, 100);
-
-        emotions.push({
-          type: emotion,
-          confidence,
-          region: face.boundingPoly?.vertices?.[0] || { x: 0, y: 0, width: 100, height: 100 },
-        });
-      }
-
-      const interpretations: Record<string, string> = {
-        happy: 'Your cat appears happy and content. It seems to be in a good mood.',
-        content: 'Your cat looks content and relaxed. It appears comfortable and satisfied.',
-        playful: 'Your cat appears playful and energetic, showing interest in interactive play.',
-        curious: 'Your cat seems curious and alert, interested in exploring its surroundings.',
-        anxious: 'Your cat appears anxious or worried. It may need a calm, safe space.',
-        stressed: 'Your cat seems stressed. Try to create a calm environment.',
-        angry: 'Your cat appears angry and aggressive. Give it space to calm down.',
-        sleepy: 'Your cat looks sleepy and tired. It probably needs rest.',
-        hungry: 'Your cat appears hungry. It may be time for a meal.',
-        neutral: 'Your cat appears calm and neutral.'
-      };
-
-      const recommendations: Record<string, string[]> = {
-        happy: ['Continue current activities', 'Provide treats', 'Engage in play'],
-        content: ['Maintain current routine', 'Provide comfortable resting areas', 'Keep environment calm'],
-        playful: ['Engage with interactive toys', 'Schedule playtime sessions', 'Provide climbing structures'],
-        curious: ['Provide enrichment toys', 'Create exploration opportunities', 'Rotate toys regularly'],
-        anxious: ['Create a calm environment', 'Use calming pheromone diffusers', 'Provide hiding spots'],
-        stressed: ['Reduce environmental stressors', 'Provide safe spaces', 'Maintain routine'],
-        angry: ['Give your cat space', 'Avoid sudden movements', 'Provide a safe hiding spot'],
-        sleepy: ['Let your cat rest', 'Provide comfortable bedding', 'Minimize disturbances'],
-        hungry: ['Provide food and water', 'Check feeding schedule', 'Offer treats'],
-        neutral: ['Maintain regular routine', 'Provide comfortable areas', 'Offer interactive play']
-      };
-
-      const primaryEmotion = emotions[0];
       const result: AnalysisResult = {
         id: Math.random().toString(36).substring(2, 11),
         fileType: 'image',
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
         uploadedAt: new Date().toISOString(),
-        emotions: emotions as any,
-        interpretation: interpretations[primaryEmotion.type],
-        recommendations: recommendations[primaryEmotion.type],
+        emotions: [{ type: claudeResult.emotion, confidence: claudeResult.confidence }],
+        interpretation: claudeResult.summary,
+        recommendations: [
+          claudeResult.body_language,
+          claudeResult.health_note,
+          claudeResult.advice,
+        ].filter(Boolean),
         thumbnailUrl: preview || '',
         originalFileUrl: preview || '',
       };
 
       setAnalysisResult(result);
       setCurrentView('results');
+
+      if (dataCollectionConsent) {
+        saveAnalysisResult({
+          file_name: selectedFile.name,
+          file_type: 'image',
+          file_size: selectedFile.size,
+          emotion: claudeResult.emotion,
+          confidence: claudeResult.confidence,
+          interpretation: claudeResult.summary,
+          recommendations: [claudeResult.body_language, claudeResult.health_note, claudeResult.advice].filter(Boolean),
+          data_collection_consent: true,
+        }).catch(console.error);
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to analyze file';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : '分析失败，请重试');
     } finally {
       setIsLoading(false);
     }
@@ -256,10 +171,6 @@ function App() {
     setCurrentView('upload');
   };
 
-  const handleViewHistory = () => {
-    setCurrentView('history');
-  };
-
   return (
     <Provider store={store}>
       <Layout>
@@ -268,10 +179,10 @@ function App() {
             <div className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-                  Analyze Your Cat's Emotions
+                  How is your cat feeling?
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
-                  Upload an image or video to get started
+                  Upload a photo and AI will read your cat's mood
                 </p>
               </div>
               <Upload onFileSelect={handleFileSelect} />
@@ -281,39 +192,21 @@ function App() {
           {currentView === 'preview' && selectedFile && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-                  Preview
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Review your file before analysis
-                </p>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Preview</h2>
+                <p className="text-gray-600 dark:text-gray-400">Review your photo before analysis</p>
               </div>
 
               <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 space-y-6">
-                {/* Preview */}
-                <div>
-                  {selectedFile.type.startsWith('image') ? (
-                    <img
-                      src={preview || ''}
-                      alt="Preview"
-                      className="w-full h-auto rounded-lg max-h-96 object-cover"
-                    />
-                  ) : (
-                    <video
-                      src={preview || ''}
-                      controls
-                      className="w-full h-auto rounded-lg max-h-96"
-                    />
-                  )}
-                </div>
+                <img
+                  src={preview || ''}
+                  alt="Preview"
+                  className="w-full h-auto rounded-lg max-h-96 object-cover"
+                />
 
-                {/* File Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div>
                     <p className="text-gray-600 dark:text-gray-400">File name</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-50 truncate">
-                      {selectedFile.name}
-                    </p>
+                    <p className="font-medium text-gray-900 dark:text-gray-50 truncate">{selectedFile.name}</p>
                   </div>
                   <div>
                     <p className="text-gray-600 dark:text-gray-400">File size</p>
@@ -323,7 +216,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Data Collection Consent */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
@@ -333,42 +225,29 @@ function App() {
                       className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      I consent to anonymized data collection to improve the emotion detection model
+                      I consent to anonymous data collection to help improve the model
                     </span>
                   </label>
                 </div>
 
-                {/* Error Message */}
                 {error && (
                   <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
                   </div>
                 )}
 
-                {/* Action Buttons */}
                 <div className="flex gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
                   <button
                     onClick={handleAnalyzeAnother}
                     disabled={isLoading}
-                    className="
-                      flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900
-                      dark:text-gray-50 rounded-lg font-medium hover:bg-gray-300
-                      dark:hover:bg-gray-600 focus:outline-none focus:ring-2
-                      focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
-                      transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                    "
+                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                   >
-                    Choose Different File
+                    Choose Another
                   </button>
                   <button
                     onClick={handleAnalyze}
                     disabled={isLoading}
-                    className="
-                      flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium
-                      hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500
-                      focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors
-                      disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2
-                    "
+                    className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isLoading ? (
                       <>
@@ -388,35 +267,24 @@ function App() {
             <Results
               result={analysisResult}
               onAnalyzeAnother={handleAnalyzeAnother}
-              onViewHistory={handleViewHistory}
+              onViewHistory={() => setCurrentView('history')}
             />
           )}
 
           {currentView === 'history' && (
             <div className="text-center space-y-4">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-                History
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                History feature coming soon
-              </p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">History</h2>
+              <p className="text-gray-600 dark:text-gray-400">Coming soon</p>
               <button
                 onClick={handleAnalyzeAnother}
-                className="
-                  inline-block px-6 py-2 bg-blue-500 text-white rounded-lg
-                  font-medium hover:bg-blue-600 focus:outline-none focus:ring-2
-                  focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
-                  transition-colors
-                "
+                className="inline-block px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
               >
                 Back to Upload
               </button>
             </div>
           )}
 
-          {currentView === 'annotate' && (
-            <DataAnnotation />
-          )}
+          {currentView === 'annotate' && <DataAnnotation />}
         </div>
       </Layout>
     </Provider>
