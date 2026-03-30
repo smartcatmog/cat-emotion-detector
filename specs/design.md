@@ -51,20 +51,24 @@ graph TB
 **上传流程：**
 1. 用户在前端选择猫照片文件
 2. 前端验证文件格式（JPEG/PNG/WebP）和大小（≤10MB）
-3. 前端将文件发送到 `/api/analyze`
-4. Edge Function 将图片上传到 Supabase Storage，获取公开 URL
-5. Edge Function 将图片（base64）发送给 Claude API 分析情绪
-6. Edge Function 解析 Claude 返回的 JSON，提取 emotion_label 和 confidence
-7. Edge Function 将 Cat_Record（image_url, emotion_label, confidence）存入 Supabase Database
-8. 返回分析结果给前端展示
+3. 用户可选填写 Pet_Name（宠物名字）和 Social_Link（社媒链接）
+4. 前端验证 Social_Link 格式（如果填写了的话，必须是有效 URL）
+5. 前端将文件 + pet_name + social_link 发送到 `/api/analyze`
+6. Edge Function 将图片上传到 Supabase Storage，获取公开 URL
+7. Edge Function 将图片（base64）发送给 Claude API 分析情绪
+8. Edge Function 解析 Claude 返回的 JSON，提取 emotion_label 和 confidence
+9. Edge Function 将 Cat_Record（image_url, emotion_label, confidence, pet_name, social_link）存入 Supabase Database
+10. 返回分析结果给前端展示
 
 **心情匹配流程：**
 1. 用户在前端输入心情描述文字
 2. 前端将文字发送到 `/api/mood-match`
 3. Edge Function 调用 Claude API 从文字中提取情绪关键词，映射到标准 Emotion_Label
-4. Edge Function 从 Supabase Database 查询匹配该 Emotion_Label 的 Cat_Record
-5. 随机选取最多 3 条记录返回给前端
-6. 前端展示匹配的猫图和情绪标签
+4. Edge Function 从 Supabase Database 查询匹配该 Emotion_Label 的 Cat_Record（包含 pet_name、social_link）
+5. Edge Function 统计匹配总数，决定展示模式：
+   - 匹配数 ≥ 5：返回多张候选图（最多 6 张），前端进入多图选择模式
+   - 匹配数 < 5：随机选取最多 3 条记录，前端直接展示
+6. 前端展示匹配的猫图、情绪标签、宠物名字（如有）和社媒链接（如有）
 
 ## Components and Interfaces
 
@@ -101,6 +105,9 @@ interface CatUploaderProps {
 
 - 接受 JPEG/PNG/WebP 格式，最大 10MB
 - 文件选择后显示预览
+- 提供可选的 Pet_Name 文本输入框（placeholder: "给你的猫起个名字吧"）
+- 提供可选的 Social_Link 文本输入框（placeholder: "你的社交媒体链接"）
+- Social_Link 输入时实时验证 URL 格式，无效时显示错误提示
 - 提交时显示加载状态，禁用重复提交
 - 上传成功后回调 `onUploadComplete`
 
@@ -123,19 +130,26 @@ interface MoodInputProps {
 interface CatGalleryProps {
   cats: CatRecord[];
   emotionLabel: EmotionLabel;
+  selectionMode: boolean;          // true when candidates >= 5
+  onSelect?: (cat: CatRecord) => void;
+  selectedCatId?: string | null;
 }
 ```
 
-- 以卡片网格展示匹配的猫图（最多 3 张）
-- 每张卡片显示图片和情绪标签
+- 以卡片网格展示匹配的猫图
+- 每张卡片显示图片、情绪标签、宠物名字（如有）和社媒链接（如有）
+- 宠物名字：当 `pet_name` 非空时，在图片下方显示名字
+- 社媒链接：当 `social_link` 非空时，显示可点击链接图标，`target="_blank"` + `rel="noopener noreferrer"` 在新标签页打开
+- 多图选择模式（`selectionMode=true`）：展示多张候选图，用户可点击选择一张，选中图片高亮显示（边框 + 勾选标记）
+- 普通模式（`selectionMode=false`）：展示最多 3 张，无选择交互
 
 ### API 端点
 
 #### POST /api/analyze
 
-改造现有端点，增加 Supabase 存储逻辑。
+改造现有端点，增加 Supabase 存储逻辑，支持可选的 pet_name 和 social_link 参数。
 
-**Request:** `multipart/form-data` 包含图片文件
+**Request:** `multipart/form-data` 包含图片文件，以及可选的 `pet_name` (string) 和 `social_link` (string) 字段
 
 **Response:**
 ```typescript
@@ -146,6 +160,8 @@ interface AnalyzeResponse {
     emotion_label: EmotionLabel;
     confidence: number;
     description: string;
+    pet_name: string | null;
+    social_link: string | null;
   };
   error?: string;
 }
@@ -153,11 +169,12 @@ interface AnalyzeResponse {
 
 **处理流程：**
 1. 验证文件格式和大小
-2. 上传图片到 Supabase Storage
-3. 将图片 base64 发送给 Claude API，使用结构化 prompt 要求返回 JSON
-4. 解析 Claude 返回结果，验证 emotion_label 和 confidence
-5. 存入 Supabase Database
-6. 返回结果
+2. 如果提供了 social_link，验证 URL 格式有效性
+3. 上传图片到 Supabase Storage
+4. 将图片 base64 发送给 Claude API，使用结构化 prompt 要求返回 JSON
+5. 解析 Claude 返回结果，验证 emotion_label 和 confidence
+6. 存入 Supabase Database（包含 pet_name 和 social_link）
+7. 返回结果
 
 #### POST /api/mood-match
 
@@ -177,6 +194,7 @@ interface MoodMatchResponse {
   data?: {
     emotion_label: EmotionLabel;
     cats: CatRecord[];
+    selection_mode: boolean;  // true when total matches >= 5
   };
   error?: string;
 }
@@ -185,8 +203,11 @@ interface MoodMatchResponse {
 **处理流程：**
 1. 验证 mood_text 非空
 2. 调用 Claude API 分析情绪，映射到标准 EmotionLabel
-3. 从 Supabase 查询匹配的 Cat_Record
-4. 随机选取最多 3 条返回
+3. 从 Supabase 查询匹配的 Cat_Record（包含 pet_name、social_link 字段）
+4. 统计匹配总数：
+   - 总数 ≥ 5：随机选取最多 6 条，`selection_mode = true`
+   - 总数 < 5：返回全部（最多 3 条），`selection_mode = false`
+5. 返回结果
 
 ### Claude API Prompt 设计
 
@@ -230,6 +251,8 @@ interface CatRecord {
   emotion_label: EmotionLabel;
   confidence: number;   // 0-100
   description: string;  // AI 生成的简要描述
+  pet_name: string | null;    // 可选的宠物名字
+  social_link: string | null; // 可选的社媒链接（有效 URL）
   created_at: string;   // ISO 8601 时间戳
 }
 
@@ -252,12 +275,15 @@ interface AnalysisResult {
   emotion_label: EmotionLabel;
   confidence: number;
   description: string;
+  pet_name: string | null;
+  social_link: string | null;
 }
 
 // 前端心情匹配结果
 interface MoodMatchResult {
   emotion_label: EmotionLabel;
   cats: CatRecord[];
+  selection_mode: boolean;  // true when total matches >= 5
 }
 ```
 
@@ -271,6 +297,8 @@ CREATE TABLE cat_images (
   emotion_label TEXT NOT NULL CHECK (emotion_label IN ('happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious')),
   confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
   description TEXT NOT NULL DEFAULT '',
+  pet_name TEXT,          -- 可选的宠物名字
+  social_link TEXT,       -- 可选的社媒链接（有效 URL）
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -294,6 +322,8 @@ CREATE INDEX idx_cat_images_emotion ON cat_images(emotion_label);
 | emotion_label | 必须是 6 个标准标签之一 |
 | confidence | 整数，0-100 |
 | mood_text | 非空，去除首尾空白后长度 > 0 |
+| pet_name | 可选（nullable），如提供则为非空字符串 |
+| social_link | 可选（nullable），如提供则必须是有效 URL（通过 `URL` 构造函数或正则验证） |
 
 
 ## Correctness Properties
@@ -314,9 +344,9 @@ CREATE INDEX idx_cat_images_emotion ON cat_images(emotion_label);
 
 ### Property 3: CatRecord serialization round-trip
 
-*For any* valid CatRecord object, serializing it to the database format and deserializing it back should produce an object equivalent to the original (all fields preserved: id, image_url, emotion_label, confidence, description, created_at).
+*For any* valid CatRecord object (including optional `pet_name` and `social_link` fields), serializing it to the database format and deserializing it back should produce an object equivalent to the original (all fields preserved: id, image_url, emotion_label, confidence, description, pet_name, social_link, created_at).
 
-**Validates: Requirements 3.4**
+**Validates: Requirements 3.4, 8.2, 8.3, 9.4, 9.5**
 
 ### Property 4: Whitespace-only mood input is rejected
 
@@ -348,6 +378,30 @@ CREATE INDEX idx_cat_images_emotion ON cat_images(emotion_label);
 
 **Validates: Requirements 6.1**
 
+### Property 9: Display mode threshold based on match count
+
+*For any* EmotionLabel query result, if the total number of matching CatRecords is ≥ 5, the system should return `selection_mode = true` with multiple candidates (up to 6); if the total is < 5, the system should return `selection_mode = false` with at most 3 items.
+
+**Validates: Requirements 7.1, 7.3**
+
+### Property 10: URL validation accepts valid URLs and rejects invalid ones
+
+*For any* string, the social link validator should accept it if and only if it is a valid URL (parseable by the `URL` constructor with `http` or `https` protocol). Any string that is not a valid URL should be rejected with an error message.
+
+**Validates: Requirements 9.2, 9.3**
+
+### Property 11: Pet name conditional display
+
+*For any* CatRecord, the rendered card should display the pet name section if and only if `pet_name` is non-null. When displayed, the rendered output must contain the exact `pet_name` string.
+
+**Validates: Requirements 8.4, 8.5**
+
+### Property 12: Social link conditional display
+
+*For any* CatRecord, the rendered card should display a clickable social link (with `target="_blank"` and `rel="noopener noreferrer"`) if and only if `social_link` is non-null. When `social_link` is null, no link element should be rendered.
+
+**Validates: Requirements 9.6, 9.7, 9.8**
+
 ## Error Handling
 
 ### 错误分类与处理策略
@@ -356,6 +410,7 @@ CREATE INDEX idx_cat_images_emotion ON cat_images(emotion_label);
 |---------|---------|---------|---------|
 | 文件格式错误 | 非 JPEG/PNG/WebP | 前端拦截，不发请求 | "请上传 JPEG、PNG 或 WebP 格式的图片" |
 | 文件过大 | > 10MB | 前端拦截，不发请求 | "图片大小不能超过 10MB" |
+| 社媒链接格式无效 | social_link 非有效 URL | 前端拦截，不发请求 | "请输入有效的链接地址（以 http:// 或 https:// 开头）" |
 | 上传失败 | Supabase Storage 错误 | API 返回错误，不写数据库 | "图片上传失败，请稍后重试" |
 | AI 分析失败 | Claude API 超时/错误 | API 返回错误，不写数据库 | "AI 分析暂时不可用，请稍后重试" |
 | 解析失败 | Claude 返回非预期格式 | 使用默认值，记录警告日志 | 正常展示默认结果 |
@@ -406,17 +461,18 @@ function formatUserError(error: unknown): string {
 ```
 src/
 ├── lib/
-│   ├── validators.ts          # 验证逻辑
+│   ├── validators.ts          # 验证逻辑（含 URL 验证）
 │   ├── parsers.ts             # 解析逻辑
-│   ├── selectors.ts           # 选择逻辑
+│   ├── selectors.ts           # 选择逻辑（含多图选择阈值）
 │   └── errors.ts              # 错误格式化
 └── __tests__/
-    ├── validators.property.test.ts   # Property 1, 4 的属性测试
+    ├── validators.property.test.ts   # Property 1, 4, 10 的属性测试
     ├── parsers.property.test.ts      # Property 2, 5 的属性测试
     ├── serialization.property.test.ts # Property 3 的属性测试
     ├── query.property.test.ts        # Property 6 的属性测试
-    ├── selectors.property.test.ts    # Property 7 的属性测试
-    └── errors.property.test.ts       # Property 8 的属性测试
+    ├── selectors.property.test.ts    # Property 7, 9 的属性测试
+    ├── errors.property.test.ts       # Property 8 的属性测试
+    └── display.property.test.ts      # Property 11, 12 的属性测试
 ```
 
 **属性测试示例（Property 1）：**
@@ -478,9 +534,10 @@ export default defineConfig({
 
 | 模块 | 单元测试 | 属性测试 |
 |------|---------|---------|
-| validators.ts | 边界值、错误格式 | Property 1, 4 |
+| validators.ts | 边界值、错误格式、无效 URL | Property 1, 4, 10 |
 | parsers.ts | 畸形 JSON、缺失字段 | Property 2, 5 |
-| 序列化逻辑 | 特定 CatRecord 实例 | Property 3 |
+| 序列化逻辑 | 特定 CatRecord 实例（含 pet_name/social_link） | Property 3 |
 | 数据库查询 | 空结果、单结果 | Property 6 |
-| selectors.ts | 空列表、1-3 项列表 | Property 7 |
+| selectors.ts | 空列表、1-3 项列表、≥5 项列表 | Property 7, 9 |
 | errors.ts | 各类错误对象 | Property 8 |
+| 展示逻辑 | pet_name/social_link 为 null 的卡片 | Property 11, 12 |
