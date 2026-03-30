@@ -8,19 +8,19 @@ const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxiou
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
+CRITICAL: The "emotion" field MUST be exactly one of these 6 values: happy, calm, sleepy, curious, annoyed, anxious
+Do NOT use any other word. Pick the closest match from these 6 options.
+
 Return ONLY valid JSON in this exact format:
 {
-  "emotion": "one word emotion",
-  "emotion_label": "happy" | "calm" | "sleepy" | "curious" | "annoyed" | "anxious",
+  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious",
   "confidence": 85,
   "body_language": "body language description",
   "health_note": "health observation",
   "advice": "owner advice",
   "summary": "one sentence summary",
   "description": "brief description of the cat's emotional state"
-}
-
-IMPORTANT: emotion_label MUST be exactly one of: happy, calm, sleepy, curious, annoyed, anxious`;
+}`;
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
@@ -112,7 +112,7 @@ export default async function handler(req: Request) {
       alert: 'curious', attentive: 'curious', interested: 'curious', watchful: 'curious', inquisitive: 'curious',
       nervous: 'anxious', scared: 'anxious', fearful: 'anxious', stressed: 'anxious', worried: 'anxious',
     };
-    let rawEmotion = (result.emotion_label || result.emotion || 'calm').toLowerCase();
+    let rawEmotion = (result.emotion || 'calm').toLowerCase();
     let emotionLabel = VALID_EMOTIONS.includes(rawEmotion) ? rawEmotion : (EMOTION_MAP[rawEmotion] || 'calm');
     result.emotion_label = emotionLabel;
 
