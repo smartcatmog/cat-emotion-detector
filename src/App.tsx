@@ -225,7 +225,7 @@ function App() {
                 <img
                   src={preview || ''}
                   alt="Preview"
-                  className="w-full h-auto rounded-lg max-h-96 object-cover"
+                  className="w-full h-auto rounded-lg max-h-[80vh] object-contain"
                 />
 
                 <div className="grid grid-cols-2 gap-4 text-sm border-t border-gray-200 dark:border-gray-700 pt-4">

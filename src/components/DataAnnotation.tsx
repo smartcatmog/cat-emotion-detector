@@ -143,7 +143,7 @@ export function DataAnnotation() {
               <img
                 src={preview}
                 alt="Preview"
-                className="w-full h-auto rounded-lg max-h-64 object-cover"
+                className="w-full h-auto rounded-lg max-h-[70vh] object-contain"
               />
             ) : (
               <div className="space-y-2">

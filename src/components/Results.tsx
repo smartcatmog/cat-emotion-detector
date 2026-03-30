@@ -79,7 +79,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
         {/* 图片预览 */}
         {result.thumbnailUrl && (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <img src={result.thumbnailUrl} alt="分析图片" className="w-full h-auto rounded-lg max-h-64 object-cover" />
+            <img src={result.thumbnailUrl} alt="分析图片" className="w-full h-auto rounded-lg max-h-[70vh] object-contain" />
           </div>
         )}
 
