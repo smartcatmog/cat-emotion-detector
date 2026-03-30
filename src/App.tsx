@@ -197,7 +197,7 @@ function App() {
 
   return (
     <Provider store={store}>
-      <Layout>
+      <Layout onNavigate={(view) => setCurrentView(view as AppView)}>
         <div className="space-y-8">
           {currentView === 'upload' && (
             <div className="space-y-6">
