@@ -45,7 +45,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 📸 Annotate Data
               </button>
               <a
-                onClick={() => onNavigate?.('history')}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.('history');
+                }}
                 className="
                   text-gray-700 dark:text-gray-300 hover:text-gray-900
                   dark:hover:text-gray-50 font-medium transition-colors
@@ -55,7 +59,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 History
               </a>
               <a
-                onClick={() => onNavigate?.('privacy')}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.('privacy');
+                }}
                 className="
                   text-gray-700 dark:text-gray-300 hover:text-gray-900
                   dark:hover:text-gray-50 font-medium transition-colors
@@ -123,7 +131,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 📸 Annotate Data
               </button>
               <a
-                onClick={() => {
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
                   onNavigate?.('history');
                   setMobileMenuOpen(false);
                 }}
@@ -136,7 +146,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 History
               </a>
               <a
-                onClick={() => {
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
                   onNavigate?.('privacy');
                   setMobileMenuOpen(false);
                 }}
@@ -177,7 +189,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
-                    onClick={() => onNavigate?.('privacy')}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate?.('privacy');
+                    }}
                     className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer"
                   >
                     Privacy Policy
