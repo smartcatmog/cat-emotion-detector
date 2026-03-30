@@ -10,16 +10,21 @@ interface AnnotatedImage {
 }
 
 const EMOTIONS = [
-  { value: 'happy', label: '😸 Happy (开心)', description: '眼睛睁大，嘴角上扬' },
-  { value: 'content', label: '😻 Content (满足)', description: '放松，舒服，眯眼' },
-  { value: 'playful', label: '😼 Playful (好玩)', description: '追逐，跳跃，活跃' },
-  { value: 'curious', label: '👀 Curious (好奇)', description: '耳朵竖起，眼睛睁大' },
-  { value: 'anxious', label: '😿 Anxious (焦虑)', description: '躲藏，紧张，害怕' },
-  { value: 'stressed', label: '😾 Stressed (压力)', description: '身体紧张，准备逃跑' },
-  { value: 'angry', label: '😠 Angry (生气)', description: '耳朵后，眯眼，嘶鸣' },
-  { value: 'sleepy', label: '😽 Sleepy (困倦)', description: '打哈欠，闭眼，懒散' },
-  { value: 'hungry', label: '🍽️ Hungry (饿)', description: '叫声，走来走去，期待' },
-  { value: 'neutral', label: '😺 Neutral (中立)', description: '正常状态，放松' },
+  { value: 'happy', label: '😸 Happy (开心到飞起)', description: '开心，兴奋，满足' },
+  { value: 'calm', label: '😌 Calm (岁月静好)', description: '平静，放松，安详' },
+  { value: 'sleepy', label: '😴 Sleepy (困到不行)', description: '困倦，疲惫，想睡觉' },
+  { value: 'curious', label: '🐱 Curious (这是啥？)', description: '好奇，警觉，感兴趣' },
+  { value: 'annoyed', label: '😾 Annoyed (别碰我)', description: '烦躁，不爽，讨厌' },
+  { value: 'anxious', label: '🙀 Anxious (慌得一批)', description: '焦虑，害怕，紧张' },
+  { value: 'resigned', label: '😑 Resigned (无奈.jpg)', description: '无奈，无可奈何，算了' },
+  { value: 'dramatic', label: '💀 Dramatic (当场去世)', description: '崩溃，受不了，太难了' },
+  { value: 'sassy', label: '💅 Sassy (你说啥？)', description: '傲娇，高冷，不屑' },
+  { value: 'clingy', label: '🥺 Clingy (求抱抱)', description: '撒娇，黏人，需要关注' },
+  { value: 'zoomies', label: '⚡ Zoomies (嗨到起飞)', description: '亢奋，精力爆棚，停不下来' },
+  { value: 'suspicious', label: '🤨 Suspicious (我看你有问题)', description: '怀疑，警惕，不信任' },
+  { value: 'smug', label: '😏 Smug (本喵最帅)', description: '得意，骄傲，自信' },
+  { value: 'confused', label: '😵 Confused (一脸懵逼)', description: '困惑，迷茫，不理解' },
+  { value: 'hangry', label: '🍽️ Hangry (饿到发疯)', description: '饿了，要吃的，暴躁' },
 ];
 
 export function DataAnnotation() {
