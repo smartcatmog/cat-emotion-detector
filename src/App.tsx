@@ -9,7 +9,16 @@ import { Privacy } from './components/Privacy';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult } from './lib/supabase';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
+
+interface CatMatch {
+  id: string;
+  image_url: string;
+  emotion_label: string;
+  description: string;
+  pet_name: string | null;
+  social_link: string | null;
+}
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo and provide:
 1) Current emotional state (e.g. relaxed, alert, fearful, content, irritated)
@@ -29,15 +38,14 @@ Return ONLY valid JSON in this exact format:
   "summary": "one sentence summary"
 }`;
 
-async function callClaude(base64: string, mediaType: string) {
+async function callClaude(base64: string, mediaType: string, petName?: string, socialLink?: string) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
   if (apiKey) {
-    // 本地开发：直接调用 Claude API
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
       messages: [{
         role: 'user',
@@ -56,14 +64,19 @@ async function callClaude(base64: string, mediaType: string) {
     });
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('无法解析分析结果');
+    if (!jsonMatch) throw new Error('Unable to parse analysis result');
     return JSON.parse(jsonMatch[0]);
   } else {
-    // 生产环境：通过 Vercel Edge Function
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64, mediaType }),
+      body: JSON.stringify({
+        image: base64,
+        mediaType,
+        save_to_gallery: true,
+        pet_name: petName || null,
+        social_link: socialLink || null,
+      }),
     });
     if (!response.ok) {
       const err = await response.json();
@@ -81,30 +94,70 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataCollectionConsent, setDataCollectionConsent] = useState(true);
+  const [moodText, setMoodText] = useState('');
+  const [moodResult, setMoodResult] = useState<any>(null);
+  const [moodLoading, setMoodLoading] = useState(false);
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const [petName, setPetName] = useState('');
+  const [socialLink, setSocialLink] = useState('');
+  const [saveToGallery, setSaveToGallery] = useState(true);
+  const [petName, setPetName] = useState('');
+  const [socialLink, setSocialLink] = useState('');
 
-  // Handle URL routing
+  // Mood match state
+  const [moodText, setMoodText] = useState('');
+  const [moodLoading, setMoodLoading] = useState(false);
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const [matchedCats, setMatchedCats] = useState<CatMatch[]>([]);
+  const [matchedEmotion, setMatchedEmotion] = useState('');
+  const [matchReasoning, setMatchReasoning] = useState('');
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+
   useEffect(() => {
     const path = window.location.pathname;
-    if (path === '/privacy') {
-      setCurrentView('privacy');
-    } else if (path === '/history') {
-      setCurrentView('history');
-    } else {
-      setCurrentView('upload');
-    }
+    if (path === '/privacy') setCurrentView('privacy');
+    else if (path === '/history') setCurrentView('history');
+    else if (path === '/mood') setCurrentView('mood');
+    else setCurrentView('upload');
   }, []);
 
-  // Update URL when view changes
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (currentView === 'privacy') {
-      window.history.pushState({}, '', '/privacy');
-    } else if (currentView === 'history') {
-      window.history.pushState({}, '', '/history');
-    } else if (currentView === 'upload') {
-      window.history.pushState({}, '', '/');
+    const pathMap: Record<string, string> = {
+      privacy: '/privacy', history: '/history', mood: '/mood', upload: '/',
+    };
+    const newPath = pathMap[currentView] || '/';
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({}, '', newPath);
     }
   }, [currentView]);
+
+  const handleMoodMatch = async () => {
+    if (!moodText.trim()) {
+      setMoodError('Please describe your mood');
+      return;
+    }
+    setMoodLoading(true);
+    setMoodError(null);
+    setMoodResult(null);
+    try {
+      const response = await fetch('/api/mood-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood_text: moodText.trim() }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Match failed');
+      }
+      const data = await response.json();
+      setMoodResult(data.data);
+    } catch (err) {
+      setMoodError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setMoodLoading(false);
+    }
+  };
 
   const handleFileSelect = (file: File, previewData: string) => {
     setSelectedFile(file);
@@ -120,17 +173,15 @@ function App() {
 
     try {
       if (!selectedFile.type.startsWith('image/')) {
-        throw new Error('视频分析即将上线，请先上传图片。');
+        throw new Error('Video analysis coming soon. Please upload an image.');
       }
 
-      // 压缩图片到 4MB 以内
       const base64 = await new Promise<string>((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(selectedFile);
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let { width, height } = img;
-          // 缩放到最大 1600px
           const maxSize = 1600;
           if (width > maxSize || height > maxSize) {
             if (width > height) { height = Math.round(height * maxSize / width); width = maxSize; }
@@ -147,7 +198,7 @@ function App() {
         img.src = url;
       });
 
-      const claudeResult = await callClaude(base64, 'image/jpeg');
+      const claudeResult = await callClaude(base64, 'image/jpeg', petName, socialLink);
 
       const result: AnalysisResult = {
         id: Math.random().toString(36).substring(2, 11),
@@ -182,9 +233,42 @@ function App() {
         }).catch(console.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '分析失败，请重试');
+      setError(err instanceof Error ? err.message : 'Analysis failed, please try again');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleMoodMatch = async () => {
+    if (!moodText.trim()) {
+      setMoodError('Please describe your mood');
+      return;
+    }
+    setMoodLoading(true);
+    setMoodError(null);
+    setMatchedCats([]);
+    setSelectedCatId(null);
+
+    try {
+      const response = await fetch('/api/mood-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood_text: moodText.trim() }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Mood matching failed');
+      }
+
+      const result = await response.json();
+      setMatchedCats(result.data.cats);
+      setMatchedEmotion(result.data.emotion_label);
+      setMatchReasoning(result.data.reasoning);
+    } catch (err) {
+      setMoodError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setMoodLoading(false);
     }
   };
 
@@ -193,129 +277,16 @@ function App() {
     setPreview(null);
     setAnalysisResult(null);
     setError(null);
+    setPetName('');
+    setSocialLink('');
     setCurrentView('upload');
+  };
+
+  const emotionEmoji: Record<string, string> = {
+    happy: '😸', calm: '😺', sleepy: '😴', curious: '🐱', annoyed: '��', anxious: '🙀',
   };
 
   return (
     <Provider store={store}>
       <Layout onNavigate={(view) => setCurrentView(view as AppView)}>
         <div className="space-y-8">
-          {currentView === 'upload' && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-                  How is your cat feeling?
-                </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400">
-                  Upload a photo and AI will read your cat's mood
-                </p>
-              </div>
-              <Upload onFileSelect={handleFileSelect} />
-            </div>
-          )}
-
-          {currentView === 'preview' && selectedFile && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Preview</h2>
-                <p className="text-gray-600 dark:text-gray-400">Review your photo before analysis</p>
-              </div>
-
-              <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 space-y-6">
-                <img
-                  src={preview || ''}
-                  alt="Preview"
-                  className="w-full h-auto rounded-lg max-h-[80vh] object-contain"
-                />
-
-                <div className="grid grid-cols-2 gap-4 text-sm border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400">File name</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-50 truncate">{selectedFile.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400">File size</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-50">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={dataCollectionConsent}
-                      onChange={(e) => setDataCollectionConsent(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      I consent to anonymous data collection to help improve the model
-                    </span>
-                  </label>
-                </div>
-
-                {error && (
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <button
-                    onClick={handleAnalyzeAnother}
-                    disabled={isLoading}
-                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                  >
-                    Choose Another
-                  </button>
-                  <button
-                    onClick={handleAnalyze}
-                    disabled={isLoading}
-                    className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      'Analyze'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentView === 'results' && analysisResult && (
-            <Results
-              result={analysisResult}
-              onAnalyzeAnother={handleAnalyzeAnother}
-              onViewHistory={() => setCurrentView('history')}
-            />
-          )}
-
-          {currentView === 'history' && (
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">History</h2>
-              <p className="text-gray-600 dark:text-gray-400">Coming soon</p>
-              <button
-                onClick={handleAnalyzeAnother}
-                className="inline-block px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
-              >
-                Back to Upload
-              </button>
-            </div>
-          )}
-
-          {currentView === 'annotate' && <DataAnnotation />}
-
-          {currentView === 'privacy' && <Privacy />}
-        </div>
-      </Layout>
-    </Provider>
-  );
-}
-
-export default App;
