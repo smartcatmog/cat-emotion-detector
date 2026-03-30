@@ -103,11 +103,17 @@ export default async function handler(req: Request) {
 
     const result = JSON.parse(jsonMatch[0]);
 
-    // Normalize emotion_label
-    let emotionLabel = (result.emotion_label || result.emotion || 'calm').toLowerCase();
-    if (!VALID_EMOTIONS.includes(emotionLabel)) {
-      emotionLabel = 'calm';
-    }
+    // Normalize emotion_label with mapping
+    const EMOTION_MAP: Record<string, string> = {
+      displeased: 'annoyed', irritated: 'annoyed', angry: 'annoyed', grumpy: 'annoyed', frustrated: 'annoyed',
+      content: 'happy', joyful: 'happy', playful: 'happy', excited: 'happy', cheerful: 'happy',
+      relaxed: 'calm', peaceful: 'calm', serene: 'calm', comfortable: 'calm', neutral: 'calm',
+      drowsy: 'sleepy', tired: 'sleepy', resting: 'sleepy', dozing: 'sleepy',
+      alert: 'curious', attentive: 'curious', interested: 'curious', watchful: 'curious', inquisitive: 'curious',
+      nervous: 'anxious', scared: 'anxious', fearful: 'anxious', stressed: 'anxious', worried: 'anxious',
+    };
+    let rawEmotion = (result.emotion_label || result.emotion || 'calm').toLowerCase();
+    let emotionLabel = VALID_EMOTIONS.includes(rawEmotion) ? rawEmotion : (EMOTION_MAP[rawEmotion] || 'calm');
     result.emotion_label = emotionLabel;
 
     // Save to cat_images gallery if requested
