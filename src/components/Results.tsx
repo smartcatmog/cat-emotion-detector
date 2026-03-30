@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
 import { saveFeedback } from '../lib/supabase';
 
-const EMOTION_OPTIONS = ['Relaxed', 'Content', 'Curious', 'Alert', 'Fearful', 'Irritated', 'Angry', 'Sleepy', 'Hungry'];
+const EMOTION_OPTIONS = ['😸 Happy', '😌 Calm', '😴 Sleepy', '🐱 Curious', '😾 Annoyed', '🙀 Anxious', '😑 Resigned', '💀 Dramatic', '💅 Sassy', '🥺 Clingy', '⚡ Zoomies', '🤨 Suspicious', '😏 Smug', '😵 Confused', '🍽️ Hangry'];
 
 interface ResultsProps {
   result: AnalysisResult;
@@ -13,6 +13,7 @@ interface ResultsProps {
 export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onViewHistory }) => {
   const [feedbackState, setFeedbackState] = useState<'idle' | 'wrong' | 'done'>('idle');
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
+  const [customEmotion, setCustomEmotion] = useState<string>('');
 
   const primaryEmotion = result.emotions?.[0]?.type || '';
   const confidence = result.emotions?.[0]?.confidence || 0;
@@ -27,7 +28,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
   };
 
   const handleSubmitCorrection = async () => {
-    await saveFeedback(result.id, false, selectedCorrect).catch(console.error);
+    await saveFeedback(result.id, false, customEmotion.trim() || selectedCorrect).catch(console.error);
     setFeedbackState('done');
   };
 
@@ -116,7 +117,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                 {EMOTION_OPTIONS.map((e) => (
                   <button
                     key={e}
-                    onClick={() => setSelectedCorrect(e)}
+                    onClick={() => { setSelectedCorrect(e); setCustomEmotion(''); }}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       selectedCorrect === e
                         ? 'bg-blue-500 text-white'
@@ -127,9 +128,18 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                   </button>
                 ))}
               </div>
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={customEmotion}
+                  onChange={(e) => { setCustomEmotion(e.target.value); setSelectedCorrect(''); }}
+                  placeholder="Or type your own label (e.g. 无所谓, bored, dramatic...)"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 mb-3"
+                />
+              </div>
               <button
                 onClick={handleSubmitCorrection}
-                disabled={!selectedCorrect}
+                disabled={!selectedCorrect && !customEmotion.trim()}
                 className="w-full py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-40"
               >
                 Submit Feedback
