@@ -8,30 +8,28 @@ const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxiou
 
 const MOOD_PROMPT = (moodText: string) => `The user described their mood: "${moodText}"
 
-Analyze this text and map it to ONE of these cat emotion labels:
-happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry
+This text may be in any language (English, Chinese, etc). Understand the semantic meaning deeply and map it to ONE of these 15 cat emotion labels:
 
-Label meanings:
-- happy = joyful, excited, content
-- calm = relaxed, peaceful, chill
-- sleepy = tired, exhausted, need rest
-- curious = interested, wondering, intrigued
-- annoyed = irritated, frustrated, fed up
-- anxious = worried, nervous, scared
-- resigned = helpless, giving up, whatever
-- dramatic = dying inside, overwhelmed, can't even
-- sassy = judging everyone, above it all, attitude
-- clingy = lonely, need a hug, miss someone
-- zoomies = hyper, can't sit still, bursting with energy
-- suspicious = something's off, don't trust it
-- smug = proud, nailed it, feeling superior
-- confused = lost, makes no sense, brain error
-- hangry = starving, need food NOW
+- happy = joyful, excited, content, 开心, 高兴, 兴奋, 满足
+- calm = relaxed, peaceful, chill, 平静, 放松, 岁月静好
+- sleepy = tired, exhausted, need rest, 困, 累, 疲惫, 想睡觉
+- curious = interested, wondering, intrigued, 好奇, 感兴趣, 想知道
+- annoyed = irritated, frustrated, fed up, 烦, 不爽, 讨厌, 烦躁
+- anxious = worried, nervous, scared, 焦虑, 担心, 害怕, 紧张
+- resigned = helpless, giving up, whatever, 无奈, 无所谓, 随他去, 算了, 不在乎, 随便, 无可奈何
+- dramatic = dying inside, overwhelmed, can't even, 当场去世, 崩溃, 受不了, 太难了, 人生完了
+- sassy = judging everyone, above it all, attitude, 傲娇, 高冷, 不屑, 看不上
+- clingy = lonely, need a hug, miss someone, 孤独, 想抱抱, 想你, 黏人, 需要陪伴
+- zoomies = hyper, can't sit still, bursting with energy, 嗨, 亢奋, 精力充沛, 停不下来
+- suspicious = something's off, don't trust it, 怀疑, 不信任, 感觉不对劲, 警惕
+- smug = proud, nailed it, feeling superior, 得意, 骄傲, 自信, 我最棒
+- confused = lost, makes no sense, brain error, 懵, 不懂, 一脸懵逼, 搞不清楚, 迷茫
+- hangry = starving, need food NOW, 饿, 饿死了, 要吃东西, 饿到发疯
 
 Return ONLY valid JSON:
 {
-  "emotion_label": "one of the 6 labels above",
-  "reasoning": "brief explanation of why this mood maps to this cat emotion"
+  "emotion_label": "one of the 15 labels above",
+  "reasoning": "brief explanation in the same language as the user's input"
 }`;
 
 export default async function handler(req: Request) {
@@ -64,7 +62,6 @@ export default async function handler(req: Request) {
       });
     }
 
-    // Step 1: Ask Claude to analyze the mood
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -99,12 +96,8 @@ export default async function handler(req: Request) {
 
     const moodResult = JSON.parse(jsonMatch[0]);
     let emotionLabel = moodResult.emotion_label?.toLowerCase();
+    if (!VALID_EMOTIONS.includes(emotionLabel)) emotionLabel = 'calm';
 
-    if (!VALID_EMOTIONS.includes(emotionLabel)) {
-      emotionLabel = 'calm'; // fallback
-    }
-
-    // Step 2: Query matching cat images from Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: cats, error: dbError } = await supabase
       .from('cat_images')
@@ -118,12 +111,9 @@ export default async function handler(req: Request) {
       });
     }
 
-    // Step 3: Select random cats
     const allCats = cats || [];
     const selectionMode = allCats.length >= 5;
     const maxItems = selectionMode ? 6 : 3;
-
-    // Shuffle and pick
     const shuffled = allCats.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, maxItems);
 
