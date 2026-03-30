@@ -96,6 +96,7 @@ function App() {
 
   // Update URL when view changes
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (currentView === 'privacy') {
       window.history.pushState({}, '', '/privacy');
     } else if (currentView === 'history') {
