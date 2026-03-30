@@ -196,7 +196,7 @@ function App() {
 
   const handleLike = async (catId: string) => {
     if (!supabase) return;
-    supabase.rpc('increment_likes', { cat_id: catId }).then(() => {}).catch(console.error);
+    void supabase.rpc('increment_likes', { cat_id: catId });
   };
 
   const handleMoodMatch = async () => {
