@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { Layout } from './components/Layout';
 import { Upload } from './components/Upload';
 import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
+import { Privacy } from './components/Privacy';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult } from './lib/supabase';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy';
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo and provide:
 1) Current emotional state (e.g. relaxed, alert, fearful, content, irritated)
@@ -80,6 +81,29 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataCollectionConsent, setDataCollectionConsent] = useState(true);
+
+  // Handle URL routing
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/privacy') {
+      setCurrentView('privacy');
+    } else if (path === '/history') {
+      setCurrentView('history');
+    } else {
+      setCurrentView('upload');
+    }
+  }, []);
+
+  // Update URL when view changes
+  useEffect(() => {
+    if (currentView === 'privacy') {
+      window.history.pushState({}, '', '/privacy');
+    } else if (currentView === 'history') {
+      window.history.pushState({}, '', '/history');
+    } else if (currentView === 'upload') {
+      window.history.pushState({}, '', '/');
+    }
+  }, [currentView]);
 
   const handleFileSelect = (file: File, previewData: string) => {
     setSelectedFile(file);
@@ -285,6 +309,8 @@ function App() {
           )}
 
           {currentView === 'annotate' && <DataAnnotation />}
+
+          {currentView === 'privacy' && <Privacy />}
         </div>
       </Layout>
     </Provider>

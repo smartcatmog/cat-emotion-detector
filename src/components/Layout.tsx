@@ -45,21 +45,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 📸 Annotate Data
               </button>
               <a
-                href="/history"
+                onClick={() => onNavigate?.('history')}
                 className="
                   text-gray-700 dark:text-gray-300 hover:text-gray-900
                   dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer
                 "
               >
                 History
               </a>
               <a
-                href="/privacy"
+                onClick={() => onNavigate?.('privacy')}
                 className="
                   text-gray-700 dark:text-gray-300 hover:text-gray-900
                   dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer
                 "
               >
                 Privacy
@@ -123,21 +123,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 📸 Annotate Data
               </button>
               <a
-                href="/history"
+                onClick={() => {
+                  onNavigate?.('history');
+                  setMobileMenuOpen(false);
+                }}
                 className="
                   block px-4 py-2 text-gray-700 dark:text-gray-300
                   hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors
+                  transition-colors cursor-pointer
                 "
               >
                 History
               </a>
               <a
-                href="/privacy"
+                onClick={() => {
+                  onNavigate?.('privacy');
+                  setMobileMenuOpen(false);
+                }}
                 className="
                   block px-4 py-2 text-gray-700 dark:text-gray-300
                   hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors
+                  transition-colors cursor-pointer
                 "
               >
                 Privacy
@@ -171,15 +177,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
-                    href="/privacy"
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50"
+                    onClick={() => onNavigate?.('privacy')}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer"
                   >
                     Privacy Policy
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/terms"
+                    href="#"
                     className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50"
                   >
                     Terms of Service
