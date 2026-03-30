@@ -5,11 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    open: true
+    open: true,
+    middlewareMode: false
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser'
+  },
+  preview: {
+    port: 4173
   }
 })
