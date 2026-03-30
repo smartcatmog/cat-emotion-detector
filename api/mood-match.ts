@@ -4,13 +4,29 @@ export const config = {
   runtime: 'edge',
 };
 
-const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned'];
+const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned', 'dramatic', 'sassy', 'clingy', 'zoomies', 'suspicious', 'smug', 'confused', 'hangry'];
 
 const MOOD_PROMPT = (moodText: string) => `The user described their mood: "${moodText}"
 
 Analyze this text and map it to ONE of these cat emotion labels:
-happy, calm, sleepy, curious, annoyed, anxious, resigned
-resigned = helpless, giving up, tolerating something unwillingly
+happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry
+
+Label meanings:
+- happy = joyful, excited, content
+- calm = relaxed, peaceful, chill
+- sleepy = tired, exhausted, need rest
+- curious = interested, wondering, intrigued
+- annoyed = irritated, frustrated, fed up
+- anxious = worried, nervous, scared
+- resigned = helpless, giving up, whatever
+- dramatic = dying inside, overwhelmed, can't even
+- sassy = judging everyone, above it all, attitude
+- clingy = lonely, need a hug, miss someone
+- zoomies = hyper, can't sit still, bursting with energy
+- suspicious = something's off, don't trust it
+- smug = proud, nailed it, feeling superior
+- confused = lost, makes no sense, brain error
+- hangry = starving, need food NOW
 
 Return ONLY valid JSON:
 {

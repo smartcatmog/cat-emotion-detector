@@ -4,17 +4,31 @@ export const config = {
   runtime: 'edge',
 };
 
-const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned'];
+const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned', 'dramatic', 'sassy', 'clingy', 'zoomies', 'suspicious', 'smug', 'confused', 'hangry'];
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
-CRITICAL: The "emotion" field MUST be exactly one of these 7 values: happy, calm, sleepy, curious, annoyed, anxious, resigned
-resigned = helpless, giving up, tolerating something unwillingly, 无奈/无可奈何
+CRITICAL: The "emotion" field MUST be exactly one of these 15 values:
+- happy (pure joy, excited, content)
+- calm (zero stress, relaxed, peaceful)
+- sleepy (need a nap, tired, drowsy)
+- curious (what's that? alert, interested)
+- annoyed (don't touch me, irritated, grumpy)
+- anxious (something's wrong, scared, nervous)
+- resigned (whatever... helpless, giving up)
+- dramatic (I'm literally dying, over-the-top, facepalm)
+- sassy (talk to the paw, snooty, judging you)
+- clingy (don't leave me, needy, wants attention)
+- zoomies (MAXIMUM ENERGY, hyper, wild)
+- suspicious (I'm watching you, distrustful, side-eye)
+- smug (I own this place, proud, self-satisfied)
+- confused (does not compute, bewildered, lost)
+- hangry (feed me NOW, hungry + angry)
 Do NOT use any other word. Pick the closest match from these 6 options.
 
 Return ONLY valid JSON in this exact format:
 {
-  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious, resigned",
+  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry",
   "confidence": 85,
   "body_language": "body language description",
   "health_note": "health observation",
