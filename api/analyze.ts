@@ -4,16 +4,17 @@ export const config = {
   runtime: 'edge',
 };
 
-const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious'];
+const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned'];
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
-CRITICAL: The "emotion" field MUST be exactly one of these 6 values: happy, calm, sleepy, curious, annoyed, anxious
+CRITICAL: The "emotion" field MUST be exactly one of these 7 values: happy, calm, sleepy, curious, annoyed, anxious, resigned
+resigned = helpless, giving up, tolerating something unwillingly, 无奈/无可奈何
 Do NOT use any other word. Pick the closest match from these 6 options.
 
 Return ONLY valid JSON in this exact format:
 {
-  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious",
+  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious, resigned",
   "confidence": 85,
   "body_language": "body language description",
   "health_note": "health observation",

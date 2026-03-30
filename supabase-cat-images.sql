@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS cat_images (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   image_url TEXT NOT NULL,
-  emotion_label TEXT NOT NULL CHECK (emotion_label IN ('happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious')),
+  emotion_label TEXT NOT NULL CHECK (emotion_label IN ('happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned')),
   confidence INTEGER NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
   description TEXT NOT NULL DEFAULT '',
   pet_name TEXT,

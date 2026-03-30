@@ -4,12 +4,13 @@ export const config = {
   runtime: 'edge',
 };
 
-const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious'];
+const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned'];
 
 const MOOD_PROMPT = (moodText: string) => `The user described their mood: "${moodText}"
 
 Analyze this text and map it to ONE of these cat emotion labels:
-happy, calm, sleepy, curious, annoyed, anxious
+happy, calm, sleepy, curious, annoyed, anxious, resigned
+resigned = helpless, giving up, tolerating something unwillingly
 
 Return ONLY valid JSON:
 {
