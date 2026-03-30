@@ -105,7 +105,7 @@ export default async function handler(req: Request) {
 
     // Normalize emotion_label with mapping
     const EMOTION_MAP: Record<string, string> = {
-      displeased: 'annoyed', irritated: 'annoyed', angry: 'annoyed', grumpy: 'annoyed', frustrated: 'annoyed',
+      displeased: 'annoyed', irritated: 'annoyed', angry: 'annoyed', grumpy: 'annoyed', frustrated: 'annoyed', unimpressed: 'annoyed', unamused: 'annoyed', bothered: 'annoyed', sulky: 'annoyed',
       content: 'happy', joyful: 'happy', playful: 'happy', excited: 'happy', cheerful: 'happy',
       relaxed: 'calm', peaceful: 'calm', serene: 'calm', comfortable: 'calm', neutral: 'calm',
       drowsy: 'sleepy', tired: 'sleepy', resting: 'sleepy', dozing: 'sleepy',
