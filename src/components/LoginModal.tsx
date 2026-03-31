@@ -41,12 +41,18 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         const data = await signUp(email, password);
         // Create profile in public.users
         if (data.user) {
-          await supabase.from('users').insert({
+          const { error: insertError } = await supabase.from('users').insert({
             id: data.user.id,
             email,
             username,
             display_name: username,
           });
+          
+          if (insertError) {
+            console.error('Profile creation failed:', insertError);
+            setError(`注册失败: ${insertError.message}`);
+            return;
+          }
           onSuccess();
         } else {
           // Email confirmation required
@@ -58,6 +64,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         onSuccess();
       }
     } catch (err: any) {
+      console.error('Auth error:', err);
       setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
