@@ -6,11 +6,12 @@ interface LayoutProps {
   onNavigate?: (view: string) => void;
   currentView?: string;
   user?: { email?: string } | null;
+  username?: string | null;
   isAnonymous?: boolean;
   onLoginClick?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, isAnonymous, onLoginClick }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, username, isAnonymous, onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { lang, toggle } = useLang();
 
@@ -68,7 +69,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               {user ? (
                 <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-full text-sm font-medium text-purple-600 dark:text-purple-400">
                   <span>👤</span>
-                  <span>{user.email}</span>
+                  <span>{username || user.email?.split('@')[0] || 'Me'}</span>
                 </div>
               ) : isAnonymous ? (
                 <button

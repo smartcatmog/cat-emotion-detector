@@ -101,12 +101,29 @@ const EMOTION_EMOJI: Record<string, string> = {
   melancholy: '🌧️',
 };
 
-function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => void; onTip: (cat: any) => void }) {
+function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string) => void; onTip: (cat: any) => void; userId?: string }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(cat.likes || 0);
   const [editingEmotion, setEditingEmotion] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState(cat.emotion_label);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [collected, setCollected] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+
+  const handleCollect = async () => {
+    if (!userId || collected || collecting) return;
+    setCollecting(true);
+    try {
+      const res = await fetch('/api/social/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, cat_image_id: cat.id, emotion_label: currentEmotion }),
+      });
+      if (res.ok || res.status === 409) setCollected(true);
+    } finally {
+      setCollecting(false);
+    }
+  };
 
   const handleLike = () => {
     if (!liked) {
@@ -182,6 +199,11 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>
             {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : 'Like'}
           </button>
+          {userId && (
+            <button onClick={handleCollect} disabled={collected || collecting} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${collected ? 'bg-green-100 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600'}`}>
+              {collected ? '✅' : collecting ? '...' : '🗂️'} {collected ? 'Saved' : 'Collect'}
+            </button>
+          )}
           <button onClick={() => onTip(cat)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-200 transition-colors">
             🪙 Tip
           </button>
@@ -258,7 +280,7 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
 }
 
 function App() {
-  const { user, isAnonymous, isAuthenticated, setAnonymousMode } = useAuth();
+  const { user, username, isAnonymous, isAuthenticated, setAnonymousMode } = useAuth();
   const { lang } = useLang();
   const [currentView, setCurrentView] = useState<AppView>('mood');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -278,6 +300,7 @@ function App() {
   const [tipCat, setTipCat] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [checkinToast, setCheckinToast] = useState<string | null>(null);
+  const [sameMoodNotif, setSameMoodNotif] = useState<{ count: number; emotion: string } | null>(null);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -320,9 +343,12 @@ function App() {
           const d = await r.json();
           if (!r.ok) { console.error('[checkin] failed:', r.status, d); return; }
           if (d.lootbox) setCheckinToast(`🎉 打卡成功！获得一个盲盒`);
-          else if (d.same_mood_count > 0) setCheckinToast(`✅ 打卡成功！今天有 ${d.same_mood_count} 人和你一样`);
           else setCheckinToast('✅ 今日打卡成功');
           setTimeout(() => setCheckinToast(null), 4000);
+          // Show same-mood notification if there are matches
+          if (d.same_mood_count > 0) {
+            setSameMoodNotif({ count: d.same_mood_count, emotion: data.data.emotion_label });
+          }
         }).catch(e => console.error('[checkin] error:', e));
       } else {
         console.log('[checkin] skipped - user:', user, 'emotion:', data.data?.emotion_label);
@@ -398,6 +424,7 @@ function App() {
         onNavigate={(view) => setCurrentView(view as AppView)}
         currentView={currentView}
         user={user}
+        username={username}
         isAnonymous={isAnonymous}
         onLoginClick={() => setShowLoginModal(true)}
       >
@@ -445,7 +472,7 @@ function App() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {moodResult.cats.map((cat: any) => (
-                        <CatCard key={cat.id} cat={cat} onLike={handleLike} onTip={setTipCat} />
+                        <CatCard key={cat.id} cat={cat} onLike={handleLike} onTip={setTipCat} userId={user?.id} />
                       ))}
                     </div>
                   )}
@@ -633,6 +660,35 @@ function App() {
         {checkinToast && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-medium z-50 animate-fade-in">
             {checkinToast}
+          </div>
+        )}
+
+        {/* Same-mood notification */}
+        {sameMoodNotif && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+              <div className="text-5xl">🤝</div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">
+                今天有 <span className="text-purple-600">{sameMoodNotif.count}</span> 人和你一样！
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                {sameMoodNotif.count} people also feel <span className="font-semibold text-purple-600">{sameMoodNotif.emotion}</span> today
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setSameMoodNotif(null); setCurrentView('same-mood'); }}
+                  className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
+                >
+                  去看看 →
+                </button>
+                <button
+                  onClick={() => setSameMoodNotif(null)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                >
+                  稍后
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {showLoginModal && (
