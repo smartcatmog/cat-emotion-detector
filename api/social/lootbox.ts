@@ -25,7 +25,27 @@ function rollRarity(boxRarity: string): string {
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
-    const { user_id } = req.query;
+    const { user_id, guest } = req.query;
+    
+    // 游客模式：随机返回一张猫图
+    if (guest === 'true') {
+      const { data: cats } = await supabase
+        .from('cat_images')
+        .select('id, image_url, emotion_label, description')
+        .limit(100);
+
+      if (cats && cats.length > 0) {
+        const catImage = cats[Math.floor(Math.random() * cats.length)];
+        const rewardRarity = rollRarity('common'); // 游客默认普通盲盒
+        return res.status(200).json({
+          reward_rarity: rewardRarity,
+          cat_image: catImage,
+          box_rarity: 'common',
+        });
+      }
+      return res.status(404).json({ error: 'No cat images available' });
+    }
+
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
     const { data, error } = await supabase

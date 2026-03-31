@@ -656,9 +656,7 @@ function App() {
               : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="收集图鉴" />
           )}
           {currentView === 'lootbox' && (
-            isAuthenticated
-              ? <LootboxPage userId={user!.id} />
-              : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="情绪盲盒" />
+            <LootboxPage userId={user?.id} />
           )}
           {currentView === 'same-mood' && (
             isAuthenticated
