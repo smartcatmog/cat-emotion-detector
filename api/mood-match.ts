@@ -144,7 +144,7 @@ export default async function handler(req: Request) {
     // Try exact match first
     let { data: cats, error: dbError } = await supabase
       .from('cat_images')
-      .select('*')
+      .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
       .eq('emotion_label', emotionLabel);
 
     // If no results, try similar emotions
@@ -153,7 +153,7 @@ export default async function handler(req: Request) {
       if (fallbacks.length > 0) {
         const { data: fallbackCats, error: fbError } = await supabase
           .from('cat_images')
-          .select('*')
+          .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
           .in('emotion_label', fallbacks);
         if (!fbError && fallbackCats && fallbackCats.length > 0) {
           cats = fallbackCats;
@@ -165,7 +165,7 @@ export default async function handler(req: Request) {
     if (!dbError && (!cats || cats.length === 0)) {
       const { data: randomCats } = await supabase
         .from('cat_images')
-        .select('*')
+        .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
         .limit(6);
       if (randomCats && randomCats.length > 0) {
         cats = randomCats;

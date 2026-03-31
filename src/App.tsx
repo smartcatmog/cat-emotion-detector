@@ -110,6 +110,8 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const [showShareCard, setShowShareCard] = useState(false);
   const [collected, setCollected] = useState(false);
   const [collecting, setCollecting] = useState(false);
+  const [nftData, setNftData] = useState<any>(cat.is_nft ? { token_id: cat.nft_token_id, rarity: cat.nft_rarity } : null);
+  const [minting, setMinting] = useState(false);
 
   const handleCollect = async () => {
     if (!userId || collected || collecting) return;
@@ -149,6 +151,25 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
     }
   };
 
+  const handleMintNFT = async () => {
+    setMinting(true);
+    try {
+      const response = await fetch('/api/mint-nft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cat_image_id: cat.id }),
+      });
+      const data = await response.json();
+      if (response.ok || (response.status === 409 && data.nft)) {
+        setNftData(data.nft);
+      }
+    } catch (error) {
+      console.error('Mint failed:', error);
+    } finally {
+      setMinting(false);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-purple-100 dark:border-gray-700 hover:shadow-xl transition-shadow">
       <div className="relative">
@@ -156,6 +177,12 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-2 py-1 text-xs font-bold text-purple-600">
           {EMOTION_EMOJI[currentEmotion] || '🐱'} {currentEmotion}
         </div>
+        {/* NFT 徽章 */}
+        {nftData && (
+          <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
+            🏆 NFT #{nftData.token_id?.replace('#', '')}
+          </div>
+        )}
       </div>
       <div className="p-4 space-y-3">
         {cat.pet_name && <p className="font-bold text-gray-900 dark:text-gray-50 text-lg">🐱 {cat.pet_name}</p>}
@@ -196,6 +223,18 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
             ✏️ 标签不对？纠正一下
           </button>
         )}
+        
+        {/* 铸造 NFT 按钮 */}
+        {!nftData && (
+          <button 
+            onClick={handleMintNFT} 
+            disabled={minting}
+            className="w-full py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1"
+          >
+            {minting ? '⏳ 铸造中...' : '🏆 铸造 NFT'}
+          </button>
+        )}
+        
         <div className="flex gap-2 pt-1">
           <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>
             {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : 'Like'}
