@@ -175,8 +175,8 @@ export const ShareCard: React.FC<ShareCardProps> = ({ imageUrl, emotion, emotion
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-gray-900 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-gray-900 rounded-2xl p-5 w-full max-w-sm space-y-3 shadow-2xl my-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-white font-bold text-lg">分享这只猫 🐱</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
@@ -202,6 +202,13 @@ export const ShareCard: React.FC<ShareCardProps> = ({ imageUrl, emotion, emotion
           className="w-full px-4 py-3 bg-gray-800 text-white rounded-xl border border-gray-700 focus:border-purple-500 outline-none placeholder-gray-500 text-sm"
         />
 
+        {/* Social media quick links */}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}&url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🐦 X</button>
+          <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">📘 Facebook</button>
+          <button onClick={() => window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}&title=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🔴 微博</button>
+        </div>
+
         <div className="flex gap-3">
           <button onClick={handleDownload} className="flex-1 py-3 bg-gray-700 text-white rounded-xl font-semibold hover:bg-gray-600 transition-colors text-sm">
             ⬇️ 下载
@@ -209,14 +216,6 @@ export const ShareCard: React.FC<ShareCardProps> = ({ imageUrl, emotion, emotion
           <button onClick={handleShare} disabled={sharing} className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 text-sm">
             {sharing ? '分享中...' : '🔗 分享'}
           </button>
-        </div>
-
-        {/* Social media quick links */}
-        <div className="flex items-center justify-center gap-3">
-          <span className="text-xs text-gray-500">快速分享：</span>
-          <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}&url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🐦 X</button>
-          <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">📘 Facebook</button>
-          <button onClick={() => window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}&title=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🔴 微博</button>
         </div>
 
         <p className="text-xs text-gray-500 text-center">下载图片后可发到微信、Instagram 等任意平台</p>
