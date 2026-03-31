@@ -6,7 +6,6 @@ import { Upload } from './components/Upload';
 import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
-import { ShareButton } from './components/ShareButton';
 import { ShareCard } from './components/ShareCard';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
@@ -29,8 +28,6 @@ Return ONLY valid JSON:
   "description": "fun, witty one-liner about this cat's vibe"
 }`;
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 async function callClaude(base64: string, mediaType: string, saveToGallery: boolean, petName: string, socialLink: string) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
   if (apiKey) {
