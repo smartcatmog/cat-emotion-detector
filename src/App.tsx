@@ -65,6 +65,9 @@ const EMOTION_EMOJI: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
   anxious: '🙀', resigned: '😑', dramatic: '💀', sassy: '💅', clingy: '🥺',
   zoomies: '⚡', suspicious: '🤨', smug: '😏', confused: '😵', hangry: '🍽️',
+  sad: '😢', angry: '😡', scared: '😨', disgusted: '🤢', surprised: '😲',
+  loved: '🥰', bored: '😒', ashamed: '😳', tired: '😮‍💨', disappointed: '😞',
+  melancholy: '🌧️',
 };
 
 function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => void; onTip: (cat: any) => void }) {
