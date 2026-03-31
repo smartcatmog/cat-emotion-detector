@@ -50,25 +50,34 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
     setMintError(null);
 
     try {
+      console.log('[NFT] Minting for gallery ID:', result.galleryId);
+      
       const response = await fetch('/api/mint-nft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cat_image_id: result.galleryId }),
       });
 
+      console.log('[NFT] Response status:', response.status);
+      
       const data = await response.json();
+      console.log('[NFT] Response data:', data);
 
       if (!response.ok) {
         if (response.status === 409 && data.nft) {
           // 已经铸造过了
+          console.log('[NFT] Already minted, showing existing NFT');
           setNftData(data.nft);
         } else {
+          console.error('[NFT] Mint failed:', data);
           throw new Error(data.error || 'Failed to mint NFT');
         }
       } else {
+        console.log('[NFT] Mint successful!');
         setNftData(data.nft);
       }
     } catch (error) {
+      console.error('[NFT] Error:', error);
       setMintError(error instanceof Error ? error.message : 'Failed to mint NFT');
     } finally {
       setMinting(false);
