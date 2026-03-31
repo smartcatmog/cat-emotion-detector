@@ -185,6 +185,25 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                   </button>
                 ))}
               </div>
+              
+              {/* 自由输入框 */}
+              <div className="pt-2">
+                <p className="text-xs text-gray-500 text-center mb-2">或者直接告诉我你的感受：</p>
+                <input
+                  type="text"
+                  placeholder="比如：心碎、失落、开心到飞起..."
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      const customEmotion = e.currentTarget.value.trim();
+                      await saveFeedback(result.id, false, customEmotion).catch(console.error);
+                      setFeedbackState('done');
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-400 text-center mt-1">按 Enter 提交</p>
+              </div>
+              
               <button
                 onClick={() => setFeedbackState('idle')}
                 className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
