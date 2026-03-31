@@ -25,6 +25,7 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
 
   useEffect(() => {
     if (currentEmotion) { setEmotion(currentEmotion); search(currentEmotion); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentEmotion]);
 
   return (

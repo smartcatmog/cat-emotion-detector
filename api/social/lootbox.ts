@@ -58,13 +58,12 @@ export default async function handler(req: any, res: any) {
     // Roll reward rarity
     const rewardRarity = rollRarity(box.box_rarity);
 
-    // Pick a random cat image of that rarity (or any if none found)
+    // Pick a random cat image
     let catImage = null;
     const { data: cats } = await supabase
       .from('cat_images')
       .select('id, image_url, emotion_label, description')
-      .order('likes', { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (cats && cats.length > 0) {
       catImage = cats[Math.floor(Math.random() * cats.length)];

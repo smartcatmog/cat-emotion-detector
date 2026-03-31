@@ -25,6 +25,7 @@ export function LootboxPage({ userId }: { userId: string }) {
       .finally(() => setLoading(false));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchBoxes(); }, [userId]);
 
   const openBox = async (boxId: string) => {

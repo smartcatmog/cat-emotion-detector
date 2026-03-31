@@ -26,7 +26,7 @@ export default async function handler(req: any, res: any) {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // Calculate streak
+  // Calculate streak - fix timezone issue by comparing date strings directly
   const { data: allRecords } = await supabase
     .from('daily_mood_records')
     .select('date')
@@ -35,13 +35,14 @@ export default async function handler(req: any, res: any) {
 
   let streak = 0;
   if (allRecords && allRecords.length > 0) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = new Date().toISOString().split('T')[0];
     for (let i = 0; i < allRecords.length; i++) {
-      const d = new Date(allRecords[i].date);
-      const expected = new Date(today);
-      expected.setDate(today.getDate() - i);
-      if (d.toISOString().split('T')[0] === expected.toISOString().split('T')[0]) {
+      const recordDate = allRecords[i].date;
+      // Calculate expected date (today - i days)
+      const expected = new Date(todayStr);
+      expected.setDate(expected.getDate() - i);
+      const expectedStr = expected.toISOString().split('T')[0];
+      if (recordDate === expectedStr) {
         streak++;
       } else break;
     }
