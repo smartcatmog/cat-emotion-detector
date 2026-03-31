@@ -14,12 +14,12 @@ type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'priv
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
-CRITICAL: The "emotion" field MUST be exactly one of these 15 values:
-happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry
+CRITICAL: The "emotion" field MUST be exactly one of these 26 values:
+happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry, sad, angry, scared, disgusted, surprised, loved, bored, ashamed, tired, disappointed, melancholy
 
 Return ONLY valid JSON:
 {
-  "emotion": "exactly one of the 15 labels",
+  "emotion": "exactly one of the 26 labels",
   "confidence": 85,
   "body_language": "body language description",
   "health_note": "health observation",
@@ -30,7 +30,6 @@ Return ONLY valid JSON:
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 async function callClaude(base64: string, mediaType: string, saveToGallery: boolean, petName: string, socialLink: string) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
   if (apiKey) {
@@ -47,7 +46,36 @@ async function callClaude(base64: string, mediaType: string, saveToGallery: bool
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Cannot parse result');
-    return JSON.parse(jsonMatch[0]);
+    const result = JSON.parse(jsonMatch[0]);
+    // 前端直接调用路径也要存图片到 gallery
+    if (saveToGallery) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const sbUrl = import.meta.env.VITE_SUPABASE_URL;
+        const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        if (sbUrl && sbKey) {
+          const sb = createClient(sbUrl, sbKey);
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
+          const imageBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+          const { error: uploadError } = await sb.storage.from('cat-images').upload(fileName, imageBuffer, { contentType: mediaType });
+          if (!uploadError) {
+            const { data: urlData } = sb.storage.from('cat-images').getPublicUrl(fileName);
+            if (urlData?.publicUrl) {
+              const { data: insertData } = await sb.from('cat_images').insert({
+                image_url: urlData.publicUrl,
+                emotion_label: result.emotion,
+                confidence: Math.min(100, Math.max(0, result.confidence || 75)),
+                description: result.description || result.summary || '',
+                pet_name: petName?.trim() || null,
+                social_link: socialLink?.trim() || null,
+              }).select('id').single();
+              if (insertData?.id) result.gallery_id = insertData.id;
+            }
+          }
+        }
+      } catch (e) { console.error('gallery save failed:', e); }
+    }
+    return result;
   } else {
     const response = await fetch('/api/analyze', {
       method: 'POST',
@@ -156,7 +184,7 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           </button>
           <ShareButton
             compact
-            text={`${cat.pet_name ? cat.pet_name + ' is' : 'This cat is'} feeling ${cat.emotion_label}! ${EMOTION_EMOJI[cat.emotion_label] || '🐱'} Find your mood cat on MoodCat`}
+            text={`${cat.pet_name ? cat.pet_name + ' is' : 'This cat is'} feeling ${currentEmotion}! ${EMOTION_EMOJI[currentEmotion] || '🐱'} Find your mood cat on MoodCat`}
             url={window.location.href}
           />
         </div>
@@ -185,13 +213,13 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 pt-1">💡 Payment coming soon — this is a demo</p>
+              <p className="text-xs text-gray-400 pt-1">🚧 Real payments coming soon — no money will be charged</p>
             </>
           ) : (
             <div className="py-4 space-y-2">
               <div className="text-3xl">🎉</div>
-              <p className="font-bold text-green-600">Thank you for the tip!</p>
-              <p className="text-xs text-gray-400">Payment processing coming soon</p>
+              <p className="font-bold text-green-600">Thanks for the love!</p>
+              <p className="text-xs text-gray-400">No charge — payment integration coming soon</p>
             </div>
           )}
           <button onClick={onClose} className="w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 transition-colors">
@@ -236,7 +264,6 @@ function App() {
   }, [currentView]);
 
   const handleLike = async (catId: string) => {
-    if (!supabase) return;
     void supabase.rpc('increment_likes', { cat_id: catId });
   };
 
