@@ -9,6 +9,7 @@ import { Privacy } from './components/Privacy';
 import { ShareCard } from './components/ShareCard';
 import { LoginModal } from './components/LoginModal';
 import { NFTCertificate } from './components/NFTCertificate';
+import { downloadNFTCertificate } from './utils/downloadNFT';
 import { CalendarPage } from './pages/CalendarPage';
 import { CollectionPage } from './pages/CollectionPage';
 import { LootboxPage } from './pages/LootboxPage';
@@ -307,8 +308,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
               <div className="flex gap-3">
                 <button
                   onClick={() => {
-                    // 简单下载提示
-                    alert('右键点击证书图片，选择"图片另存为"即可下载');
+                    downloadNFTCertificate('nft-certificate', `moodcat-nft-${nftData.token_id}.png`);
                   }}
                   className="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors"
                 >

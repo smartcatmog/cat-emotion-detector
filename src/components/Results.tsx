@@ -3,6 +3,7 @@ import { AnalysisResult } from '../types';
 import { saveFeedback, updateCatEmotion } from '../lib/supabase';
 import { ShareCard } from './ShareCard';
 import { NFTCertificate } from './NFTCertificate';
+import { downloadNFTCertificate } from '../utils/downloadNFT';
 
 const EMOTION_LABELS: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
@@ -84,10 +85,10 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
     }
   };
 
-  const downloadNFTCertificate = () => {
-    // 简单实现：打开新窗口让用户截图
-    // 更好的实现：使用 html2canvas 生成图片
-    alert('Right-click the certificate and select "Save Image As..." to download');
+  const downloadNFTCertificateHandler = () => {
+    if (nftData) {
+      downloadNFTCertificate('nft-certificate', `moodcat-nft-${nftData.token_id}.png`);
+    }
   };
 
   return (
@@ -310,7 +311,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
 
           <div className="flex gap-3">
             <button
-              onClick={downloadNFTCertificate}
+              onClick={downloadNFTCertificateHandler}
               className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
             >
               ⬇️ 下载证书

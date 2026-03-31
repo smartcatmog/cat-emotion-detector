@@ -49,7 +49,7 @@ export const NFTCertificate: React.FC<NFTCertificateProps> = ({
   const config = rarityConfig[rarity];
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-md mx-auto" id="nft-certificate">
       {/* 外层发光效果 */}
       <div className={`absolute inset-0 bg-gradient-to-br ${config.color} opacity-20 blur-xl rounded-2xl`} />
       
