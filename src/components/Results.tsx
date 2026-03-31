@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
-import { saveFeedback } from '../lib/supabase';
+import { saveFeedback, updateCatEmotion } from '../lib/supabase';
 import { ShareButton } from './ShareButton';
 
-const EMOTION_OPTIONS = ['😸 Happy', '😌 Calm', '😴 Sleepy', '🐱 Curious', '😾 Annoyed', '🙀 Anxious', '😑 Resigned', '💀 Dramatic', '💅 Sassy', '🥺 Clingy', '⚡ Zoomies', '🤨 Suspicious', '😏 Smug', '😵 Confused', '🍽️ Hangry'];
+const EMOTION_LABELS: Record<string, string> = {
+  happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
+  anxious: '🙀', resigned: '😑', dramatic: '💀', sassy: '💅', clingy: '🥺',
+  zoomies: '⚡', suspicious: '🤨', smug: '😏', confused: '😵', hangry: '🍽️',
+  sad: '😢', angry: '😡', scared: '😨', disgusted: '🤢', surprised: '😲',
+  loved: '🥰', bored: '😒', ashamed: '😳', tired: '😮‍💨', disappointed: '😞',
+  melancholy: '🌧️',
+};
 
 interface ResultsProps {
   result: AnalysisResult;
@@ -15,8 +22,9 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
   const [feedbackState, setFeedbackState] = useState<'idle' | 'wrong' | 'done'>('idle');
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
   const [customEmotion, setCustomEmotion] = useState<string>('');
+  const [correctedEmotion, setCorrectedEmotion] = useState<string | null>(null);
 
-  const primaryEmotion = result.emotions?.[0]?.type || '';
+  const primaryEmotion = correctedEmotion || result.emotions?.[0]?.type || '';
   const confidence = result.emotions?.[0]?.confidence || 0;
 
   const handleAccurate = async () => {
@@ -115,17 +123,24 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                 What do you think your cat is actually feeling?
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {EMOTION_OPTIONS.map((e) => (
+                {Object.entries(EMOTION_LABELS).map(([emotion, emoji]) => (
                   <button
-                    key={e}
-                    onClick={() => { setSelectedCorrect(e); setCustomEmotion(''); }}
+                    key={emotion}
+                    onClick={async () => {
+                      setSelectedCorrect(emotion);
+                      setCustomEmotion('');
+                      if (result.galleryId) {
+                        await updateCatEmotion(result.galleryId, emotion);
+                        setCorrectedEmotion(emotion);
+                      }
+                    }}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedCorrect === e
-                        ? 'bg-blue-500 text-white'
+                      selectedCorrect === emotion
+                        ? 'bg-purple-500 text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    {e}
+                    {emoji} {emotion}
                   </button>
                 ))}
               </div>
@@ -134,14 +149,22 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                   type="text"
                   value={customEmotion}
                   onChange={(e) => { setCustomEmotion(e.target.value); setSelectedCorrect(''); }}
-                  placeholder="Or type your own label (e.g. 无所谓, bored, dramatic...)"
+                  placeholder="Or type your own label (e.g. sad, 心碎, tired...)"
                   className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 mb-3"
                 />
               </div>
               <button
-                onClick={handleSubmitCorrection}
+                onClick={async () => {
+                  const emotion = customEmotion.trim() || selectedCorrect;
+                  await saveFeedback(result.id, false, emotion).catch(console.error);
+                  if (result.galleryId && selectedCorrect) {
+                    await updateCatEmotion(result.galleryId, selectedCorrect);
+                    setCorrectedEmotion(selectedCorrect);
+                  }
+                  setFeedbackState('done');
+                }}
                 disabled={!selectedCorrect && !customEmotion.trim()}
-                className="w-full py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-40"
+                className="w-full py-2 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors disabled:opacity-40"
               >
                 Submit Feedback
               </button>

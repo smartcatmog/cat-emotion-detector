@@ -13,6 +13,7 @@ export interface Emotion {
 
 export interface AnalysisResult {
   id: string;
+  galleryId?: string;  // cat_images table row id, if saved to gallery
   fileType: 'image' | 'video';
   fileName: string;
   fileSize: number;

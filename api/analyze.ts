@@ -162,14 +162,15 @@ export default async function handler(req: Request) {
           const imageUrl = urlData?.publicUrl;
 
           if (imageUrl) {
-            await supabase.from('cat_images').insert({
+            const { data: insertData } = await supabase.from('cat_images').insert({
               image_url: imageUrl,
               emotion_label: emotionLabel,
               confidence: Math.min(100, Math.max(0, result.confidence || 75)),
               description: result.description || result.summary || '',
               pet_name: pet_name?.trim() || null,
               social_link: social_link?.trim() || null,
-            });
+            }).select('id').single();
+            if (insertData?.id) result.gallery_id = insertData.id;
           }
         }
       } catch (saveErr) {

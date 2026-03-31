@@ -293,6 +293,7 @@ function App() {
         interpretation: claudeResult.summary,
         recommendations: [claudeResult.body_language, claudeResult.health_note, claudeResult.advice].filter(Boolean),
         thumbnailUrl: preview || '', originalFileUrl: preview || '',
+        galleryId: claudeResult.gallery_id || undefined,
       };
       setAnalysisResult(result); setCurrentView('results');
       if (dataCollectionConsent) {
