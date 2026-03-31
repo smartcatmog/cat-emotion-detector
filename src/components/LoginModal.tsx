@@ -20,6 +20,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    console.log('[LoginModal] handleSubmit started, mode:', mode);
 
     if (mode === 'signup') {
       if (!validateUsername(username)) {
@@ -28,6 +29,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       }
       // Check username uniqueness
       try {
+        console.log('[LoginModal] Checking username uniqueness...');
         const { data: existing, error: checkError } = await supabase
           .from('users')
           .select('id')
@@ -52,10 +54,13 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       }
     }
 
+    console.log('[LoginModal] Starting auth...');
     setLoading(true);
     try {
       if (mode === 'signup') {
+        console.log('[LoginModal] Calling signUp...');
         const data = await signUp(email, password);
+        console.log('[LoginModal] signUp result:', data);
         // Create profile in public.users
         if (data.user) {
           const { error: insertError } = await supabase.from('users').insert({
@@ -77,7 +82,9 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
           setMode('login');
         }
       } else {
-        await signIn(email, password);
+        console.log('[LoginModal] Calling signIn...');
+        const result = await signIn(email, password);
+        console.log('[LoginModal] signIn result:', result);
         onSuccess();
       }
     } catch (err: any) {
@@ -85,6 +92,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
+      console.log('[LoginModal] Auth completed');
     }
   };
 
