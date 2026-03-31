@@ -40,29 +40,20 @@ const RARITY_MAP: Record<string, 'common' | 'rare' | 'epic' | 'legendary'> = {
   tired: 'common',
 };
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     if (!supabaseUrl || !supabaseKey) {
-      return new Response(JSON.stringify({ error: 'Supabase configuration missing' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ error: 'Supabase configuration missing' });
     }
 
-    const { cat_image_id } = await req.json();
+    const { cat_image_id } = req.body;
 
     if (!cat_image_id) {
-      return new Response(JSON.stringify({ error: 'cat_image_id is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ error: 'cat_image_id is required' });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -75,24 +66,18 @@ export default async function handler(req: Request): Promise<Response> {
       .single();
 
     if (fetchError || !catImage) {
-      return new Response(JSON.stringify({ error: 'Cat image not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(404).json({ error: 'Cat image not found' });
     }
 
     // 2. 检查是否已经铸造过
     if (catImage.is_nft) {
-      return new Response(JSON.stringify({ 
+      return res.status(409).json({ 
         error: 'Already minted',
         nft: {
           token_id: catImage.nft_token_id,
           rarity: catImage.nft_rarity,
           minted_at: catImage.nft_minted_at,
         }
-      }), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -102,10 +87,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (tokenError) {
       console.error('Token ID generation failed:', tokenError);
-      return new Response(JSON.stringify({ error: 'Failed to generate token ID' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ error: 'Failed to generate token ID' });
     }
 
     const tokenId = tokenIdData as string;
@@ -128,13 +110,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (updateError) {
       console.error('NFT minting failed:', updateError);
-      return new Response(JSON.stringify({ error: 'Failed to mint NFT' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(500).json({ error: 'Failed to mint NFT' });
     }
 
-    return new Response(JSON.stringify({
+    return res.status(200).json({
       success: true,
       nft: {
         id: updatedImage.id,
@@ -145,18 +124,12 @@ export default async function handler(req: Request): Promise<Response> {
         emotion_label: updatedImage.emotion_label,
         pet_name: updatedImage.pet_name,
       }
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Mint NFT error:', error);
-    return new Response(JSON.stringify({ 
+    return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
