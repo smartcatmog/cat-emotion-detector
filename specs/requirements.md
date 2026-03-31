@@ -129,3 +129,79 @@
 6. WHEN Cat_Image 被匹配展示给其他 User 时，THE System SHALL 在图片旁显示可点击的 Social_Link（如果存在）
 7. WHEN User 点击 Social_Link 时，THE System SHALL 在新标签页中打开该链接
 8. IF Cat_Record 的 Social_Link 为空值，THEN THE System SHALL 不显示链接区域
+
+### Requirement 10: 26种情绪标签体系
+
+**User Story:** 作为 User，我希望系统能准确识别更丰富的情绪，包括悲伤、愤怒、害怕、疲惫、惆怅等人类基本情感。
+
+#### Acceptance Criteria
+
+1. THE System SHALL 支持以下26种 Emotion_Label：happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry, sad, angry, scared, disgusted, surprised, loved, bored, ashamed, tired, disappointed, melancholy
+2. THE Claude_API 的 Prompt SHALL 包含所有26种标签及其中英文语义映射
+3. THE Database 的 emotion_label 约束 SHALL 允许所有26种标签值
+4. THE System 的前端 EMOTION_EMOJI 映射 SHALL 包含所有26种标签对应的 emoji
+5. WHEN 用户输入中文情绪词（如"伤心"、"惆怅"、"活着好累"）时，Claude_API SHALL 准确映射到对应的 Emotion_Label
+
+### Requirement 11: 情绪标签纠正
+
+**User Story:** 作为 User，当 AI 的情绪判断不准确时，我想纠正标签，这样数据库中的猫图可以被正确匹配。
+
+#### Acceptance Criteria
+
+1. WHEN 分析结果展示后，THE System SHALL 提供"Not accurate"反馈按钮
+2. WHEN User 点击"Not accurate"时，THE System SHALL 展示26种 Emotion_Label 供用户选择
+3. WHEN User 选择正确的 Emotion_Label 时，THE System SHALL 更新 Database 中该 Cat_Record 的 emotion_label 字段
+4. WHEN User 选择正确的 Emotion_Label 时，THE System SHALL 同时保存一条 feedback 记录
+5. WHEN 在 Mood Match 结果页中，THE System SHALL 在每张猫卡片上提供"标签不对？纠正一下"按钮
+6. WHEN User 在猫卡片上纠正标签时，THE System SHALL 直接更新该 Cat_Record 的 emotion_label
+
+### Requirement 12: 心情匹配反馈
+
+**User Story:** 作为 User，当系统对我的心情解读不准确时，我想告诉系统我真正的感受，这样可以帮助改进匹配。
+
+#### Acceptance Criteria
+
+1. WHEN Mood Match 结果展示后，THE System SHALL 在结果下方显示"不是这个感觉？告诉我你真正的心情"入口
+2. WHEN User 点击该入口时，THE System SHALL 展示26种 Emotion_Label 和一个自由输入框
+3. WHEN User 选择一个 Emotion_Label 时，THE System SHALL 保存反馈到 mood_feedback 表（包含原始输入、AI 判断、用户纠正）
+4. WHEN User 选择一个 Emotion_Label 时，THE System SHALL 用该标签重新搜索匹配的猫图并更新展示
+
+### Requirement 13: 分享卡片生成
+
+**User Story:** 作为 User，我想把匹配到的猫图生成一张好看的分享卡片，带上自己的文字，分享到社交媒体。
+
+#### Acceptance Criteria
+
+1. WHEN User 点击猫卡片或结果页的"Share"按钮时，THE System SHALL 弹出分享卡片编辑界面
+2. THE 分享卡片 SHALL 使用 Canvas 合成，包含：猫图、情绪标签+emoji、用户自定义文字、MoodCat logo
+3. THE System SHALL 提供文字输入框，允许用户输入最多20个字符的自定义文案
+4. WHEN 用户输入文字时，THE Canvas SHALL 实时更新预览
+5. THE System SHALL 提供"下载"按钮，将卡片导出为 PNG 图片
+6. THE System SHALL 提供"分享"按钮，在支持 Web Share API 的设备上调用系统分享菜单（支持带图片分享）
+7. IF 设备不支持 Web Share API，THEN THE System SHALL 降级为下载图片
+8. THE System SHALL 提供 X/Twitter、Facebook、微博的快捷分享链接
+9. THE 卡片输出尺寸 SHALL 为 1080x1350（4:5比例），适合 Instagram 和微信朋友圈
+
+### Requirement 14: 导航与品牌
+
+**User Story:** 作为 User，我希望导航简洁好用，品牌有辨识度。
+
+#### Acceptance Criteria
+
+1. THE System 的品牌名 SHALL 为"MoodCat"
+2. THE 导航栏 SHALL 仅包含核心入口：Mood Match 和 Analyze
+3. THE 导航栏 SHALL 包含指向 GitHub 仓库的"Star us"链接
+4. Annotate Data、History、Privacy 等次要功能 SHALL 放在页脚
+5. THE 页脚 SHALL 包含联系邮箱和 Twitter 链接
+6. THE 页脚版权年份 SHALL 为 2026
+
+### Requirement 15: 打赏功能（Demo）
+
+**User Story:** 作为 User，我想给喜欢的猫主人打赏表示感谢。
+
+#### Acceptance Criteria
+
+1. WHEN User 点击猫卡片上的"Tip"按钮时，THE System SHALL 弹出打赏弹窗
+2. THE 打赏弹窗 SHALL 显示金额选项（£1, £2, £5, £10）
+3. THE System SHALL 明确标注"Real payments coming soon — no money will be charged"
+4. WHEN User 点击金额后，THE System SHALL 显示感谢信息并明确说明"No charge — payment integration coming soon"
