@@ -4,31 +4,41 @@ export const config = {
   runtime: 'edge',
 };
 
-const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned', 'dramatic', 'sassy', 'clingy', 'zoomies', 'suspicious', 'smug', 'confused', 'hangry'];
+const VALID_EMOTIONS = ['happy', 'calm', 'sleepy', 'curious', 'annoyed', 'anxious', 'resigned', 'dramatic', 'sassy', 'clingy', 'zoomies', 'suspicious', 'smug', 'confused', 'hangry', 'sad', 'angry', 'scared', 'disgusted', 'surprised', 'loved', 'bored', 'ashamed', 'tired', 'disappointed', 'melancholy'];
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
-CRITICAL: The "emotion" field MUST be exactly one of these 15 values:
+CRITICAL: The "emotion" field MUST be exactly one of these 26 values:
 - happy (pure joy, excited, content)
 - calm (zero stress, relaxed, peaceful)
-- sleepy (need a nap, tired, drowsy)
+- sleepy (physically drowsy, need a nap)
 - curious (what's that? alert, interested)
-- annoyed (don't touch me, irritated, grumpy)
-- anxious (something's wrong, scared, nervous)
+- annoyed (mildly irritated, grumpy, don't touch me)
+- anxious (nervous, on edge, stressed)
 - resigned (whatever... helpless, giving up)
-- dramatic (I'm literally dying, over-the-top, facepalm)
-- sassy (talk to the paw, snooty, judging you)
+- dramatic (I'm literally dying, over-the-top)
+- sassy (talk to the paw, judging you)
 - clingy (don't leave me, needy, wants attention)
 - zoomies (MAXIMUM ENERGY, hyper, wild)
 - suspicious (I'm watching you, distrustful, side-eye)
 - smug (I own this place, proud, self-satisfied)
 - confused (does not compute, bewildered, lost)
 - hangry (feed me NOW, hungry + angry)
-Do NOT use any other word. Pick the closest match from these 6 options.
+- sad (heartbroken, grieving, tearful, dejected)
+- angry (furious, rage, very mad)
+- scared (frightened, terrified, fearful)
+- disgusted (revolted, repulsed)
+- surprised (shocked, astonished)
+- loved (warm, cherished, affectionate)
+- bored (uninterested, dull, nothing to do)
+- ashamed (embarrassed, guilty)
+- tired (exhausted, burnt out, mentally drained)
+- disappointed (let down, hopes crushed)
+- melancholy (wistful, vaguely sad, pensive)
 
 Return ONLY valid JSON in this exact format:
 {
-  "emotion": "exactly one of: happy, calm, sleepy, curious, annoyed, anxious, resigned, dramatic, sassy, clingy, zoomies, suspicious, smug, confused, hangry",
+  "emotion": "exactly one of the 26 labels above",
   "confidence": 85,
   "body_language": "body language description",
   "health_note": "health observation",

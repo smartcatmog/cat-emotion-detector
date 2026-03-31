@@ -8,7 +8,7 @@ import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareButton } from './components/ShareButton';
 import { AnalysisResult } from './types';
-import { saveAnalysisResult, saveMoodFeedback } from './lib/supabase';
+import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion } from './lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
@@ -73,6 +73,8 @@ const EMOTION_EMOJI: Record<string, string> = {
 function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => void; onTip: (cat: any) => void }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(cat.likes || 0);
+  const [editingEmotion, setEditingEmotion] = useState(false);
+  const [currentEmotion, setCurrentEmotion] = useState(cat.emotion_label);
 
   const handleLike = () => {
     if (!liked) {
@@ -102,7 +104,7 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
       <div className="relative">
         <img src={cat.image_url} alt={cat.pet_name || 'A cat'} className="w-full h-56 object-cover" />
         <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 rounded-full px-2 py-1 text-xs font-bold text-purple-600">
-          {EMOTION_EMOJI[cat.emotion_label] || '🐱'} {cat.emotion_label}
+          {EMOTION_EMOJI[currentEmotion] || '🐱'} {currentEmotion}
         </div>
       </div>
       <div className="p-4 space-y-3">
@@ -112,6 +114,37 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           <a href={cat.social_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-purple-500 hover:text-purple-700 font-medium">
             📱 Follow the owner →
           </a>
+        )}
+
+        {/* 纠正情绪标签 */}
+        {editingEmotion ? (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500">选择正确的情绪：</p>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(EMOTION_EMOJI).map(([emotion, emoji]) => (
+                <button
+                  key={emotion}
+                  onClick={async () => {
+                    await updateCatEmotion(cat.id, emotion);
+                    setCurrentEmotion(emotion);
+                    setEditingEmotion(false);
+                  }}
+                  className={`px-2 py-1 rounded-full text-xs font-medium transition-all border
+                    ${currentEmotion === emotion
+                      ? 'bg-purple-100 border-purple-300 text-purple-700'
+                      : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300 hover:text-purple-600'
+                    }`}
+                >
+                  {emoji} {emotion}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setEditingEmotion(false)} className="text-xs text-gray-400 hover:text-gray-600">取消</button>
+          </div>
+        ) : (
+          <button onClick={() => setEditingEmotion(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
+            ✏️ 标签不对？纠正一下
+          </button>
         )}
         <div className="flex gap-2 pt-1">
           <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>

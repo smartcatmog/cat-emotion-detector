@@ -174,3 +174,12 @@ export async function saveMoodFeedback(moodText: string, aiEmotion: string, user
   }]);
   if (error) console.error('mood feedback save failed:', error);
 }
+
+// Update a cat image's emotion label (user correction)
+export async function updateCatEmotion(catId: string, newEmotion: string) {
+  const { error } = await supabase
+    .from('cat_images')
+    .update({ emotion_label: newEmotion })
+    .eq('id', catId);
+  if (error) console.error('updateCatEmotion failed:', error);
+}
