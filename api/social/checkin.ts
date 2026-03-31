@@ -49,23 +49,13 @@ export default async function handler(req: any, res: any) {
     await supabase.from('same_mood_matches').upsert(matches, { ignoreDuplicates: true });
   }
 
-  // Grant daily lootbox if not already given today
-  const { data: existingBoxes } = await supabase
+  // Grant lootbox on every checkin (no daily limit)
+  const { data: box } = await supabase
     .from('loot_boxes')
-    .select('id')
-    .eq('user_id', user_id)
-    .eq('box_type', 'daily_free')
-    .gte('created_at', `${today}T00:00:00`);
-
-  let lootbox = null;
-  if (!existingBoxes || existingBoxes.length === 0) {
-    const { data: box } = await supabase
-      .from('loot_boxes')
-      .insert({ user_id, box_type: 'daily_free', box_rarity: 'common', source: '每日打卡' })
-      .select()
-      .single();
-    lootbox = box;
-  }
+    .insert({ user_id, box_type: 'daily_free', box_rarity: 'common', source: '每日打卡' })
+    .select()
+    .single();
+  const lootbox = box;
 
   return res.status(200).json({ data, same_mood_count: sameUsers?.length || 0, lootbox });
 }

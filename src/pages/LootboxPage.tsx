@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 
-const RARITY_STYLE: Record<string, { label: string; color: string; bg: string }> = {
-  common:    { label: '普通',   color: 'text-gray-600',   bg: 'bg-gray-100' },
-  rare:      { label: '稀有',   color: 'text-blue-600',   bg: 'bg-blue-100' },
-  epic:      { label: '史诗',   color: 'text-purple-600', bg: 'bg-purple-100' },
-  legendary: { label: '传说',   color: 'text-yellow-600', bg: 'bg-yellow-100' },
+const RARITY_STYLE: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  common:    { label: '普通 Common',   color: 'text-gray-600',   bg: 'bg-gray-50',    border: 'border-gray-200' },
+  rare:      { label: '稀有 Rare',     color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-200' },
+  epic:      { label: '史诗 Epic',     color: 'text-purple-600', bg: 'bg-purple-50',  border: 'border-purple-200' },
+  legendary: { label: '传说 Legendary',color: 'text-yellow-600', bg: 'bg-yellow-50',  border: 'border-yellow-200' },
 };
 
 const BOX_EMOJI: Record<string, string> = {
@@ -13,6 +13,7 @@ const BOX_EMOJI: Record<string, string> = {
 
 export function LootboxPage({ userId }: { userId: string }) {
   const [boxes, setBoxes] = useState<any[]>([]);
+  const [openedBoxes, setOpenedBoxes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState<string | null>(null);
   const [reward, setReward] = useState<any>(null);
@@ -21,7 +22,10 @@ export function LootboxPage({ userId }: { userId: string }) {
     setLoading(true);
     fetch(`/api/social/lootbox?user_id=${userId}`)
       .then(r => r.json())
-      .then(d => setBoxes(d.data || []))
+      .then(d => {
+        setBoxes(d.data || []);
+        setOpenedBoxes(d.opened || []);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -40,8 +44,12 @@ export function LootboxPage({ userId }: { userId: string }) {
       const data = await res.json();
       if (res.ok) {
         setReward(data);
-        // Remove opened box from list immediately without full refetch
-        setBoxes(prev => prev.filter(b => b.id !== boxId));
+        // Move box from unopened to opened locally
+        const box = boxes.find(b => b.id === boxId);
+        if (box) {
+          setBoxes(prev => prev.filter(b => b.id !== boxId));
+          setOpenedBoxes(prev => [{ ...box, is_opened: true }, ...prev]);
+        }
       }
     } finally {
       setOpening(null);
@@ -49,10 +57,10 @@ export function LootboxPage({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="max-w-lg mx-auto space-y-4">
+    <div className="max-w-lg mx-auto space-y-5">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪盲盒</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">每日打卡获得盲盒，开启获得猫图收藏</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪盲盒 Loot Box</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">每次打卡获得一个盲盒 · 永久收藏</p>
       </div>
 
       {/* Reward display */}
@@ -62,8 +70,8 @@ export function LootboxPage({ userId }: { userId: string }) {
           {reward.cat_image ? (
             <>
               <img src={reward.cat_image.image_url} alt="reward" className="w-40 h-40 object-cover rounded-xl mx-auto shadow" />
-              <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${RARITY_STYLE[reward.reward_rarity]?.bg} ${RARITY_STYLE[reward.reward_rarity]?.color}`}>
-                {RARITY_STYLE[reward.reward_rarity]?.label || reward.reward_rarity} 猫图
+              <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold border ${RARITY_STYLE[reward.reward_rarity]?.bg} ${RARITY_STYLE[reward.reward_rarity]?.color} ${RARITY_STYLE[reward.reward_rarity]?.border}`}>
+                {RARITY_STYLE[reward.reward_rarity]?.label || reward.reward_rarity}
               </div>
               {reward.cat_image.description && (
                 <p className="text-sm text-gray-500 italic">"{reward.cat_image.description}"</p>
@@ -77,32 +85,58 @@ export function LootboxPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Box inventory */}
       {loading ? (
         <div className="text-center py-8 text-gray-400">加载中...</div>
-      ) : boxes.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
-          <div className="text-5xl">📭</div>
-          <p className="text-gray-500 dark:text-gray-400 font-medium">暂无盲盒</p>
-          <p className="text-sm text-gray-400">每日打卡后自动获得一个盲盒</p>
-        </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {boxes.map((box: any) => (
-            <div key={box.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow text-center space-y-2">
-              <div className="text-4xl">{BOX_EMOJI[box.box_rarity] || '📦'}</div>
-              <p className="font-semibold text-gray-900 dark:text-gray-50 text-sm capitalize">{box.box_rarity} 盲盒</p>
-              <p className="text-xs text-gray-400">{box.source}</p>
-              <button
-                onClick={() => openBox(box.id)}
-                disabled={opening === box.id}
-                className="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                {opening === box.id ? '开启中...' : '开启'}
-              </button>
+        <>
+          {/* Unopened boxes */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
+              未开启 Unopened · {boxes.length} 个
+            </h3>
+            {boxes.length === 0 ? (
+              <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
+                <div className="text-4xl">📭</div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">暂无盲盒，打卡后自动获得</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {boxes.map((box: any) => (
+                  <div key={box.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow text-center space-y-2">
+                    <div className="text-4xl">{BOX_EMOJI[box.box_rarity] || '📦'}</div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-50 text-sm capitalize">{box.box_rarity} 盲盒</p>
+                    <p className="text-xs text-gray-400">{box.source}</p>
+                    <button
+                      onClick={() => openBox(box.id)}
+                      disabled={opening === box.id}
+                      className="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    >
+                      {opening === box.id ? '开启中...' : '开启 Open'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opened history */}
+          {openedBoxes.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
+                已开启历史 History · {openedBoxes.length} 个
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {openedBoxes.map((box: any) => (
+                  <div key={box.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 text-center space-y-1 opacity-70">
+                    <div className="text-2xl">{BOX_EMOJI[box.box_rarity] || '📦'}</div>
+                    <p className="text-xs text-gray-500 capitalize">{box.box_rarity}</p>
+                    <p className="text-[10px] text-gray-400">{new Date(box.opened_at || box.created_at).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

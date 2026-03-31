@@ -25,7 +25,6 @@ function rollRarity(boxRarity: string): string {
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
-    // Get user's unopened lootboxes
     const { user_id } = req.query;
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
@@ -33,11 +32,15 @@ export default async function handler(req: any, res: any) {
       .from('loot_boxes')
       .select('*')
       .eq('user_id', user_id)
-      .eq('is_opened', false)
-      .order('created_at');
+      .order('created_at', { ascending: false });
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ data });
+
+    // Enrich opened boxes with their reward cat image via loot_box_rewards if exists
+    // For now just return all boxes split by status
+    const unopened = (data || []).filter((b: any) => !b.is_opened);
+    const opened = (data || []).filter((b: any) => b.is_opened);
+    return res.status(200).json({ data: unopened, opened, total: data?.length || 0 });
   }
 
   if (req.method === 'POST') {
