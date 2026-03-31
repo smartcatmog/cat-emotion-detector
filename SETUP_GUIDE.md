@@ -5,6 +5,7 @@
 ### Prerequisites
 - Node.js 18+ 
 - npm or yarn
+- Supabase account (for database)
 
 ### Installation
 
@@ -23,6 +24,41 @@
    ```
    VITE_API_URL=http://localhost:3000/api/v1
    ```
+
+4. **Setup Supabase Database:**
+   
+   Run the following SQL migration files in your Supabase SQL Editor (in order):
+   
+   a. Basic setup:
+   ```bash
+   supabase-setup.sql
+   ```
+   
+   b. Cat images table:
+   ```bash
+   supabase-cat-images.sql
+   ```
+   
+   c. Update emotions (26 emotions):
+   ```bash
+   supabase-update-emotions.sql
+   ```
+   
+   d. Mood feedback table:
+   ```bash
+   supabase-mood-feedback.sql
+   ```
+   
+   e. **Users table (for social features):**
+   ```bash
+   supabase-users.sql
+   ```
+   
+   To run a migration:
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Copy the contents of the SQL file
+   - Paste and execute
 
 ### Development
 

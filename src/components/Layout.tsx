@@ -3,9 +3,12 @@ import React, { useState } from 'react';
 interface LayoutProps {
   children: React.ReactNode;
   onNavigate?: (view: string) => void;
+  user?: { email?: string } | null;
+  isAnonymous?: boolean;
+  onLoginClick?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, user, isAnonymous, onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -42,6 +45,28 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                   <span>{label}</span>
                 </button>
               ))}
+              {user ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-full text-sm font-medium text-purple-600 dark:text-purple-400">
+                  <span>👤</span>
+                  <span>{user.email}</span>
+                </div>
+              ) : isAnonymous ? (
+                <button
+                  onClick={onLoginClick}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                >
+                  <span>👻</span>
+                  <span>Guest</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onLoginClick}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+                >
+                  <span>🔑</span>
+                  <span>Sign In</span>
+                </button>
+              )}
               <a
                 href="https://github.com/smartcatmog/cat-emotion-detector"
                 target="_blank"

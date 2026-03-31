@@ -7,8 +7,10 @@ import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareCard } from './components/ShareCard';
+import { LoginModal } from './components/LoginModal';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
+import { useAuth } from './hooks/useAuth';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
 
@@ -238,6 +240,7 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
 }
 
 function App() {
+  const { user, isAnonymous, isAuthenticated, setAnonymousMode } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('mood');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -254,6 +257,7 @@ function App() {
   const [socialLink, setSocialLink] = useState('');
   const [saveToGallery, setSaveToGallery] = useState(true);
   const [tipCat, setTipCat] = useState<any>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -341,9 +345,23 @@ function App() {
     setError(null); setPetName(''); setSocialLink(''); setCurrentView('mood');
   };
 
+  // Check if feature requires auth
+  const requiresAuth = (feature: 'calendar' | 'collection' | 'lootbox' | 'same-mood') => {
+    if (!isAuthenticated && !isAnonymous) {
+      setShowLoginModal(true);
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Provider store={store}>
-      <Layout onNavigate={(view) => setCurrentView(view as AppView)}>
+      <Layout 
+        onNavigate={(view) => setCurrentView(view as AppView)}
+        user={user}
+        isAnonymous={isAnonymous}
+        onLoginClick={() => setShowLoginModal(true)}
+      >
         <div className="space-y-6">
 
           {/* Tab Nav */}
@@ -549,6 +567,16 @@ function App() {
         </div>
 
         {tipCat && <TipModal cat={tipCat} onClose={() => setTipCat(null)} />}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onSuccess={() => setShowLoginModal(false)}
+            onAnonymous={() => {
+              setAnonymousMode();
+              setShowLoginModal(false);
+            }}
+          />
+        )}
       </Layout>
     </Provider>
   );
