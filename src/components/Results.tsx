@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
 import { saveFeedback, updateCatEmotion } from '../lib/supabase';
-import { ShareButton } from './ShareButton';
+import { ShareCard } from './ShareCard';
 
 const EMOTION_LABELS: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
@@ -23,6 +23,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
   const [customEmotion, setCustomEmotion] = useState<string>('');
   const [correctedEmotion, setCorrectedEmotion] = useState<string | null>(null);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   const primaryEmotion = correctedEmotion || result.emotions?.[0]?.type || '';
   const confidence = result.emotions?.[0]?.confidence || 0;
@@ -186,12 +187,23 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
           >
             Analyze Another
           </button>
-          <ShareButton
-            text={`My cat is feeling ${primaryEmotion}! 🐱 Check out Cat Emotion Detector`}
-            url={window.location.href}
-          />
+          <button
+            onClick={() => setShowShareCard(true)}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
+            🔗 Share
+          </button>
         </div>
       </div>
+
+      {showShareCard && (
+        <ShareCard
+          imageUrl={result.thumbnailUrl}
+          emotion={primaryEmotion}
+          emotionEmoji={EMOTION_LABELS[primaryEmotion] || '🐱'}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
     </div>
   );
 };

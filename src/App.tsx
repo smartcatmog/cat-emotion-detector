@@ -7,6 +7,7 @@ import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareButton } from './components/ShareButton';
+import { ShareCard } from './components/ShareCard';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 
@@ -101,6 +102,7 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
   const [likeCount, setLikeCount] = useState(cat.likes || 0);
   const [editingEmotion, setEditingEmotion] = useState(false);
   const [currentEmotion, setCurrentEmotion] = useState(cat.emotion_label);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   const handleLike = () => {
     if (!liked) {
@@ -182,13 +184,20 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
             ⬇️ Save
           </button>
-          <ShareButton
-            compact
-            text={`${cat.pet_name ? cat.pet_name + ' is' : 'This cat is'} feeling ${currentEmotion}! ${EMOTION_EMOJI[currentEmotion] || '🐱'} Find your mood cat on MoodCat`}
-            url={window.location.href}
-          />
+          <button onClick={() => setShowShareCard(true)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-purple-100 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-200 transition-colors">
+            🔗 Share
+          </button>
         </div>
       </div>
+      {showShareCard && (
+        <ShareCard
+          imageUrl={cat.image_url}
+          emotion={currentEmotion}
+          emotionEmoji={EMOTION_EMOJI[currentEmotion] || '🐱'}
+          petName={cat.pet_name}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
     </div>
   );
 }
