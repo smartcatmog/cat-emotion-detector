@@ -14,6 +14,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, user, isAn
   const navItems = [
     { view: 'mood', emoji: '💭', label: 'Mood Match' },
     { view: 'upload', emoji: '🐱', label: 'Analyze' },
+    { view: 'calendar', emoji: '📅', label: '日历' },
+    { view: 'collection', emoji: '🗂️', label: '图鉴' },
+    { view: 'lootbox', emoji: '📦', label: '盲盒' },
+    { view: 'same-mood', emoji: '🤝', label: '同心情' },
   ];
 
   return (

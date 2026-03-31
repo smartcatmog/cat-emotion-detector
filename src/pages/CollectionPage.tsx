@@ -1,0 +1,98 @@
+import { useState, useEffect } from 'react';
+
+const EMOTION_EMOJI: Record<string, string> = {
+  happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
+  resigned:'😑',dramatic:'💀',sassy:'💅',clingy:'🥺',zoomies:'⚡',suspicious:'🤨',
+  smug:'😏',confused:'😵',hangry:'🍽️',sad:'😢',angry:'😡',scared:'😨',
+  disgusted:'🤢',surprised:'😲',loved:'🥰',bored:'😒',ashamed:'😳',tired:'😮‍💨',
+  disappointed:'😞',melancholy:'🌧️',
+};
+
+const ALL_EMOTIONS = Object.keys(EMOTION_EMOJI);
+
+export function CollectionPage({ userId }: { userId: string }) {
+  const [byEmotion, setByEmotion] = useState<Record<string, any[]>>({});
+  const [unlocked, setUnlocked] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/social/collection?user_id=${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        setByEmotion(d.by_emotion || {});
+        setUnlocked(d.unlocked || 0);
+        setTotal(d.total || 0);
+      })
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <div className="text-center py-12 text-gray-400">加载中...</div>;
+
+  const selectedItems = selected ? (byEmotion[selected] || []) : [];
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-4">
+      <div className="text-center space-y-1">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪图鉴</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          已解锁 <span className="text-purple-600 font-bold">{unlocked}</span> / {ALL_EMOTIONS.length} 种情绪 · 共收集 {total} 张
+        </p>
+        {/* Progress bar */}
+        <div className="max-w-xs mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+          <div
+            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+            style={{ width: `${(unlocked / ALL_EMOTIONS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Emotion grid */}
+      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+        {ALL_EMOTIONS.map(emotion => {
+          const items = byEmotion[emotion] || [];
+          const isUnlocked = items.length > 0;
+          return (
+            <button
+              key={emotion}
+              onClick={() => setSelected(selected === emotion ? null : emotion)}
+              className={`flex flex-col items-center p-2 rounded-xl border transition-all text-xs
+                ${selected === emotion ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/30' : ''}
+                ${isUnlocked
+                  ? 'border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 hover:border-purple-400'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-50'
+                }`}
+            >
+              <span className="text-2xl">{isUnlocked ? EMOTION_EMOJI[emotion] : '❓'}</span>
+              <span className={`mt-1 truncate w-full text-center ${isUnlocked ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
+                {emotion}
+              </span>
+              {isUnlocked && <span className="text-purple-500 font-bold">{items.length}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected emotion detail */}
+      {selected && selectedItems.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow space-y-3">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-50">
+            {EMOTION_EMOJI[selected]} {selected} · {selectedItems.length} 张
+          </h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {selectedItems.map((item: any, i: number) => (
+              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                {item.cat_images?.image_url ? (
+                  <img src={item.cat_images.image_url} alt={selected} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">🐱</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

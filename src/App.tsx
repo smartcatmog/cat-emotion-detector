@@ -8,11 +8,15 @@ import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareCard } from './components/ShareCard';
 import { LoginModal } from './components/LoginModal';
+import { CalendarPage } from './pages/CalendarPage';
+import { CollectionPage } from './pages/CollectionPage';
+import { LootboxPage } from './pages/LootboxPage';
+import { SameMoodPage } from './pages/SameMoodPage';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood';
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
@@ -197,6 +201,19 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           onClose={() => setShowShareCard(false)}
         />
       )}
+    </div>
+  );
+}
+
+function AuthPrompt({ onLogin, feature }: { onLogin: () => void; feature: string }) {
+  return (
+    <div className="text-center py-16 space-y-4">
+      <div className="text-5xl">🔒</div>
+      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">{feature}需要登录</h3>
+      <p className="text-gray-500 dark:text-gray-400 text-sm">登录后解锁打卡、收集、盲盒等社交功能</p>
+      <button onClick={onLogin} className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg">
+        登录 / 注册
+      </button>
     </div>
   );
 }
@@ -564,6 +581,28 @@ function App() {
 
           {currentView === 'annotate' && <DataAnnotation />}
           {currentView === 'privacy' && <Privacy />}
+
+          {/* Social Pages - require login */}
+          {currentView === 'calendar' && (
+            isAuthenticated
+              ? <CalendarPage userId={user!.id} />
+              : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="情绪日历" />
+          )}
+          {currentView === 'collection' && (
+            isAuthenticated
+              ? <CollectionPage userId={user!.id} />
+              : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="收集图鉴" />
+          )}
+          {currentView === 'lootbox' && (
+            isAuthenticated
+              ? <LootboxPage userId={user!.id} />
+              : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="情绪盲盒" />
+          )}
+          {currentView === 'same-mood' && (
+            isAuthenticated
+              ? <SameMoodPage userId={user!.id} currentEmotion={moodResult?.emotion_label} />
+              : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="同心情广场" />
+          )}
         </div>
 
         {tipCat && <TipModal cat={tipCat} onClose={() => setTipCat(null)} />}

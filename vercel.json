@@ -5,11 +5,12 @@
   "framework": "vite",
   "outputDirectory": "dist",
   "functions": {
-    "api/analyze.ts": {
-      "maxDuration": 30
-    },
-    "api/mood-match.ts": {
-      "maxDuration": 30
-    }
+    "api/analyze.ts": { "maxDuration": 30 },
+    "api/mood-match.ts": { "maxDuration": 30 },
+    "api/social/checkin.ts": { "maxDuration": 10 },
+    "api/social/calendar.ts": { "maxDuration": 10 },
+    "api/social/collection.ts": { "maxDuration": 10 },
+    "api/social/lootbox.ts": { "maxDuration": 10 },
+    "api/social/same-mood.ts": { "maxDuration": 10 }
   }
 }

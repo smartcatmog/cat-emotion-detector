@@ -1,0 +1,96 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const RARITY_WEIGHTS = {
+  common:  { common: 0.80, rare: 0.15, epic: 0.05 },
+  silver:  { common: 0.10, rare: 0.50, epic: 0.35, legendary: 0.05 },
+  gold:    { common: 0.00, rare: 0.10, epic: 0.60, legendary: 0.30 },
+  rainbow: { common: 0.00, rare: 0.00, epic: 0.20, legendary: 0.80 },
+};
+
+function rollRarity(boxRarity: string): string {
+  const weights = RARITY_WEIGHTS[boxRarity as keyof typeof RARITY_WEIGHTS] || RARITY_WEIGHTS.common;
+  const roll = Math.random();
+  let cumulative = 0;
+  for (const [rarity, weight] of Object.entries(weights)) {
+    cumulative += weight;
+    if (roll <= cumulative) return rarity;
+  }
+  return 'common';
+}
+
+export default async function handler(req: any, res: any) {
+  if (req.method === 'GET') {
+    // Get user's unopened lootboxes
+    const { user_id } = req.query;
+    if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
+
+    const { data, error } = await supabase
+      .from('loot_boxes')
+      .select('*')
+      .eq('user_id', user_id)
+      .eq('is_opened', false)
+      .order('created_at');
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ data });
+  }
+
+  if (req.method === 'POST') {
+    const { user_id, box_id } = req.body;
+    if (!user_id || !box_id) return res.status(400).json({ error: 'Missing fields' });
+
+    // Get the box
+    const { data: box, error: boxError } = await supabase
+      .from('loot_boxes')
+      .select('*')
+      .eq('id', box_id)
+      .eq('user_id', user_id)
+      .eq('is_opened', false)
+      .single();
+
+    if (boxError || !box) return res.status(404).json({ error: 'Box not found or already opened' });
+
+    // Roll reward rarity
+    const rewardRarity = rollRarity(box.box_rarity);
+
+    // Pick a random cat image of that rarity (or any if none found)
+    let catImage = null;
+    const { data: cats } = await supabase
+      .from('cat_images')
+      .select('id, image_url, emotion_label, description')
+      .order('likes', { ascending: false })
+      .limit(50);
+
+    if (cats && cats.length > 0) {
+      catImage = cats[Math.floor(Math.random() * cats.length)];
+    }
+
+    // Mark box as opened
+    await supabase
+      .from('loot_boxes')
+      .update({ is_opened: true, opened_at: new Date().toISOString() })
+      .eq('id', box_id);
+
+    // Auto-add to collection if cat image found
+    if (catImage) {
+      await supabase
+        .from('user_collections')
+        .insert({ user_id, cat_image_id: catImage.id, emotion_label: catImage.emotion_label })
+        .select()
+        .single();
+    }
+
+    return res.status(200).json({
+      reward_rarity: rewardRarity,
+      cat_image: catImage,
+      box_rarity: box.box_rarity,
+    });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
