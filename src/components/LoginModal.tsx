@@ -27,12 +27,29 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         return;
       }
       // Check username uniqueness
-      const { data: existing } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', username)
-        .single();
-      if (existing) { setError('用户名已被占用，换一个试试'); return; }
+      try {
+        const { data: existing, error: checkError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('username', username)
+          .single();
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 = no rows returned, which is what we want
+          console.error('Username check failed:', checkError);
+          setError('无法验证用户名，请重试');
+          return;
+        }
+        
+        if (existing) {
+          setError('用户名已被占用，换一个试试');
+          return;
+        }
+      } catch (err) {
+        console.error('Username check error:', err);
+        setError('无法验证用户名，请重试');
+        return;
+      }
     }
 
     setLoading(true);
