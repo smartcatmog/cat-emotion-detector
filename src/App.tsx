@@ -8,6 +8,7 @@ import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareCard } from './components/ShareCard';
 import { LoginModal } from './components/LoginModal';
+import { NFTCertificate } from './components/NFTCertificate';
 import { CalendarPage } from './pages/CalendarPage';
 import { CollectionPage } from './pages/CollectionPage';
 import { LootboxPage } from './pages/LootboxPage';
@@ -110,8 +111,9 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const [showShareCard, setShowShareCard] = useState(false);
   const [collected, setCollected] = useState(false);
   const [collecting, setCollecting] = useState(false);
-  const [nftData, setNftData] = useState<any>(cat.is_nft ? { token_id: cat.nft_token_id, rarity: cat.nft_rarity } : null);
+  const [nftData, setNftData] = useState<any>(cat.is_nft ? { token_id: cat.nft_token_id, rarity: cat.nft_rarity, minted_at: cat.nft_minted_at } : null);
   const [minting, setMinting] = useState(false);
+  const [showNFTModal, setShowNFTModal] = useState(false);
 
   const handleCollect = async () => {
     if (!userId || collected || collecting) return;
@@ -161,7 +163,13 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
       });
       const data = await response.json();
       if (response.ok || (response.status === 409 && data.nft)) {
-        setNftData(data.nft);
+        const nftInfo = {
+          ...data.nft,
+          image_url: cat.image_url,
+          pet_name: cat.pet_name,
+        };
+        setNftData(nftInfo);
+        setShowNFTModal(true); // 显示 NFT 证书模态框
       }
     } catch (error) {
       console.error('Mint failed:', error);
@@ -263,6 +271,59 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
           petName={cat.pet_name}
           onClose={() => setShowShareCard(false)}
         />
+      )}
+      
+      {/* NFT 证书模态框 */}
+      {showNFTModal && nftData && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="relative max-w-2xl w-full">
+            <button
+              onClick={() => setShowNFTModal(false)}
+              className="absolute -top-4 -right-4 w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg z-10"
+            >
+              ✕
+            </button>
+            
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-white mb-2">
+                  🎉 NFT 铸造成功！
+                </h3>
+                <p className="text-gray-300">
+                  你的猫咪已经成为独一无二的数字收藏品
+                </p>
+              </div>
+              
+              <NFTCertificate
+                imageUrl={nftData.image_url || cat.image_url}
+                tokenId={nftData.token_id}
+                emotion={nftData.emotion_label || currentEmotion}
+                emotionChinese={currentEmotion}
+                mintDate={new Date(nftData.minted_at).toLocaleDateString('zh-CN')}
+                rarity={nftData.rarity}
+                petName={nftData.pet_name || cat.pet_name}
+              />
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    // 简单下载提示
+                    alert('右键点击证书图片，选择"图片另存为"即可下载');
+                  }}
+                  className="flex-1 px-4 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors"
+                >
+                  ⬇️ 下载证书
+                </button>
+                <button
+                  onClick={() => setShowShareCard(true)}
+                  className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-xl font-semibold hover:bg-purple-600 transition-colors"
+                >
+                  🔗 分享
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
