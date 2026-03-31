@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 // 稀有度映射
 const RARITY_MAP: Record<string, 'common' | 'rare' | 'epic' | 'legendary'> = {
@@ -49,6 +49,13 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ error: 'Supabase configuration missing' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const { cat_image_id } = await req.json();
 
     if (!cat_image_id) {

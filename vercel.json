@@ -7,6 +7,7 @@
   "functions": {
     "api/analyze.ts": { "maxDuration": 30 },
     "api/mood-match.ts": { "maxDuration": 30 },
+    "api/mint-nft.ts": { "maxDuration": 10 },
     "api/social/checkin.ts": { "maxDuration": 10 },
     "api/social/calendar.ts": { "maxDuration": 10 },
     "api/social/collection.ts": { "maxDuration": 10 },

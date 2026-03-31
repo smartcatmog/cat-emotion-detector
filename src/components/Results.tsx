@@ -223,6 +223,18 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
             </button>
           )}
 
+          {/* 提示：需要保存到图库才能铸造 NFT */}
+          {!result.galleryId && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-center">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-2">
+                💡 想要铸造 NFT？
+              </p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                下次上传时勾选 "✨ Add to mood gallery"，就可以铸造独一无二的 NFT 证书了！
+              </p>
+            </div>
+          )}
+
           {mintError && (
             <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg text-center">
               {mintError}
