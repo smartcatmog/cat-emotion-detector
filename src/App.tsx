@@ -8,8 +8,7 @@ import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareButton } from './components/ShareButton';
 import { AnalysisResult } from './types';
-import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion } from './lib/supabase';
-import { createClient } from '@supabase/supabase-js';
+import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
 
@@ -31,7 +30,6 @@ Return ONLY valid JSON:
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 async function callClaude(base64: string, mediaType: string, saveToGallery: boolean, petName: string, socialLink: string) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
