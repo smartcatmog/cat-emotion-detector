@@ -20,9 +20,11 @@ export function CalendarPage({ userId }: { userId: string }) {
 
   useEffect(() => {
     setLoading(true);
+    setRecords([]); // clear stale data immediately
     fetch(`/api/social/calendar?user_id=${userId}&year=${year}&month=${month}`)
       .then(r => r.json())
       .then(d => { setRecords(d.data || []); setStreak(d.streak || 0); })
+      .catch(() => setRecords([]))
       .finally(() => setLoading(false));
   }, [userId, year, month]);
 

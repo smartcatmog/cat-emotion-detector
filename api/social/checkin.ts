@@ -50,16 +50,15 @@ export default async function handler(req: any, res: any) {
   }
 
   // Grant daily lootbox if not already given today
-  const { data: existingBox } = await supabase
+  const { data: existingBoxes } = await supabase
     .from('loot_boxes')
     .select('id')
     .eq('user_id', user_id)
     .eq('box_type', 'daily_free')
-    .gte('created_at', `${today}T00:00:00`)
-    .single();
+    .gte('created_at', `${today}T00:00:00`);
 
   let lootbox = null;
-  if (!existingBox) {
+  if (!existingBoxes || existingBoxes.length === 0) {
     const { data: box } = await supabase
       .from('loot_boxes')
       .insert({ user_id, box_type: 'daily_free', box_rarity: 'common', source: '每日打卡' })

@@ -25,11 +25,17 @@ export default async function handler(req: any, res: any) {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    // Enrich with cat image data
-    const enriched = await Promise.all((data || []).map(async (item: any) => {
-      const { data: img } = await supabase
-        .from('cat_images').select('image_url, description').eq('id', item.cat_image_id).single();
-      return { ...item, cat_images: img };
+    // Batch fetch cat images to avoid N+1
+    const catImageIds = [...new Set((data || []).map((item: any) => item.cat_image_id).filter(Boolean))];
+    const { data: catImages } = catImageIds.length > 0
+      ? await supabase.from('cat_images').select('id, image_url, description').in('id', catImageIds)
+      : { data: [] };
+    const catImageMap: Record<string, any> = {};
+    (catImages || []).forEach((img: any) => { catImageMap[img.id] = img; });
+
+    const enriched = (data || []).map((item: any) => ({
+      ...item,
+      cat_images: catImageMap[item.cat_image_id] || null,
     }));
 
     // Group by emotion

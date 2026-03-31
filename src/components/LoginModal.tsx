@@ -47,11 +47,16 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
             username,
             display_name: username,
           });
+          onSuccess();
+        } else {
+          // Email confirmation required
+          setError('注册成功！请检查邮箱点击确认链接后再登录');
+          setMode('login');
         }
       } else {
         await signIn(email, password);
+        onSuccess();
       }
-      onSuccess();
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
