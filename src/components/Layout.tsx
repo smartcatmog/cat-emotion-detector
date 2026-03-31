@@ -8,158 +8,79 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const navItems = [
+    { view: 'mood', emoji: '💭', label: 'Mood Match' },
+    { view: 'upload', emoji: '🐱', label: 'Analyze' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-purple-100 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate?.('mood')}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
               <span className="text-2xl">🐱</span>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-50">
-                Cat Emotion Detector
-              </h1>
-            </div>
+              <span className="text-lg font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+                MoodCat
+              </span>
+            </button>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex gap-6">
-              <button
-                onClick={() => onNavigate?.('upload')}
-                className="
-                  text-gray-700 dark:text-gray-300 hover:text-gray-900
-                  dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1
-                "
-              >
-                Analyze
-              </button>
-              <button
-                onClick={() => onNavigate?.('annotate')}
-                className="
-                  text-gray-700 dark:text-gray-300 hover:text-gray-900
-                  dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1
-                "
-              >
-                📸 Annotate Data
-              </button>
+            <nav className="hidden md:flex items-center gap-2">
+              {navItems.map(({ view, emoji, label }) => (
+                <button
+                  key={view}
+                  onClick={() => onNavigate?.(view)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition-all"
+                >
+                  <span>{emoji}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
               <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.('history');
-                }}
-                className="
-                  text-gray-700 dark:text-gray-300 hover:text-gray-900
-                  dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer
-                "
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity shadow-sm shadow-purple-200"
               >
-                History
-              </a>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.('privacy');
-                }}
-                className="
-                  text-gray-700 dark:text-gray-300 hover:text-gray-900
-                  dark:hover:text-gray-50 font-medium transition-colors
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 cursor-pointer
-                "
-              >
-                Privacy
+                ⭐ Star us
               </a>
             </nav>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="
-                md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-300
-                hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none
-                focus:ring-2 focus:ring-blue-500
-              "
+              className="md:hidden p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Toggle menu"
-              aria-expanded={mobileMenuOpen}
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
+              <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
             </button>
           </div>
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <nav className="md:hidden pb-4 space-y-2">
+            <nav className="md:hidden pb-4 space-y-1">
+              {navItems.map(({ view, emoji, label }) => (
+                <button
+                  key={view}
+                  onClick={() => { onNavigate?.(view); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-2 w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
+                >
+                  <span>{emoji}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
               <button
-                onClick={() => {
-                  onNavigate?.('upload');
-                  setMobileMenuOpen(false);
-                }}
-                className="
-                  block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300
-                  hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors
-                "
+                onClick={() => { onNavigate?.('privacy'); setMobileMenuOpen(false); }}
+                className="flex items-center gap-2 w-full text-left px-4 py-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-sm"
               >
-                Analyze
+                🔒 Privacy
               </button>
-              <button
-                onClick={() => {
-                  onNavigate?.('annotate');
-                  setMobileMenuOpen(false);
-                }}
-                className="
-                  block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300
-                  hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors
-                "
-              >
-                📸 Annotate Data
-              </button>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.('history');
-                  setMobileMenuOpen(false);
-                }}
-                className="
-                  block px-4 py-2 text-gray-700 dark:text-gray-300
-                  hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors cursor-pointer
-                "
-              >
-                History
-              </a>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.('privacy');
-                  setMobileMenuOpen(false);
-                }}
-                className="
-                  block px-4 py-2 text-gray-700 dark:text-gray-300
-                  hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg
-                  transition-colors cursor-pointer
-                "
-              >
-                Privacy
-              </a>
             </nav>
           )}
         </div>
@@ -171,55 +92,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-4">
-                About
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Cat Emotion Detector helps you understand your cat's emotions through AI-powered analysis.
-              </p>
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🐱</span>
+              <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">MoodCat</span>
+              <span className="text-gray-400 text-sm">— AI-powered cat emotion detector</span>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-4">
-                Links
-              </h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigate?.('privacy');
-                    }}
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 cursor-pointer"
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50"
-                  >
-                    Terms of Service
-                  </a>
-                </li>
-              </ul>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <button onClick={() => onNavigate?.('annotate')} className="hover:text-purple-500 transition-colors">📸 Annotate Data</button>
+              <button onClick={() => onNavigate?.('history')} className="hover:text-purple-500 transition-colors">📚 History</button>
+              <button onClick={() => onNavigate?.('privacy')} className="hover:text-purple-500 transition-colors">🔒 Privacy</button>
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <span>© 2024 MoodCat</span>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-4">
-                Contact
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Have questions? We'd love to hear from you.
-              </p>
-            </div>
-          </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>&copy; 2024 Cat Emotion Detector. All rights reserved.</p>
           </div>
         </div>
       </footer>

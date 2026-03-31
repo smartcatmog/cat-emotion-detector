@@ -6,6 +6,7 @@ import { Upload } from './components/Upload';
 import { Results } from './components/Results';
 import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
+import { ShareButton } from './components/ShareButton';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult } from './lib/supabase';
 import { createClient } from '@supabase/supabase-js';
@@ -119,6 +120,11 @@ function CatCard({ cat, onLike, onTip }: { cat: any; onLike: (id: string) => voi
           <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
             ⬇️ Save
           </button>
+          <ShareButton
+            compact
+            text={`${cat.pet_name ? cat.pet_name + ' is' : 'This cat is'} feeling ${cat.emotion_label}! ${EMOTION_EMOJI[cat.emotion_label] || '🐱'} Find your mood cat on MoodCat`}
+            url={window.location.href}
+          />
         </div>
       </div>
     </div>

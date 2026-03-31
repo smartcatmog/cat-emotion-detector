@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
 import { saveFeedback } from '../lib/supabase';
+import { ShareButton } from './ShareButton';
 
 const EMOTION_OPTIONS = ['😸 Happy', '😌 Calm', '😴 Sleepy', '🐱 Curious', '😾 Annoyed', '🙀 Anxious', '😑 Resigned', '💀 Dramatic', '💅 Sassy', '🥺 Clingy', '⚡ Zoomies', '🤨 Suspicious', '😏 Smug', '😵 Confused', '🍽️ Hangry'];
 
@@ -162,12 +163,10 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
           >
             Analyze Another
           </button>
-          <button
-            onClick={onViewHistory}
-            className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            History
-          </button>
+          <ShareButton
+            text={`My cat is feeling ${primaryEmotion}! 🐱 Check out Cat Emotion Detector`}
+            url={window.location.href}
+          />
         </div>
       </div>
     </div>
