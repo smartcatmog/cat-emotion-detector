@@ -38,8 +38,11 @@ export function LootboxPage({ userId }: { userId: string }) {
         body: JSON.stringify({ user_id: userId, box_id: boxId }),
       });
       const data = await res.json();
-      setReward(data);
-      fetchBoxes();
+      if (res.ok) {
+        setReward(data);
+        // Remove opened box from list immediately without full refetch
+        setBoxes(prev => prev.filter(b => b.id !== boxId));
+      }
     } finally {
       setOpening(null);
     }
