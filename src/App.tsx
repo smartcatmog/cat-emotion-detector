@@ -350,14 +350,13 @@ function App() {
                               key={emotion}
                               onClick={async () => {
                                 await saveMoodFeedback(moodText, moodResult.emotion_label, emotion);
-                                // 用用户选的情绪重新搜索猫
                                 setMoodLoading(true);
                                 setMoodFeedback('done');
                                 try {
                                   const res = await fetch('/api/mood-match', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ mood_text: emotion }), // 直接用情绪标签搜索
+                                    body: JSON.stringify({ mood_text: emotion }),
                                   });
                                   const data = await res.json();
                                   if (data.data) setMoodResult({ ...data.data, emotion_label: emotion });
@@ -372,6 +371,20 @@ function App() {
                               {emoji} {emotion}
                             </button>
                           ))}
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <input
+                            type="text"
+                            placeholder="或者直接告诉我你的感受，比如 sad、心碎、失落..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
+                            onKeyDown={async (e) => {
+                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                const val = e.currentTarget.value.trim();
+                                await saveMoodFeedback(moodText, moodResult.emotion_label, val);
+                                setMoodFeedback('done');
+                              }
+                            }}
+                          />
                         </div>
                         <button
                           onClick={() => setMoodFeedback('idle')}
