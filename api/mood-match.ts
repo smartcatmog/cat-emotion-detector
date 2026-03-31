@@ -110,10 +110,67 @@ export default async function handler(req: Request) {
     if (!VALID_EMOTIONS.includes(emotionLabel)) emotionLabel = 'calm';
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { data: cats, error: dbError } = await supabase
+
+    // Fallback map: if exact match has no cats, try similar emotions
+    const SIMILAR_EMOTIONS: Record<string, string[]> = {
+      confused: ['suspicious', 'curious'],
+      sad: ['melancholy', 'disappointed', 'resigned'],
+      melancholy: ['sad', 'disappointed', 'resigned'],
+      disappointed: ['sad', 'melancholy', 'resigned'],
+      angry: ['annoyed', 'dramatic', 'hangry'],
+      scared: ['anxious', 'suspicious'],
+      disgusted: ['annoyed', 'angry'],
+      surprised: ['confused', 'curious', 'scared'],
+      loved: ['happy', 'calm'],
+      bored: ['tired', 'resigned', 'sleepy'],
+      ashamed: ['sad', 'anxious', 'resigned'],
+      tired: ['sleepy', 'bored', 'resigned'],
+      anxious: ['scared', 'confused'],
+      clingy: ['sad', 'loved'],
+      resigned: ['tired', 'bored', 'melancholy'],
+      dramatic: ['angry', 'annoyed', 'hangry'],
+      hangry: ['angry', 'annoyed', 'dramatic'],
+      sassy: ['smug', 'annoyed'],
+      zoomies: ['happy', 'curious'],
+      suspicious: ['confused', 'curious'],
+      smug: ['sassy', 'happy'],
+      happy: ['loved', 'zoomies', 'calm'],
+      calm: ['sleepy', 'loved', 'happy'],
+      sleepy: ['tired', 'calm', 'bored'],
+      curious: ['confused', 'suspicious'],
+      annoyed: ['angry', 'dramatic', 'sassy'],
+    };
+
+    // Try exact match first
+    let { data: cats, error: dbError } = await supabase
       .from('cat_images')
       .select('*')
       .eq('emotion_label', emotionLabel);
+
+    // If no results, try similar emotions
+    if (!dbError && (!cats || cats.length === 0)) {
+      const fallbacks = SIMILAR_EMOTIONS[emotionLabel] || [];
+      if (fallbacks.length > 0) {
+        const { data: fallbackCats, error: fbError } = await supabase
+          .from('cat_images')
+          .select('*')
+          .in('emotion_label', fallbacks);
+        if (!fbError && fallbackCats && fallbackCats.length > 0) {
+          cats = fallbackCats;
+        }
+      }
+    }
+
+    // Last resort: return random cats from any label
+    if (!dbError && (!cats || cats.length === 0)) {
+      const { data: randomCats } = await supabase
+        .from('cat_images')
+        .select('*')
+        .limit(6);
+      if (randomCats && randomCats.length > 0) {
+        cats = randomCats;
+      }
+    }
 
     if (dbError) {
       return new Response(JSON.stringify({ error: 'Database query failed' }), {
