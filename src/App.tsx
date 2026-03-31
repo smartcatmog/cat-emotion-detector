@@ -328,7 +328,17 @@ function App() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mood_text: moodText.trim() }),
       });
-      if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Match failed'); }
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMsg = 'Match failed';
+        try {
+          const err = JSON.parse(text);
+          errorMsg = err.error || errorMsg;
+        } catch {
+          errorMsg = text || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
       const data = await response.json();
       setMoodResult(data.data);
       setMoodFeedback('idle');
