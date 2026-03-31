@@ -8,6 +8,14 @@ const EMOTION_EMOJI: Record<string, string> = {
   disappointed:'😞',melancholy:'🌧️',
 };
 
+const EMOTION_ZH: Record<string, string> = {
+  happy:'开心', calm:'平静', sleepy:'困', curious:'好奇', annoyed:'烦', anxious:'焦虑',
+  resigned:'无奈', dramatic:'崩溃', sassy:'傲娇', clingy:'黏人', zoomies:'亢奋', suspicious:'怀疑',
+  smug:'得意', confused:'懵', hangry:'饿', sad:'难过', angry:'生气', scared:'害怕',
+  disgusted:'恶心', surprised:'惊讶', loved:'被爱', bored:'无聊', ashamed:'羞愧', tired:'累了',
+  disappointed:'失望', melancholy:'惆怅',
+};
+
 export function SameMoodPage({ userId, currentEmotion }: { userId: string; currentEmotion?: string }) {
   const [emotion, setEmotion] = useState(currentEmotion || '');
   const [users, setUsers] = useState<any[]>([]);
@@ -49,7 +57,7 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
                   : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300'
                 }`}
             >
-              {emoji} {e}
+              {emoji} {EMOTION_ZH[e]} / {e}
             </button>
           ))}
         </div>
@@ -63,13 +71,13 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
           ) : (
             <>
               <p className="text-center text-sm text-gray-500">
-                今天有 <span className="text-purple-600 font-bold">{count}</span> 人和你一样感到 {EMOTION_EMOJI[emotion]} {emotion}
+                今天有 <span className="text-purple-600 font-bold">{count}</span> 人和你一样感到 {EMOTION_EMOJI[emotion]} {EMOTION_ZH[emotion]} / {emotion}
               </p>
 
               {users.length === 0 ? (
                 <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
                   <div className="text-4xl">{EMOTION_EMOJI[emotion]}</div>
-                  <p className="text-gray-500 dark:text-gray-400">你是今天第一个 {emotion} 的人</p>
+                  <p className="text-gray-500 dark:text-gray-400">你是今天第一个 {EMOTION_ZH[emotion]} / {emotion} 的人</p>
                   <p className="text-sm text-gray-400">先去打卡，等待同心情的朋友出现</p>
                 </div>
               ) : (

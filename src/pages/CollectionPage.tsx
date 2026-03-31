@@ -8,6 +8,14 @@ const EMOTION_EMOJI: Record<string, string> = {
   disappointed:'😞',melancholy:'🌧️',
 };
 
+const EMOTION_ZH: Record<string, string> = {
+  happy:'开心', calm:'平静', sleepy:'困', curious:'好奇', annoyed:'烦', anxious:'焦虑',
+  resigned:'无奈', dramatic:'崩溃', sassy:'傲娇', clingy:'黏人', zoomies:'亢奋', suspicious:'怀疑',
+  smug:'得意', confused:'懵', hangry:'饿', sad:'难过', angry:'生气', scared:'害怕',
+  disgusted:'恶心', surprised:'惊讶', loved:'被爱', bored:'无聊', ashamed:'羞愧', tired:'累了',
+  disappointed:'失望', melancholy:'惆怅',
+};
+
 const ALL_EMOTIONS = Object.keys(EMOTION_EMOJI);
 
 export function CollectionPage({ userId }: { userId: string }) {
@@ -65,8 +73,9 @@ export function CollectionPage({ userId }: { userId: string }) {
                 }`}
             >
               <span className="text-2xl">{isUnlocked ? EMOTION_EMOJI[emotion] : '❓'}</span>
-              <span className={`mt-1 truncate w-full text-center ${isUnlocked ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
-                {emotion}
+              <span className={`mt-1 truncate w-full text-center text-[10px] leading-tight ${isUnlocked ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
+                <span className="block">{EMOTION_ZH[emotion]}</span>
+                <span className="block opacity-60">{emotion}</span>
               </span>
               {isUnlocked && <span className="text-purple-500 font-bold">{items.length}</span>}
             </button>
@@ -78,7 +87,7 @@ export function CollectionPage({ userId }: { userId: string }) {
       {selected && selectedItems.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow space-y-3">
           <h3 className="font-semibold text-gray-900 dark:text-gray-50">
-            {EMOTION_EMOJI[selected]} {selected} · {selectedItems.length} 张
+            {EMOTION_EMOJI[selected]} {EMOTION_ZH[selected]} / {selected} · {selectedItems.length} 张
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {selectedItems.map((item: any, i: number) => (

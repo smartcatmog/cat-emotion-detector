@@ -8,6 +8,14 @@ const EMOTION_EMOJI: Record<string, string> = {
   disappointed:'😞',melancholy:'🌧️',
 };
 
+const EMOTION_ZH: Record<string, string> = {
+  happy:'开心', calm:'平静', sleepy:'困', curious:'好奇', annoyed:'烦', anxious:'焦虑',
+  resigned:'无奈', dramatic:'崩溃', sassy:'傲娇', clingy:'黏人', zoomies:'亢奋', suspicious:'怀疑',
+  smug:'得意', confused:'懵', hangry:'饿', sad:'难过', angry:'生气', scared:'害怕',
+  disgusted:'恶心', surprised:'惊讶', loved:'被爱', bored:'无聊', ashamed:'羞愧', tired:'累了',
+  disappointed:'失望', melancholy:'惆怅',
+};
+
 interface DayRecord { date: string; emotion_label: string; mood_text?: string; }
 
 export function CalendarPage({ userId, onManualCheckin }: { userId: string; onManualCheckin?: (emotion: string) => void }) {
@@ -130,7 +138,7 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
               disabled={checkinLoading}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-purple-400 hover:text-purple-600 transition-all disabled:opacity-50"
             >
-              {emoji} {e}
+              {emoji} {EMOTION_ZH[e]} / {e}
             </button>
           ))}
           <button
