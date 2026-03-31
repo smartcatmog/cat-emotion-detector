@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 interface LayoutProps {
   children: React.ReactNode;
   onNavigate?: (view: string) => void;
+  currentView?: string;
   user?: { email?: string } | null;
   isAnonymous?: boolean;
   onLoginClick?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, user, isAnonymous, onLoginClick }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, isAnonymous, onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -43,7 +44,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, user, isAn
                 <button
                   key={view}
                   onClick={() => onNavigate?.(view)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600 dark:hover:text-purple-400 transition-all"
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all
+                    ${currentView === view
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600'
+                    }`}
                 >
                   <span>{emoji}</span>
                   <span>{label}</span>
@@ -98,7 +103,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, user, isAn
                 <button
                   key={view}
                   onClick={() => { onNavigate?.(view); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-2 w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
+                  className={`flex items-center gap-2 w-full text-left px-4 py-3 rounded-xl transition-colors font-medium
+                    ${currentView === view
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700'
+                    }`}
                 >
                   <span>{emoji}</span>
                   <span>{label}</span>

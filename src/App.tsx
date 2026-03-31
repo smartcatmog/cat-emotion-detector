@@ -394,6 +394,7 @@ function App() {
     <Provider store={store}>
       <Layout 
         onNavigate={(view) => setCurrentView(view as AppView)}
+        currentView={currentView}
         user={user}
         isAnonymous={isAnonymous}
         onLoginClick={() => setShowLoginModal(true)}
