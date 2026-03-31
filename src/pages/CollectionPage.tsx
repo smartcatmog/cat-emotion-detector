@@ -91,9 +91,31 @@ export function CollectionPage({ userId }: { userId: string }) {
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {selectedItems.map((item: any, i: number) => (
-              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+              <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
                 {item.cat_images?.image_url ? (
-                  <img src={item.cat_images.image_url} alt={selected} className="w-full h-full object-cover" />
+                  <>
+                    <img src={item.cat_images.image_url} alt={selected} className="w-full h-full object-cover" />
+                    {/* NFT 徽章 */}
+                    {item.cat_images.is_nft && (
+                      <div className="absolute top-1 right-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                        🏆 NFT
+                      </div>
+                    )}
+                    {/* 稀有度标签 */}
+                    {item.cat_images.nft_rarity && (
+                      <div className={`absolute bottom-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg
+                        ${item.cat_images.nft_rarity === 'legendary' ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' : ''}
+                        ${item.cat_images.nft_rarity === 'epic' ? 'bg-gradient-to-r from-purple-400 to-purple-600 text-white' : ''}
+                        ${item.cat_images.nft_rarity === 'rare' ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' : ''}
+                        ${item.cat_images.nft_rarity === 'common' ? 'bg-gray-400 text-white' : ''}
+                      `}>
+                        {item.cat_images.nft_rarity === 'legendary' && '⭐'}
+                        {item.cat_images.nft_rarity === 'epic' && '💎'}
+                        {item.cat_images.nft_rarity === 'rare' && '💠'}
+                        {item.cat_images.nft_rarity === 'common' && '⚪'}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl">🐱</div>
                 )}

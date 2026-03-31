@@ -11,14 +11,26 @@ const BOX_EMOJI: Record<string, string> = {
   common: '📦', silver: '🥈', gold: '🥇', rainbow: '🌈',
 };
 
-export function LootboxPage({ userId }: { userId: string }) {
+export function LootboxPage({ userId }: { userId?: string }) {
   const [boxes, setBoxes] = useState<any[]>([]);
   const [openedBoxes, setOpenedBoxes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState<string | null>(null);
   const [reward, setReward] = useState<any>(null);
+  const [guestBoxCount, setGuestBoxCount] = useState(3); // 游客模式默认3个盲盒
 
   const fetchBoxes = () => {
+    if (!userId) {
+      // 游客模式：生成虚拟盲盒
+      setBoxes([
+        { id: 'guest-1', box_rarity: 'common', source: '体验盲盒', is_guest: true },
+        { id: 'guest-2', box_rarity: 'silver', source: '体验盲盒', is_guest: true },
+        { id: 'guest-3', box_rarity: 'gold', source: '体验盲盒', is_guest: true },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     fetch(`/api/social/lootbox?user_id=${userId}`)
       .then(r => r.json())
