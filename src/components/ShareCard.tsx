@@ -210,7 +210,16 @@ export const ShareCard: React.FC<ShareCardProps> = ({ imageUrl, emotion, emotion
             {sharing ? '分享中...' : '🔗 分享'}
           </button>
         </div>
-        <p className="text-xs text-gray-500 text-center">下载后可发到微信、Instagram、微博等任意平台</p>
+
+        {/* Social media quick links */}
+        <div className="flex items-center justify-center gap-3">
+          <span className="text-xs text-gray-500">快速分享：</span>
+          <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}&url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🐦 X</button>
+          <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">📘 Facebook</button>
+          <button onClick={() => window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent('https://cat-emotion-detector.vercel.app')}&title=${encodeURIComponent((userText || `${emotionEmoji} ${emotion}`) + ' — MoodCat 🐱')}`, '_blank')} className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs hover:bg-gray-700 transition-colors">🔴 微博</button>
+        </div>
+
+        <p className="text-xs text-gray-500 text-center">下载图片后可发到微信、Instagram 等任意平台</p>
       </div>
     </div>
   );

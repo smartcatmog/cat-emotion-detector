@@ -21,7 +21,6 @@ interface ResultsProps {
 export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onViewHistory }) => {
   const [feedbackState, setFeedbackState] = useState<'idle' | 'wrong' | 'done'>('idle');
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
-  const [customEmotion, setCustomEmotion] = useState<string>('');
   const [correctedEmotion, setCorrectedEmotion] = useState<string | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
 
@@ -35,11 +34,6 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
 
   const handleInaccurate = () => {
     setFeedbackState('wrong');
-  };
-
-  const handleSubmitCorrection = async () => {
-    await saveFeedback(result.id, false, customEmotion.trim() || selectedCorrect).catch(console.error);
-    setFeedbackState('done');
   };
 
   return (
@@ -121,7 +115,7 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
           {feedbackState === 'wrong' && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-                What do you think your cat is actually feeling?
+                选择你觉得正确的情绪标签：
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {Object.entries(EMOTION_LABELS).map(([emotion, emoji]) => (
@@ -129,11 +123,12 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                     key={emotion}
                     onClick={async () => {
                       setSelectedCorrect(emotion);
-                      setCustomEmotion('');
                       if (result.galleryId) {
                         await updateCatEmotion(result.galleryId, emotion);
                         setCorrectedEmotion(emotion);
                       }
+                      await saveFeedback(result.id, false, emotion).catch(console.error);
+                      setFeedbackState('done');
                     }}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       selectedCorrect === emotion
@@ -145,29 +140,11 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
                   </button>
                 ))}
               </div>
-              <div className="w-full">
-                <input
-                  type="text"
-                  value={customEmotion}
-                  onChange={(e) => { setCustomEmotion(e.target.value); setSelectedCorrect(''); }}
-                  placeholder="Or type your own label (e.g. sad, 心碎, tired...)"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 mb-3"
-                />
-              </div>
               <button
-                onClick={async () => {
-                  const emotion = customEmotion.trim() || selectedCorrect;
-                  await saveFeedback(result.id, false, emotion).catch(console.error);
-                  if (result.galleryId && selectedCorrect) {
-                    await updateCatEmotion(result.galleryId, selectedCorrect);
-                    setCorrectedEmotion(selectedCorrect);
-                  }
-                  setFeedbackState('done');
-                }}
-                disabled={!selectedCorrect && !customEmotion.trim()}
-                className="w-full py-2 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors disabled:opacity-40"
+                onClick={() => setFeedbackState('idle')}
+                className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
               >
-                Submit Feedback
+                取消
               </button>
             </div>
           )}
