@@ -201,10 +201,16 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('登录超时，请检查网络连接或稍后重试')), 10000)
+  );
+  
+  const signInPromise = supabase.auth.signInWithPassword({
     email,
     password,
   });
+  
+  const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
   if (error) throw error;
   return data;
 }
