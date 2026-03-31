@@ -316,12 +316,14 @@ function App() {
           body: JSON.stringify({ user_id: user.id, emotion_label: data.data.emotion_label, mood_text: moodText }),
         }).then(async r => {
           const d = await r.json();
-          if (!r.ok) { console.error('[checkin] failed:', d); return; }
+          if (!r.ok) { console.error('[checkin] failed:', r.status, d); return; }
           if (d.lootbox) setCheckinToast(`🎉 打卡成功！获得一个盲盒`);
           else if (d.same_mood_count > 0) setCheckinToast(`✅ 打卡成功！今天有 ${d.same_mood_count} 人和你一样`);
           else setCheckinToast('✅ 今日打卡成功');
           setTimeout(() => setCheckinToast(null), 4000);
         }).catch(e => console.error('[checkin] error:', e));
+      } else {
+        console.log('[checkin] skipped - user:', user, 'emotion:', data.data?.emotion_label);
       }
     } catch (err) {
       setMoodError(err instanceof Error ? err.message : 'Something went wrong');

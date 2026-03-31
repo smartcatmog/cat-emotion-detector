@@ -10,13 +10,38 @@ const EMOTION_EMOJI: Record<string, string> = {
 
 interface DayRecord { date: string; emotion_label: string; mood_text?: string; }
 
-export function CalendarPage({ userId }: { userId: string }) {
+export function CalendarPage({ userId, onManualCheckin }: { userId: string; onManualCheckin?: (emotion: string) => void }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [records, setRecords] = useState<DayRecord[]>([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [checkinMsg, setCheckinMsg] = useState<string | null>(null);
+
+  const doCheckin = async (emotion: string) => {
+    setCheckinLoading(true);
+    try {
+      const r = await fetch('/api/social/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, emotion_label: emotion }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setCheckinMsg(`❌ 打卡失败: ${d.error}`); return; }
+      if (d.lootbox) setCheckinMsg('🎉 打卡成功！获得一个盲盒');
+      else setCheckinMsg('✅ 打卡成功');
+      // Refresh calendar
+      const res = await fetch(`/api/social/calendar?user_id=${userId}&year=${year}&month=${month}`);
+      const cal = await res.json();
+      setRecords(cal.data || []);
+      setStreak(cal.streak || 0);
+    } finally {
+      setCheckinLoading(false);
+      setTimeout(() => setCheckinMsg(null), 3000);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -93,6 +118,33 @@ export function CalendarPage({ userId }: { userId: string }) {
       </div>
 
       <p className="text-center text-xs text-gray-400">每次心情匹配后自动打卡记录</p>
+
+      {/* Manual checkin for testing / direct use */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow space-y-3">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">今天还没打卡？选一个心情手动记录：</p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {Object.entries(EMOTION_EMOJI).slice(0, 8).map(([e, emoji]) => (
+            <button
+              key={e}
+              onClick={() => doCheckin(e)}
+              disabled={checkinLoading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-purple-400 hover:text-purple-600 transition-all disabled:opacity-50"
+            >
+              {emoji} {e}
+            </button>
+          ))}
+          <button
+            onClick={() => doCheckin('happy')}
+            disabled={checkinLoading}
+            className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-all disabled:opacity-50"
+          >
+            {checkinLoading ? '记录中...' : '更多 →'}
+          </button>
+        </div>
+        {checkinMsg && (
+          <p className="text-center text-sm font-medium text-green-600 dark:text-green-400">{checkinMsg}</p>
+        )}
+      </div>
     </div>
   );
 }
