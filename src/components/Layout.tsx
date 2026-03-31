@@ -43,7 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
                 </button>
               ))}
               <a
-                href="https://github.com"
+                href="https://github.com/smartcatmog/cat-emotion-detector"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity shadow-sm shadow-purple-200"
