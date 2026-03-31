@@ -104,8 +104,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
               <button onClick={() => onNavigate?.('annotate')} className="hover:text-purple-500 transition-colors">📸 Annotate Data</button>
               <button onClick={() => onNavigate?.('history')} className="hover:text-purple-500 transition-colors">📚 History</button>
               <button onClick={() => onNavigate?.('privacy')} className="hover:text-purple-500 transition-colors">🔒 Privacy</button>
+              <a href="mailto:vivicui@gmail.com" className="hover:text-purple-500 transition-colors">✉️ Contact</a>
+              <a href="https://twitter.com/viviancuicui" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">🐦 @viviancuicui</a>
               <span className="text-gray-300 dark:text-gray-600">|</span>
-              <span>© 2024 MoodCat</span>
+              <span>© 2026 MoodCat</span>
             </div>
           </div>
         </div>
