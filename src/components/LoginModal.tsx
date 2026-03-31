@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn, signUp } from '../lib/supabase';
+import { signIn, signUp, supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -11,17 +11,43 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const validateUsername = (v: string) => /^[\u4e00-\u9fa5a-zA-Z0-9_]{2,20}$/.test(v);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
+    if (mode === 'signup') {
+      if (!validateUsername(username)) {
+        setError('用户名 2-20 字符，支持中文、英文、数字、下划线');
+        return;
+      }
+      // Check username uniqueness
+      const { data: existing } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .single();
+      if (existing) { setError('用户名已被占用，换一个试试'); return; }
+    }
+
+    setLoading(true);
     try {
       if (mode === 'signup') {
-        await signUp(email, password);
+        const data = await signUp(email, password);
+        // Create profile in public.users
+        if (data.user) {
+          await supabase.from('users').insert({
+            id: data.user.id,
+            email,
+            username,
+            display_name: username,
+          });
+        }
       } else {
         await signIn(email, password);
       }
@@ -39,14 +65,30 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         <div className="space-y-4">
           <div className="text-center">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-              {mode === 'login' ? 'Welcome back!' : 'Create account'}
+              {mode === 'login' ? '欢迎回来 👋' : '创建账号 🐱'}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {mode === 'login' ? 'Sign in to access all features' : 'Sign up to unlock social features'}
+              {mode === 'login' ? '登录解锁日历、图鉴、盲盒等功能' : '注册后解锁全部社交功能'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  用户名 <span className="text-gray-400 font-normal">（支持中文/英文，2-20字符）</span>
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="例如：快乐猫咪 / happycat"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
+                  required
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email
@@ -62,7 +104,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Password
+                密码 <span className="text-gray-400 font-normal">（至少6位）</span>
               </label>
               <input
                 type="password"
@@ -85,25 +127,25 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
               disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Sign Up'}
+              {loading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
             </button>
           </form>
 
           <div className="text-center">
             <button
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
               className="text-sm text-purple-500 hover:text-purple-700 font-medium"
             >
-              {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {mode === 'login' ? '没有账号？点击注册' : '已有账号？点击登录'}
             </button>
           </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">or</span>
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">或者</span>
             </div>
           </div>
 
@@ -111,14 +153,11 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
             onClick={onAnonymous}
             className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
           >
-            Continue as Guest
+            👻 游客模式（基础功能）
           </button>
 
-          <button
-            onClick={onClose}
-            className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Close
+          <button onClick={onClose} className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            关闭
           </button>
         </div>
       </div>

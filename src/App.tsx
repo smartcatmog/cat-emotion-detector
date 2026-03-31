@@ -275,6 +275,7 @@ function App() {
   const [saveToGallery, setSaveToGallery] = useState(true);
   const [tipCat, setTipCat] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [checkinToast, setCheckinToast] = useState<string | null>(null);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -306,6 +307,20 @@ function App() {
       const data = await response.json();
       setMoodResult(data.data);
       setMoodFeedback('idle');
+
+      // Auto check-in if logged in
+      if (user && data.data?.emotion_label) {
+        fetch('/api/social/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id, emotion_label: data.data.emotion_label, mood_text: moodText }),
+        }).then(r => r.json()).then(d => {
+          if (d.lootbox) setCheckinToast(`🎉 打卡成功！获得一个盲盒`);
+          else if (d.same_mood_count > 0) setCheckinToast(`✅ 打卡成功！今天有 ${d.same_mood_count} 人和你一样`);
+          else setCheckinToast('✅ 今日打卡成功');
+          setTimeout(() => setCheckinToast(null), 4000);
+        }).catch(() => {});
+      }
     } catch (err) {
       setMoodError(err instanceof Error ? err.message : 'Something went wrong');
     } finally { setMoodLoading(false); }
@@ -606,6 +621,13 @@ function App() {
         </div>
 
         {tipCat && <TipModal cat={tipCat} onClose={() => setTipCat(null)} />}
+
+        {/* Check-in toast */}
+        {checkinToast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-medium z-50 animate-fade-in">
+            {checkinToast}
+          </div>
+        )}
         {showLoginModal && (
           <LoginModal
             onClose={() => setShowLoginModal(false)}
