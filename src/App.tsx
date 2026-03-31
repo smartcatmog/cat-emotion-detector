@@ -15,6 +15,7 @@ import { SameMoodPage } from './pages/SameMoodPage';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
+import { useLang, t } from './lib/i18n';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood';
 
@@ -258,6 +259,7 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
 
 function App() {
   const { user, isAnonymous, isAuthenticated, setAnonymousMode } = useAuth();
+  const { lang } = useLang();
   const [currentView, setCurrentView] = useState<AppView>('mood');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -417,14 +419,14 @@ function App() {
           {currentView === 'mood' && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">How are you feeling?</h2>
-                <p className="text-gray-500 dark:text-gray-400">Tell us your mood — we'll find the cat that gets you 🐾</p>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">{t.howFeeling[lang]}</h2>
+                <p className="text-gray-500 dark:text-gray-400">{t.moodSubtitle[lang]}</p>
               </div>
               <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 space-y-4 border border-purple-100 dark:border-gray-700">
-                <textarea value={moodText} onChange={(e) => setMoodText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleMoodMatch(); }}} placeholder="I'm exhausted and done with everything... / 今天心情很烦躁..." className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 resize-none focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none" rows={3} />
+                <textarea value={moodText} onChange={(e) => setMoodText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleMoodMatch(); }}} placeholder={t.moodPlaceholder[lang]} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 resize-none focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none" rows={3} />
                 {moodError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{moodError}</p>}
                 <button onClick={handleMoodMatch} disabled={moodLoading} className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-purple-200 dark:shadow-none">
-                  {moodLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Finding your cat...</>) : '🔮 Find My Mood Cat'}
+                  {moodLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.findingCat[lang]}</>) : t.findCat[lang]}
                 </button>
               </div>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLang } from '../lib/i18n';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,14 +12,15 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, isAnonymous, onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { lang, toggle } = useLang();
 
   const navItems = [
-    { view: 'mood', emoji: '💭', label: 'Mood Match' },
-    { view: 'upload', emoji: '🐱', label: 'Analyze' },
-    { view: 'calendar', emoji: '📅', label: '日历' },
-    { view: 'collection', emoji: '🗂️', label: '图鉴' },
-    { view: 'lootbox', emoji: '📦', label: '盲盒' },
-    { view: 'same-mood', emoji: '🤝', label: '同心情' },
+    { view: 'mood',      emoji: '💭', label: lang === 'zh' ? '心情匹配' : 'Mood Match' },
+    { view: 'upload',    emoji: '🐱', label: lang === 'zh' ? '分析猫咪' : 'Analyze' },
+    { view: 'calendar',  emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
+    { view: 'collection',emoji: '🗂️', label: lang === 'zh' ? '图鉴' : 'Collection' },
+    { view: 'lootbox',   emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
+    { view: 'same-mood', emoji: '🤝', label: lang === 'zh' ? '同心情' : 'Same Mood' },
   ];
 
   return (
@@ -54,6 +56,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   <span>{label}</span>
                 </button>
               ))}
+              {/* Language toggle */}
+              <button
+                onClick={toggle}
+                className="px-3 py-1.5 rounded-full text-sm font-semibold border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-400 hover:text-purple-600 transition-all"
+                title={lang === 'zh' ? 'Switch to English' : '切换中文'}
+              >
+                {lang === 'zh' ? 'EN' : '中文'}
+              </button>
+
               {user ? (
                 <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-full text-sm font-medium text-purple-600 dark:text-purple-400">
                   <span>👤</span>
@@ -118,6 +129,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 className="flex items-center gap-2 w-full text-left px-4 py-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-sm"
               >
                 🔒 Privacy
+              </button>
+              <button
+                onClick={toggle}
+                className="flex items-center gap-2 w-full text-left px-4 py-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-sm"
+              >
+                🌐 {lang === 'zh' ? 'Switch to English' : '切换中文'}
               </button>
             </nav>
           )}
