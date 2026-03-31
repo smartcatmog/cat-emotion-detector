@@ -16,7 +16,7 @@ export default async function handler(req: any, res: any) {
   // Get all users with same emotion today
   const query = supabase
     .from('daily_mood_records')
-    .select('user_id, mood_text, cat_image_id, created_at, users(username, display_name, avatar_url)')
+    .select('user_id, mood_text, cat_image_id, created_at')
     .eq('date', today)
     .eq('emotion_label', emotion_label)
     .order('created_at', { ascending: false })
@@ -27,18 +27,15 @@ export default async function handler(req: any, res: any) {
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
 
-  // Get cat images for those who have one
+  // Enrich with user profile and cat image
   const enriched = await Promise.all((data || []).map(async (record: any) => {
-    let cat_image = null;
-    if (record.cat_image_id) {
-      const { data: img } = await supabase
-        .from('cat_images')
-        .select('image_url, description')
-        .eq('id', record.cat_image_id)
-        .single();
-      cat_image = img;
-    }
-    return { ...record, cat_image };
+    const [userRes, catRes] = await Promise.all([
+      supabase.from('users').select('username, display_name, avatar_url').eq('id', record.user_id).single(),
+      record.cat_image_id
+        ? supabase.from('cat_images').select('image_url, description').eq('id', record.cat_image_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    return { ...record, users: userRes.data, cat_image: catRes.data };
   }));
 
   return res.status(200).json({ data: enriched, count: enriched.length });

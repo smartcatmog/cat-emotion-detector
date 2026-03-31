@@ -19,22 +19,29 @@ export default async function handler(req: any, res: any) {
 
     const { data, error } = await supabase
       .from('user_collections')
-      .select('emotion_label, cat_image_id, collected_at, cat_images(image_url, description)')
+      .select('emotion_label, cat_image_id, collected_at')
       .eq('user_id', user_id)
       .order('collected_at', { ascending: false });
 
     if (error) return res.status(500).json({ error: error.message });
 
+    // Enrich with cat image data
+    const enriched = await Promise.all((data || []).map(async (item: any) => {
+      const { data: img } = await supabase
+        .from('cat_images').select('image_url, description').eq('id', item.cat_image_id).single();
+      return { ...item, cat_images: img };
+    }));
+
     // Group by emotion
     const byEmotion: Record<string, any[]> = {};
     ALL_EMOTIONS.forEach(e => { byEmotion[e] = []; });
-    (data || []).forEach((item: any) => {
+    enriched.forEach((item: any) => {
       if (byEmotion[item.emotion_label]) byEmotion[item.emotion_label].push(item);
     });
 
     const unlocked = Object.keys(byEmotion).filter(e => byEmotion[e].length > 0).length;
 
-    return res.status(200).json({ by_emotion: byEmotion, total: data?.length || 0, unlocked, total_emotions: ALL_EMOTIONS.length });
+    return res.status(200).json({ by_emotion: byEmotion, total: enriched.length, unlocked, total_emotions: ALL_EMOTIONS.length });
   }
 
   if (req.method === 'POST') {
