@@ -13,6 +13,14 @@ export default async function handler(req: any, res: any) {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Ensure user exists in public.users
+  const { data: existingUser } = await supabase.from('users').select('id').eq('id', user_id).single();
+  if (!existingUser) {
+    // Create a minimal user record using the user_id as fallback username
+    const fallbackUsername = `user_${user_id.replace(/-/g, '').substring(0, 12)}`;
+    await supabase.from('users').insert({ id: user_id, username: fallbackUsername, display_name: fallbackUsername });
+  }
+
   // Upsert today's mood record
   const { data, error } = await supabase
     .from('daily_mood_records')
@@ -21,7 +29,7 @@ export default async function handler(req: any, res: any) {
     .select()
     .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return res.status(500).json({ error: error.message, detail: error.details, hint: error.hint });
 
   // Find same-mood users today and create match records
   const { data: sameUsers } = await supabase
