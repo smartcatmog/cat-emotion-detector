@@ -47,6 +47,32 @@ export function LootboxPage({ userId }: { userId?: string }) {
   const openBox = async (boxId: string) => {
     setOpening(boxId);
     setReward(null);
+    
+    const box = boxes.find(b => b.id === boxId);
+    
+    // 游客模式：随机获取一张猫图
+    if (!userId || box?.is_guest) {
+      try {
+        const res = await fetch('/api/social/lootbox?guest=true');
+        const data = await res.json();
+        if (res.ok && data.cat_image) {
+          setReward({
+            ...data,
+            is_guest: true,
+          });
+          // 移除已开启的盲盒
+          setBoxes(prev => prev.filter(b => b.id !== boxId));
+          setGuestBoxCount(prev => prev - 1);
+        }
+      } catch (err) {
+        console.error('Guest lootbox error:', err);
+      } finally {
+        setOpening(null);
+      }
+      return;
+    }
+
+    // 登录用户模式
     try {
       const res = await fetch('/api/social/lootbox', {
         method: 'POST',
@@ -57,7 +83,6 @@ export function LootboxPage({ userId }: { userId?: string }) {
       if (res.ok) {
         setReward(data);
         // Move box from unopened to opened locally
-        const box = boxes.find(b => b.id === boxId);
         if (box) {
           setBoxes(prev => prev.filter(b => b.id !== boxId));
           setOpenedBoxes(prev => [{ ...box, is_opened: true }, ...prev]);
@@ -88,7 +113,11 @@ export function LootboxPage({ userId }: { userId?: string }) {
               {reward.cat_image.description && (
                 <p className="text-sm text-gray-500 italic">"{reward.cat_image.description}"</p>
               )}
-              <p className="text-xs text-green-600">已自动加入你的图鉴 ✓</p>
+              {reward.is_guest ? (
+                <p className="text-xs text-yellow-600">👻 游客模式 · 登录后可永久收藏</p>
+              ) : (
+                <p className="text-xs text-green-600">已自动加入你的图鉴 ✓</p>
+              )}
             </>
           ) : (
             <p className="text-gray-500">暂无猫图，稍后再试</p>
@@ -109,7 +138,9 @@ export function LootboxPage({ userId }: { userId?: string }) {
             {boxes.length === 0 ? (
               <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
                 <div className="text-4xl">📭</div>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">暂无盲盒，打卡后自动获得</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {userId ? '暂无盲盒，打卡后自动获得' : '体验盲盒已用完，登录后可获得更多'}
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
