@@ -177,9 +177,15 @@ export async function saveMoodFeedback(moodText: string, aiEmotion: string, user
 
 // Update a cat image's emotion label (user correction)
 export async function updateCatEmotion(catId: string, newEmotion: string) {
-  const { error } = await supabase
+  console.log('[updateCatEmotion] updating', catId, '->', newEmotion);
+  const { data, error } = await supabase
     .from('cat_images')
     .update({ emotion_label: newEmotion })
-    .eq('id', catId);
-  if (error) console.error('updateCatEmotion failed:', error);
+    .eq('id', catId)
+    .select();
+  if (error) {
+    console.error('[updateCatEmotion] FAILED:', error.message, error.details);
+  } else {
+    console.log('[updateCatEmotion] success:', data);
+  }
 }
