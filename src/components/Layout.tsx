@@ -22,6 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     { view: 'collection',emoji: '🗂️', label: lang === 'zh' ? '图鉴' : 'Collection' },
     { view: 'lootbox',   emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
     { view: 'same-mood', emoji: '🤝', label: lang === 'zh' ? '同心情' : 'Same Mood' },
+    { view: 'nft-preview', emoji: '🎨', label: lang === 'zh' ? 'NFT设计' : 'NFT Design' },
   ];
 
   return (

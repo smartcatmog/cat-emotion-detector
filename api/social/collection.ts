@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
     // Batch fetch cat images to avoid N+1
     const catImageIds = [...new Set((data || []).map((item: any) => item.cat_image_id).filter(Boolean))];
     const { data: catImages } = catImageIds.length > 0
-      ? await supabase.from('cat_images').select('id, image_url, description').in('id', catImageIds)
+      ? await supabase.from('cat_images').select('id, image_url, description, is_nft, nft_token_id, nft_rarity').in('id', catImageIds)
       : { data: [] };
     const catImageMap: Record<string, any> = {};
     (catImages || []).forEach((img: any) => { catImageMap[img.id] = img; });

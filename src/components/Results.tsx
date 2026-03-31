@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
 import { saveFeedback, updateCatEmotion } from '../lib/supabase';
 import { ShareCard } from './ShareCard';
+import { NFTCertificate } from './NFTCertificate';
 
 const EMOTION_LABELS: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
@@ -23,6 +24,9 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
   const [correctedEmotion, setCorrectedEmotion] = useState<string | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [nftData, setNftData] = useState<any>(null);
+  const [minting, setMinting] = useState(false);
+  const [mintError, setMintError] = useState<string | null>(null);
 
   const primaryEmotion = correctedEmotion || result.emotions?.[0]?.type || '';
   const confidence = result.emotions?.[0]?.confidence || 0;
@@ -34,6 +38,47 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
 
   const handleInaccurate = () => {
     setFeedbackState('wrong');
+  };
+
+  const handleMintNFT = async () => {
+    if (!result.galleryId) {
+      setMintError('This image is not in the gallery. Please upload with "Add to gallery" enabled.');
+      return;
+    }
+
+    setMinting(true);
+    setMintError(null);
+
+    try {
+      const response = await fetch('/api/mint-nft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cat_image_id: result.galleryId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 409 && data.nft) {
+          // 已经铸造过了
+          setNftData(data.nft);
+        } else {
+          throw new Error(data.error || 'Failed to mint NFT');
+        }
+      } else {
+        setNftData(data.nft);
+      }
+    } catch (error) {
+      setMintError(error instanceof Error ? error.message : 'Failed to mint NFT');
+    } finally {
+      setMinting(false);
+    }
+  };
+
+  const downloadNFTCertificate = () => {
+    // 简单实现：打开新窗口让用户截图
+    // 更好的实现：使用 html2canvas 生成图片
+    alert('Right-click the certificate and select "Save Image As..." to download');
   };
 
   return (
@@ -157,21 +202,88 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
         </div>
 
         {/* 操作按钮 */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 flex gap-3">
-          <button
-            onClick={onAnalyzeAnother}
-            className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
-          >
-            Analyze Another
-          </button>
-          <button
-            onClick={() => setShowShareCard(true)}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-          >
-            🔗 Share
-          </button>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-3">
+          {/* NFT 铸造按钮 */}
+          {result.galleryId && !nftData && (
+            <button
+              onClick={handleMintNFT}
+              disabled={minting}
+              className="w-full px-4 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+            >
+              {minting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  铸造中...
+                </>
+              ) : (
+                <>
+                  🏆 铸造 NFT 证书
+                </>
+              )}
+            </button>
+          )}
+
+          {mintError && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg text-center">
+              {mintError}
+            </p>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onAnalyzeAnother}
+              className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            >
+              Analyze Another
+            </button>
+            <button
+              onClick={() => setShowShareCard(true)}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+            >
+              🔗 Share
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* NFT 证书展示 */}
+      {nftData && (
+        <div className="mt-8 space-y-4">
+          <div className="text-center">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-2">
+              🎉 NFT 铸造成功！
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              你的猫咪已经成为独一无二的数字收藏品
+            </p>
+          </div>
+          
+          <NFTCertificate
+            imageUrl={result.thumbnailUrl || ''}
+            tokenId={nftData.token_id}
+            emotion={nftData.emotion_label}
+            emotionChinese={primaryEmotion}
+            mintDate={new Date(nftData.minted_at).toLocaleDateString('zh-CN')}
+            rarity={nftData.rarity}
+            petName={nftData.pet_name}
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={downloadNFTCertificate}
+              className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
+            >
+              ⬇️ 下载证书
+            </button>
+            <button
+              onClick={() => setShowShareCard(true)}
+              className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors"
+            >
+              🔗 分享 NFT
+            </button>
+          </div>
+        </div>
+      )}
 
       {showShareCard && (
         <ShareCard

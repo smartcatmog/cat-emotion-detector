@@ -12,12 +12,13 @@ import { CalendarPage } from './pages/CalendarPage';
 import { CollectionPage } from './pages/CollectionPage';
 import { LootboxPage } from './pages/LootboxPage';
 import { SameMoodPage } from './pages/SameMoodPage';
+import { NFTPreviewPage } from './pages/NFTPreviewPage';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { useLang, t } from './lib/i18n';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood' | 'nft-preview';
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
@@ -306,6 +307,7 @@ function App() {
     const path = window.location.pathname;
     if (path === '/privacy') setCurrentView('privacy');
     else if (path === '/history') setCurrentView('history');
+    else if (path === '/nft-preview') setCurrentView('nft-preview');
     else setCurrentView('mood');
   }, []);
 
@@ -313,6 +315,7 @@ function App() {
     window.scrollTo(0, 0);
     if (currentView === 'privacy') window.history.pushState({}, '', '/privacy');
     else if (currentView === 'history') window.history.pushState({}, '', '/history');
+    else if (currentView === 'nft-preview') window.history.pushState({}, '', '/nft-preview');
     else window.history.pushState({}, '', '/');
   }, [currentView]);
 
@@ -662,6 +665,9 @@ function App() {
               ? <SameMoodPage userId={user!.id} currentEmotion={moodResult?.emotion_label} />
               : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="同心情广场" />
           )}
+          
+          {/* NFT Preview Page */}
+          {currentView === 'nft-preview' && <NFTPreviewPage />}
         </div>
 
         {tipCat && <TipModal cat={tipCat} onClose={() => setTipCat(null)} />}
