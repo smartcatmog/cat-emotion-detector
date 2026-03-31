@@ -163,3 +163,14 @@ export async function saveFeedback(analysisId: string, isAccurate: boolean, corr
   }]);
   if (error) throw error;
 }
+
+// Save mood match feedback (user disagrees with AI emotion mapping)
+export async function saveMoodFeedback(moodText: string, aiEmotion: string, userEmotion: string) {
+  const { error } = await supabase.from('mood_feedback').insert([{
+    mood_text: moodText,
+    ai_emotion: aiEmotion,
+    user_emotion: userEmotion,
+    created_at: new Date().toISOString(),
+  }]);
+  if (error) console.error('mood feedback save failed:', error);
+}

@@ -8,7 +8,7 @@ import { DataAnnotation } from './components/DataAnnotation';
 import { Privacy } from './components/Privacy';
 import { ShareButton } from './components/ShareButton';
 import { AnalysisResult } from './types';
-import { saveAnalysisResult } from './lib/supabase';
+import { saveAnalysisResult, saveMoodFeedback } from './lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood';
@@ -181,6 +181,7 @@ function App() {
   const [moodResult, setMoodResult] = useState<any>(null);
   const [moodLoading, setMoodLoading] = useState(false);
   const [moodError, setMoodError] = useState<string | null>(null);
+  const [moodFeedback, setMoodFeedback] = useState<'idle' | 'picking' | 'done'>('idle');
   const [petName, setPetName] = useState('');
   const [socialLink, setSocialLink] = useState('');
   const [saveToGallery, setSaveToGallery] = useState(true);
@@ -216,6 +217,7 @@ function App() {
       if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Match failed'); }
       const data = await response.json();
       setMoodResult(data.data);
+      setMoodFeedback('idle');
     } catch (err) {
       setMoodError(err instanceof Error ? err.message : 'Something went wrong');
     } finally { setMoodLoading(false); }
@@ -322,6 +324,70 @@ function App() {
                       ))}
                     </div>
                   )}
+
+                  {/* Mood feedback */}
+                  <div className="max-w-xl mx-auto">
+                    {moodFeedback === 'idle' && (
+                      <div className="flex items-center justify-center gap-3 py-2">
+                        <span className="text-sm text-gray-400">不是这个感觉？</span>
+                        <button
+                          onClick={() => setMoodFeedback('picking')}
+                          className="text-sm text-purple-500 hover:text-purple-700 font-medium underline underline-offset-2 transition-colors"
+                        >
+                          告诉我你真正的心情 →
+                        </button>
+                      </div>
+                    )}
+
+                    {moodFeedback === 'picking' && (
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-purple-100 dark:border-gray-700 p-4 space-y-3 shadow-sm">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+                          你觉得 <span className="text-purple-600 font-bold">"{moodText}"</span> 更接近哪种感觉？
+                        </p>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {Object.entries(EMOTION_EMOJI).map(([emotion, emoji]) => (
+                            <button
+                              key={emotion}
+                              onClick={async () => {
+                                await saveMoodFeedback(moodText, moodResult.emotion_label, emotion);
+                                // 用用户选的情绪重新搜索猫
+                                setMoodLoading(true);
+                                setMoodFeedback('done');
+                                try {
+                                  const res = await fetch('/api/mood-match', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ mood_text: emotion }), // 直接用情绪标签搜索
+                                  });
+                                  const data = await res.json();
+                                  if (data.data) setMoodResult({ ...data.data, emotion_label: emotion });
+                                } catch {/* silent */} finally { setMoodLoading(false); }
+                              }}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all border
+                                ${moodResult.emotion_label === emotion
+                                  ? 'bg-purple-100 border-purple-300 text-purple-700'
+                                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300 hover:text-purple-600'
+                                }`}
+                            >
+                              {emoji} {emotion}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setMoodFeedback('idle')}
+                          className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    )}
+
+                    {moodFeedback === 'done' && (
+                      <p className="text-center text-sm text-green-600 dark:text-green-400 py-2">
+                        谢谢反馈，已为你重新匹配 🐱
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
