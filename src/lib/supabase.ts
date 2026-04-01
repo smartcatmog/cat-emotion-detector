@@ -192,19 +192,21 @@ export async function updateCatEmotion(catId: string, newEmotion: string) {
 
 // Auth functions
 export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  console.log('[signUp] supabaseUrl:', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'MISSING');
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    throw new Error('Supabase URL 未配置，请联系管理员');
+  }
+  const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
   return data;
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  console.log('[signIn] supabaseUrl:', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'MISSING');
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    throw new Error('Supabase URL 未配置，请联系管理员');
+  }
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
 }
