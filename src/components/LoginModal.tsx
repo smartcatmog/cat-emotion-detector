@@ -53,11 +53,18 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
 
       if (data.session) {
         // 用服务端返回的 session 设置客户端登录状态
-        await supabase.auth.setSession({
+        // 直接存储到 localStorage，绕过 SDK 的安全限制
+        const storageKey = `sb-gfrbubfyznmkqchwjhtn-auth-token`;
+        localStorage.setItem(storageKey, JSON.stringify({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
-        });
-        onSuccess();
+          expires_at: data.session.expires_at,
+          expires_in: data.session.expires_in,
+          token_type: 'bearer',
+          user: data.user,
+        }));
+        // 刷新页面让 Supabase SDK 自动读取 session
+        window.location.reload();
       } else {
         setError('注册成功！请检查邮箱确认后登录，或直接尝试登录');
         setMode('login');
