@@ -14,7 +14,9 @@ export default async function handler(req: any, res: any) {
   const y = parseInt(year) || new Date().getFullYear();
   const m = parseInt(month) || new Date().getMonth() + 1;
   const from = `${y}-${String(m).padStart(2, '0')}-01`;
-  const to = `${y}-${String(m).padStart(2, '0')}-31`;
+  // 用下个月第一天减一天，得到正确的月末日期
+  const lastDay = new Date(y, m, 0).getDate();
+  const to = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
   const { data, error } = await supabase
     .from('daily_mood_records')
