@@ -447,10 +447,11 @@ function App() {
 
       // Auto check-in if logged in
       if (user && data.data?.emotion_label) {
+        const firstCatId = data.data.cats?.[0]?.id || null;
         fetch('/api/social/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: user.id, emotion_label: data.data.emotion_label, mood_text: moodText }),
+          body: JSON.stringify({ user_id: user.id, emotion_label: data.data.emotion_label, mood_text: moodText, cat_image_id: firstCatId }),
         }).then(async r => {
           const d = await r.json();
           if (!r.ok) { console.error('[checkin] failed:', r.status, d); return; }

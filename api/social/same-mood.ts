@@ -79,7 +79,11 @@ export default async function handler(req: any, res: any) {
 
   const enriched = records.map((record: any) => ({
     ...record,
-    users: userMap[record.user_id] || null,
+    users: userMap[record.user_id] || {
+      display_name: `用户${record.user_id.substring(0, 6)}`,
+      username: `用户${record.user_id.substring(0, 6)}`,
+      social_link: null,
+    },
     cat_image: record.cat_image_id ? catMap[record.cat_image_id] || null : null,
     streak: streakMap[record.user_id] || 1,
   }));
