@@ -37,7 +37,10 @@ export default async function handler(req: any, res: any) {
 
     if (action === 'signin') {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return res.status(400).json({ error: error.message });
+      if (error) {
+        console.error('[auth] signin error:', error.message, error.status);
+        return res.status(400).json({ error: error.message });
+      }
       return res.status(200).json({ user: data.user, session: data.session });
     }
 
