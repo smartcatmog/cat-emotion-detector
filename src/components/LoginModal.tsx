@@ -60,9 +60,10 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       if (mode === 'signup') {
         console.log('[LoginModal] Calling signUp...');
         const data = await signUp(email, password);
-        console.log('[LoginModal] signUp result:', data);
-        // Create profile in public.users
+        console.log('[LoginModal] signUp result:', JSON.stringify(data));
+        
         if (data.user) {
+          console.log('[LoginModal] User created, inserting profile...');
           const { error: insertError } = await supabase.from('users').insert({
             id: data.user.id,
             email,
@@ -72,27 +73,38 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
           
           if (insertError) {
             console.error('Profile creation failed:', insertError);
-            setError(`注册失败: ${insertError.message}`);
-            return;
+            // 即使 profile 创建失败，用户已经注册了，可以继续
+            // 不要阻止登录
+            console.warn('Profile insert failed but user was created, proceeding...');
           }
           onSuccess();
         } else {
-          // Email confirmation required
-          setError('注册成功！请检查邮箱点击确认链接后再登录');
+          // data.session 也是 null 说明需要邮件确认
+          console.log('[LoginModal] No user in response, email confirmation may be required');
+          setError('注册成功！如需邮件确认，请检查邮箱。或直接尝试登录。');
           setMode('login');
         }
       } else {
         console.log('[LoginModal] Calling signIn...');
         const result = await signIn(email, password);
-        console.log('[LoginModal] signIn result:', result);
+        console.log('[LoginModal] signIn result:', result ? 'success' : 'null');
         onSuccess();
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.message || 'Authentication failed');
+      const msg = err.message || '';
+      if (msg.includes('Invalid login credentials')) {
+        setError('邮箱或密码错误');
+      } else if (msg.includes('Email not confirmed')) {
+        setError('请先确认邮箱，检查你的收件箱');
+      } else if (msg.includes('User already registered')) {
+        setError('该邮箱已注册，请直接登录');
+        setMode('login');
+      } else {
+        setError(msg || '操作失败，请重试');
+      }
     } finally {
       setLoading(false);
-      console.log('[LoginModal] Auth completed');
     }
   };
 
