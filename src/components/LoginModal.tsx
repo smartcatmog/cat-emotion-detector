@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { signIn, signUp, supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -28,34 +27,47 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
 
     setLoading(true);
     try {
-      if (mode === 'signup') {
-        const data = await signUp(email, password);
-        if (data.user) {
-          // 创建用户 profile，用户名重复由数据库 UNIQUE 约束处理
-          const { error: insertError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email,
-            username,
-            display_name: username,
-          });
-          if (insertError?.code === '23505') {
-            setError('用户名已被占用，换一个试试');
-            return;
-          }
-          onSuccess();
-        } else {
-          setError('注册成功！请直接登录');
-          setMode('login');
-        }
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: mode === 'signup' ? 'signup' : 'signin',
+          email,
+          password,
+          username,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data.error || '操作失败';
+        if (msg.includes('Invalid login credentials')) setError('邮箱或密码错误');
+        else if (msg.includes('User already registered')) { setError('该邮箱已注册，请直接登录'); setMode('login'); }
+        else if (msg.includes('already exists') || msg.includes('23505')) setError('用户名已被占用，换一个试试');
+        else setError(msg);
+        return;
+      }
+
+      if (data.session) {
+        // 直接写入 localStorage，然后刷新页面
+        // 完全绕过 Supabase SDK（被 SES 沙箱阻止）
+        const key = `sb-gfrbubfyznmkqchwjhtn-auth-token`;
+        localStorage.setItem(key, JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: data.session.expires_at,
+          expires_in: data.session.expires_in,
+          token_type: 'bearer',
+          user: data.user,
+        }));
+        window.location.reload();
       } else {
-        await signIn(email, password);
-        onSuccess();
+        setError('注册成功！请直接登录');
+        setMode('login');
       }
     } catch (err: any) {
-      const msg = err.message || '';
-      if (msg.includes('Invalid login credentials')) setError('邮箱或密码错误');
-      else if (msg.includes('User already registered')) { setError('该邮箱已注册，请直接登录'); setMode('login'); }
-      else setError(msg || '操作失败，请重试');
+      setError('网络错误，请重试');
     } finally {
       setLoading(false);
     }
