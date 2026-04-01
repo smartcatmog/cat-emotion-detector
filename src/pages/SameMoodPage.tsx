@@ -22,8 +22,26 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [socialLink, setSocialLink] = useState('');
+  const [socialPlatform, setSocialPlatform] = useState('twitter');
   const [savingLink, setSavingLink] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const [savedMsg, setSavedMsg] = useState('');
+
+  const PLATFORMS = [
+    { id: 'twitter', label: 'X / Twitter', prefix: 'https://x.com/', placeholder: 'username' },
+    { id: 'instagram', label: 'Instagram', prefix: 'https://instagram.com/', placeholder: 'username' },
+    { id: 'tiktok', label: 'TikTok', prefix: 'https://tiktok.com/@', placeholder: 'username' },
+    { id: 'weibo', label: '微博', prefix: 'https://weibo.com/u/', placeholder: '用户名或ID' },
+    { id: 'xiaohongshu', label: '小红书', prefix: 'https://www.xiaohongshu.com/user/profile/', placeholder: '用户ID' },
+    { id: 'custom', label: '其他链接', prefix: '', placeholder: 'https://...' },
+  ];
+
+  const buildLink = () => {
+    const platform = PLATFORMS.find(p => p.id === socialPlatform);
+    if (!platform || !socialLink.trim()) return '';
+    if (socialPlatform === 'custom') return socialLink.trim();
+    return `${platform.prefix}${socialLink.trim().replace('@', '')}`;
+  };
 
   const search = (e: string) => {
     if (!e) return;
@@ -35,15 +53,19 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
   };
 
   const saveSocialLink = async () => {
-    if (!socialLink.trim()) return;
+    const link = buildLink();
+    if (!link) return;
     setSavingLink(true);
     try {
-      await fetch('/api/social/update-profile', {
+      const res = await fetch('/api/social/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, social_link: socialLink.trim() }),
+        body: JSON.stringify({ user_id: userId, social_link: link }),
       });
-      setShowLinkInput(false);
+      if (res.ok) {
+        setSavedMsg('✅ 已保存！');
+        setTimeout(() => { setSavedMsg(''); setShowLinkInput(false); }, 2000);
+      }
     } finally {
       setSavingLink(false);
     }
@@ -65,19 +87,40 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
             📱 设置我的社交媒体链接
           </button>
         ) : (
-          <div className="flex gap-2 max-w-sm mx-auto mt-2">
-            <input
-              type="text"
-              value={socialLink}
-              onChange={e => setSocialLink(e.target.value)}
-              placeholder="instagram.com/yourname 或 twitter.com/..."
-              className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-            />
-            <button onClick={saveSocialLink} disabled={savingLink}
-              className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 disabled:opacity-50">
-              {savingLink ? '...' : '保存'}
-            </button>
-            <button onClick={() => setShowLinkInput(false)} className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600">✕</button>
+          <div className="max-w-sm mx-auto mt-2 space-y-2">
+            {/* 平台选择 */}
+            <div className="flex flex-wrap gap-1 justify-center">
+              {PLATFORMS.map(p => (
+                <button key={p.id} onClick={() => setSocialPlatform(p.id)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all
+                    ${socialPlatform === p.id ? 'bg-purple-500 text-white border-purple-500' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-purple-300'}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {/* 用户名输入 */}
+            <div className="flex gap-2">
+              {socialPlatform !== 'custom' && (
+                <span className="flex items-center text-xs text-gray-400 whitespace-nowrap">
+                  {PLATFORMS.find(p => p.id === socialPlatform)?.prefix}
+                </span>
+              )}
+              <input type="text" value={socialLink} onChange={e => setSocialLink(e.target.value)}
+                placeholder={PLATFORMS.find(p => p.id === socialPlatform)?.placeholder}
+                className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none min-w-0" />
+              <button onClick={saveSocialLink} disabled={savingLink || !socialLink.trim()}
+                className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 disabled:opacity-50 whitespace-nowrap">
+                {savingLink ? '...' : '保存'}
+              </button>
+              <button onClick={() => setShowLinkInput(false)} className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            {/* 预览链接 */}
+            {socialLink.trim() && (
+              <p className="text-xs text-gray-400 text-center">
+                链接：<a href={buildLink()} target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">{buildLink()}</a>
+              </p>
+            )}
+            {savedMsg && <p className="text-xs text-green-500 text-center">{savedMsg}</p>}
           </div>
         )}
       </div>
