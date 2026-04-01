@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn, signUp, supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -20,66 +20,50 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    console.log('[LoginModal] handleSubmit started, mode:', mode);
 
-    if (mode === 'signup') {
-      if (!validateUsername(username)) {
-        setError('用户名 2-20 字符，支持中文、英文、数字、下划线');
-        return;
-      }
+    if (mode === 'signup' && !validateUsername(username)) {
+      setError('用户名 2-20 字符，支持中文、英文、数字、下划线');
+      return;
     }
 
-    console.log('[LoginModal] Starting auth...');
     setLoading(true);
     try {
-      if (mode === 'signup') {
-        console.log('[LoginModal] Calling signUp...');
-        const data = await signUp(email, password);
-        console.log('[LoginModal] signUp result:', JSON.stringify(data));
-        
-        if (data.user) {
-          console.log('[LoginModal] User created, inserting profile...');
-          const { error: insertError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email,
-            username,
-            display_name: username,
-          });
-          
-          if (insertError) {
-            console.error('Profile creation failed:', insertError);
-            if (insertError.code === '23505') {
-              setError('用户名已被占用，换一个试试');
-            }
-            // 即使 profile 创建失败，用户已经注册了，可以继续
-            return;
-          }
-          onSuccess();
-        } else {
-          // data.session 也是 null 说明需要邮件确认
-          console.log('[LoginModal] No user in response, email confirmation may be required');
-          setError('注册成功！如需邮件确认，请检查邮箱。或直接尝试登录。');
-          setMode('login');
-        }
-      } else {
-        console.log('[LoginModal] Calling signIn...');
-        const result = await signIn(email, password);
-        console.log('[LoginModal] signIn result:', result ? 'success' : 'null');
+      // 通过服务端 API 认证，绕过浏览器安全限制
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: mode === 'signup' ? 'signup' : 'signin',
+          email,
+          password,
+          username,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data.error || '操作失败';
+        if (msg.includes('Invalid login credentials')) setError('邮箱或密码错误');
+        else if (msg.includes('User already registered')) { setError('该邮箱已注册，请直接登录'); setMode('login'); }
+        else if (msg.includes('already exists') || msg.includes('23505')) setError('用户名已被占用，换一个试试');
+        else setError(msg);
+        return;
+      }
+
+      if (data.session) {
+        // 用服务端返回的 session 设置客户端登录状态
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
         onSuccess();
+      } else {
+        setError('注册成功！请检查邮箱确认后登录，或直接尝试登录');
+        setMode('login');
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
-      const msg = err.message || '';
-      if (msg.includes('Invalid login credentials')) {
-        setError('邮箱或密码错误');
-      } else if (msg.includes('Email not confirmed')) {
-        setError('请先确认邮箱，检查你的收件箱');
-      } else if (msg.includes('User already registered')) {
-        setError('该邮箱已注册，请直接登录');
-        setMode('login');
-      } else {
-        setError(msg || '操作失败，请重试');
-      }
+      setError('网络错误，请重试');
     } finally {
       setLoading(false);
     }
