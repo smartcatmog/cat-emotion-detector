@@ -50,16 +50,17 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       }
 
       if (data.session) {
-        // 直接写入 localStorage，然后刷新页面
-        // 完全绕过 Supabase SDK（被 SES 沙箱阻止）
-        const key = `sb-gfrbubfyznmkqchwjhtn-auth-token`;
-        localStorage.setItem(key, JSON.stringify({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-          expires_at: data.session.expires_at,
-          expires_in: data.session.expires_in,
-          token_type: 'bearer',
-          user: data.user,
+        // 写入 Supabase SDK 期望的 localStorage key
+        localStorage.setItem('supabase.auth.token', JSON.stringify({
+          currentSession: {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+            expires_in: data.session.expires_in,
+            token_type: 'bearer',
+            user: data.user,
+          },
+          expiresAt: data.session.expires_at,
         }));
         window.location.reload();
       } else {
