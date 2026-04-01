@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { saveSession } from '../hooks/useAuth';
 
 interface LoginModalProps {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (user: { id: string; email: string; username?: string }) => void;
   onAnonymous: () => void;
 }
 
@@ -30,12 +31,7 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: mode === 'signup' ? 'signup' : 'signin',
-          email,
-          password,
-          username,
-        }),
+        body: JSON.stringify({ action: mode === 'signup' ? 'signup' : 'signin', email, password, username }),
       });
 
       const data = await res.json();
@@ -49,20 +45,16 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         return;
       }
 
-      if (data.session) {
-        // 写入 Supabase SDK 期望的 localStorage key
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
-          currentSession: {
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-            expires_at: data.session.expires_at,
-            expires_in: data.session.expires_in,
-            token_type: 'bearer',
-            user: data.user,
-          },
-          expiresAt: data.session.expires_at,
-        }));
-        window.location.reload();
+      if (data.session && data.user) {
+        const user = {
+          id: data.user.id,
+          email: data.user.email,
+          username: data.username || username || data.user.email?.split('@')[0],
+        };
+        // 保存 session 到 localStorage
+        saveSession(user, data.session.access_token, data.session.expires_at);
+        // 直接通知父组件，不需要刷新页面
+        onSuccess(user);
       } else {
         setError('注册成功！请直接登录');
         setMode('login');
@@ -103,77 +95,46 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
                 />
               </div>
             )}
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
-                required
-              />
+                required />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 密码 <span className="text-gray-400 font-normal">（至少6位）</span>
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
-                required
-                minLength={6}
-              />
+                required minLength={6} />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
               {loading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
             </button>
           </form>
 
           <div className="text-center">
-            <button
-              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
-              className="text-sm text-purple-500 hover:text-purple-700 font-medium"
-            >
+            <button onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
+              className="text-sm text-purple-500 hover:text-purple-700 font-medium">
               {mode === 'login' ? '没有账号？点击注册' : '已有账号？点击登录'}
             </button>
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">或者</span>
-            </div>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-gray-700" /></div>
+            <div className="relative flex justify-center text-sm"><span className="px-2 bg-white dark:bg-gray-800 text-gray-500">或者</span></div>
           </div>
 
-          <button
-            onClick={onAnonymous}
-            className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
-          >
+          <button onClick={onAnonymous}
+            className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
             👻 游客模式（基础功能）
           </button>
-
-          <button onClick={onClose} className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors">
-            关闭
-          </button>
+          <button onClick={onClose} className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors">关闭</button>
         </div>
       </div>
     </div>

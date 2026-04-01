@@ -1,10 +1,50 @@
 import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase, getCurrentUser } from '../lib/supabase';
+
+// 完全不依赖 Supabase SDK，用自己的 session 管理
+const SESSION_KEY = 'moodcat_session';
+
+export interface MoodCatUser {
+  id: string;
+  email: string;
+  username?: string;
+}
+
+function getStoredSession(): MoodCatUser | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    // 检查是否过期
+    if (session.expires_at && Date.now() / 1000 > session.expires_at) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session.user || null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveSession(user: MoodCatUser, accessToken: string, expiresAt: number) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ user, access_token: accessToken, expires_at: expiresAt }));
+}
+
+export function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+export function getAccessToken(): string | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw).access_token || null;
+  } catch {
+    return null;
+  }
+}
 
 interface AuthState {
-  user: User | null;
-  username: string | null;
+  user: MoodCatUser | null;
   isAnonymous: boolean;
   isLoading: boolean;
 }
@@ -12,54 +52,43 @@ interface AuthState {
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
-    username: null,
     isAnonymous: false,
     isLoading: true,
   });
 
-  const fetchUsername = async (userId: string) => {
-    const { data } = await supabase.from('users').select('username, display_name').eq('id', userId).single();
-    return data?.display_name || data?.username || null;
-  };
-
   useEffect(() => {
-    getCurrentUser().then(async user => {
-      if (user) {
-        const username = await fetchUsername(user.id);
-        setAuthState({ user, username, isAnonymous: false, isLoading: false });
-      } else {
-        const anonId = localStorage.getItem('anon_user_id');
-        setAuthState({ user: null, username: null, isAnonymous: !!anonId, isLoading: false });
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // 忽略 null session 事件，避免误清除登录状态
-      if (event === 'SIGNED_OUT') {
-        setAuthState({ user: null, username: null, isAnonymous: false, isLoading: false });
-        return;
-      }
-      if (session?.user) {
-        const username = await fetchUsername(session.user.id);
-        setAuthState({ user: session.user, username, isAnonymous: false, isLoading: false });
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    const user = getStoredSession();
+    if (user) {
+      setAuthState({ user, isAnonymous: false, isLoading: false });
+    } else {
+      const anonId = localStorage.getItem('anon_user_id');
+      setAuthState({ user: null, isAnonymous: !!anonId, isLoading: false });
+    }
   }, []);
 
   const setAnonymousMode = () => {
     const anonId = localStorage.getItem('anon_user_id') || `anon_${Date.now()}_${Math.random().toString(36).substring(2)}`;
     localStorage.setItem('anon_user_id', anonId);
-    setAuthState({ user: null, username: null, isAnonymous: true, isLoading: false });
+    setAuthState({ user: null, isAnonymous: true, isLoading: false });
+  };
+
+  const login = (user: MoodCatUser) => {
+    setAuthState({ user, isAnonymous: false, isLoading: false });
+  };
+
+  const logout = () => {
+    clearSession();
+    setAuthState({ user: null, isAnonymous: false, isLoading: false });
   };
 
   return {
     user: authState.user,
-    username: authState.username,
+    username: authState.user?.username || null,
     isAnonymous: authState.isAnonymous,
     isAuthenticated: !!authState.user,
     isLoading: authState.isLoading,
     setAnonymousMode,
+    login,
+    logout,
   };
 }

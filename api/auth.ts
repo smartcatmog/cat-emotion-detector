@@ -30,7 +30,7 @@ export default async function handler(req: any, res: any) {
         if (insertError && insertError.code !== '23505') {
           console.error('Profile insert error:', insertError);
         }
-        return res.status(200).json({ user: data.user, session: data.session });
+        return res.status(200).json({ user: data.user, session: data.session, username });
       }
       return res.status(200).json({ message: 'Check your email to confirm registration' });
     }
@@ -41,7 +41,10 @@ export default async function handler(req: any, res: any) {
         console.error('[auth] signin error:', error.message, error.status);
         return res.status(400).json({ error: error.message });
       }
-      return res.status(200).json({ user: data.user, session: data.session });
+      // 查询用户名
+      const { data: profile } = await supabase.from('users').select('username, display_name').eq('id', data.user.id).single();
+      const username = profile?.display_name || profile?.username || email.split('@')[0];
+      return res.status(200).json({ user: data.user, session: data.session, username });
     }
 
     return res.status(400).json({ error: 'Invalid action' });

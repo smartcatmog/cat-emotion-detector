@@ -381,7 +381,7 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
 }
 
 function App() {
-  const { user, username, isAnonymous, isAuthenticated, setAnonymousMode } = useAuth();
+  const { user, username, isAnonymous, isAuthenticated, setAnonymousMode, login } = useAuth();
   const { lang } = useLang();
   const [currentView, setCurrentView] = useState<AppView>('mood');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -808,7 +808,10 @@ function App() {
         {showLoginModal && (
           <LoginModal
             onClose={() => setShowLoginModal(false)}
-            onSuccess={() => setShowLoginModal(false)}
+            onSuccess={(user) => {
+              login(user);
+              setShowLoginModal(false);
+            }}
             onAnonymous={() => {
               setAnonymousMode();
               setShowLoginModal(false);
