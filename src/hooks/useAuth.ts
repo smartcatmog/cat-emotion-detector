@@ -33,12 +33,15 @@ export function useAuth() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // 忽略 null session 事件，避免误清除登录状态
+      if (event === 'SIGNED_OUT') {
+        setAuthState({ user: null, username: null, isAnonymous: false, isLoading: false });
+        return;
+      }
       if (session?.user) {
         const username = await fetchUsername(session.user.id);
         setAuthState({ user: session.user, username, isAnonymous: false, isLoading: false });
-      } else {
-        setAuthState({ user: null, username: null, isAnonymous: false, isLoading: false });
       }
     });
 
