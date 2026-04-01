@@ -415,7 +415,6 @@ function App() {
     window.scrollTo(0, 0);
     if (currentView === 'privacy') window.history.pushState({}, '', '/privacy');
     else if (currentView === 'history') window.history.pushState({}, '', '/history');
-    else if (currentView === 'nft-preview') window.history.pushState({}, '', '/');
     else window.history.pushState({}, '', '/');
   }, [currentView]);
 
