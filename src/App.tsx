@@ -20,7 +20,7 @@ import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from
 import { useAuth } from './hooks/useAuth';
 import { useLang, t } from './lib/i18n';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood' | 'nft-preview';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood';
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
@@ -381,7 +381,7 @@ function TipModal({ cat, onClose }: { cat: any; onClose: () => void }) {
 }
 
 function App() {
-  const { user, username, isAnonymous, isAuthenticated, setAnonymousMode, login } = useAuth();
+  const { user, username, isAnonymous, isAuthenticated, setAnonymousMode, login, logout } = useAuth();
   const { lang } = useLang();
   const [currentView, setCurrentView] = useState<AppView>('mood');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -407,7 +407,7 @@ function App() {
     const path = window.location.pathname;
     if (path === '/privacy') setCurrentView('privacy');
     else if (path === '/history') setCurrentView('history');
-    else if (path === '/nft-preview') setCurrentView('nft-preview');
+    else if (path === '/nft-preview') setCurrentView('mood');
     else setCurrentView('mood');
   }, []);
 
@@ -415,7 +415,7 @@ function App() {
     window.scrollTo(0, 0);
     if (currentView === 'privacy') window.history.pushState({}, '', '/privacy');
     else if (currentView === 'history') window.history.pushState({}, '', '/history');
-    else if (currentView === 'nft-preview') window.history.pushState({}, '', '/nft-preview');
+    else if (currentView === 'nft-preview') window.history.pushState({}, '', '/');
     else window.history.pushState({}, '', '/');
   }, [currentView]);
 
@@ -540,6 +540,7 @@ function App() {
         username={username}
         isAnonymous={isAnonymous}
         onLoginClick={() => setShowLoginModal(true)}
+        onLogout={logout}
       >
         <div className="space-y-6">
 
@@ -764,8 +765,7 @@ function App() {
               : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="同心情广场" />
           )}
           
-          {/* NFT Preview Page */}
-          {currentView === 'nft-preview' && <NFTPreviewPage />}
+          {/* NFT Preview Page - removed, NFT is now integrated in CatCard and Results */}
         </div>
 
         {tipCat && <TipModal cat={tipCat} onClose={() => setTipCat(null)} />}
