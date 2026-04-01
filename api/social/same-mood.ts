@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
 
   const [usersRes, catsRes] = await Promise.all([
     userIds.length > 0
-      ? supabase.from('users').select('id, username, display_name, avatar_url').in('id', userIds)
+      ? supabase.from('users').select('id, username, display_name, avatar_url, social_link').in('id', userIds)
       : Promise.resolve({ data: [] }),
     catIds.length > 0
       ? supabase.from('cat_images').select('id, image_url, description').in('id', catIds)
@@ -47,10 +47,41 @@ export default async function handler(req: any, res: any) {
   const catMap: Record<string, any> = {};
   (catsRes.data || []).forEach((c: any) => { catMap[c.id] = c; });
 
+  // 计算每个用户连续打卡这个情绪的天数
+  const streakMap: Record<string, number> = {};
+  if (userIds.length > 0) {
+    const { data: recentRecords } = await supabase
+      .from('daily_mood_records')
+      .select('user_id, date, emotion_label')
+      .in('user_id', userIds)
+      .eq('emotion_label', emotion_label)
+      .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .order('date', { ascending: false });
+
+    if (recentRecords) {
+      userIds.forEach((uid: string) => {
+        const userDates = recentRecords
+          .filter((r: any) => r.user_id === uid)
+          .map((r: any) => r.date)
+          .sort()
+          .reverse();
+        let streak = 0;
+        for (let i = 0; i < userDates.length; i++) {
+          const expected = new Date(today);
+          expected.setDate(expected.getDate() - i);
+          if (userDates[i] === expected.toISOString().split('T')[0]) streak++;
+          else break;
+        }
+        streakMap[uid] = streak;
+      });
+    }
+  }
+
   const enriched = records.map((record: any) => ({
     ...record,
     users: userMap[record.user_id] || null,
     cat_image: record.cat_image_id ? catMap[record.cat_image_id] || null : null,
+    streak: streakMap[record.user_id] || 1,
   }));
 
   return res.status(200).json({ data: enriched, count: enriched.length });

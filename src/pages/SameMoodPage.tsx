@@ -21,6 +21,9 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
   const [users, setUsers] = useState<any[]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [socialLink, setSocialLink] = useState('');
+  const [savingLink, setSavingLink] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
 
   const search = (e: string) => {
     if (!e) return;
@@ -29,6 +32,21 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
       .then(r => r.json())
       .then(d => { setUsers(d.data || []); setCount(d.count || 0); })
       .finally(() => setLoading(false));
+  };
+
+  const saveSocialLink = async () => {
+    if (!socialLink.trim()) return;
+    setSavingLink(true);
+    try {
+      await fetch('/api/social/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, social_link: socialLink.trim() }),
+      });
+      setShowLinkInput(false);
+    } finally {
+      setSavingLink(false);
+    }
   };
 
   useEffect(() => {
@@ -41,6 +59,27 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">同心情广场</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">找到今天和你一样心情的人</p>
+        {/* 设置社交链接 */}
+        {!showLinkInput ? (
+          <button onClick={() => setShowLinkInput(true)} className="text-xs text-purple-400 hover:text-purple-600 underline">
+            📱 设置我的社交媒体链接
+          </button>
+        ) : (
+          <div className="flex gap-2 max-w-sm mx-auto mt-2">
+            <input
+              type="text"
+              value={socialLink}
+              onChange={e => setSocialLink(e.target.value)}
+              placeholder="instagram.com/yourname 或 twitter.com/..."
+              className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+            />
+            <button onClick={saveSocialLink} disabled={savingLink}
+              className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 disabled:opacity-50">
+              {savingLink ? '...' : '保存'}
+            </button>
+            <button onClick={() => setShowLinkInput(false)} className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+        )}
       </div>
 
       {/* Emotion selector */}
@@ -90,11 +129,28 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
                       </div>
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-gray-50 text-sm truncate">
-                          {u.users?.display_name || u.users?.username || '匿名用户'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 dark:text-gray-50 text-sm truncate">
+                            {u.users?.display_name || u.users?.username || '匿名用户'}
+                          </p>
+                          {u.streak > 1 && (
+                            <span className="text-xs text-orange-500 font-semibold whitespace-nowrap">
+                              🔥 {u.streak}天
+                            </span>
+                          )}
+                        </div>
                         {u.mood_text && (
                           <p className="text-xs text-gray-400 truncate">"{u.mood_text}"</p>
+                        )}
+                        {u.users?.social_link && (
+                          <a
+                            href={u.users.social_link.startsWith('http') ? u.users.social_link : `https://${u.users.social_link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-purple-500 hover:text-purple-700 truncate block"
+                          >
+                            📱 {u.users.social_link.replace(/^https?:\/\//, '')}
+                          </a>
                         )}
                       </div>
                       {/* Cat image thumbnail */}
