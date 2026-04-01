@@ -8,18 +8,18 @@ export async function downloadNFTCertificate(elementId: string, fileName: string
   }
 
   try {
-    // 使用 html2canvas 将元素转换为图片
     const canvas = await html2canvas(element, {
-      backgroundColor: '#1a1a2e', // 深色背景
-      scale: 2, // 2倍分辨率，更清晰
+      backgroundColor: '#111827',
+      scale: 2,
       logging: false,
-      useCORS: true, // 允许跨域图片
+      useCORS: true,
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+      windowWidth: element.offsetWidth,
     });
 
-    // 转换为 blob 并下载
     canvas.toBlob((blob) => {
       if (!blob) return;
-      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
