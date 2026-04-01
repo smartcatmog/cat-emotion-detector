@@ -27,31 +27,6 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
         setError('用户名 2-20 字符，支持中文、英文、数字、下划线');
         return;
       }
-      // Check username uniqueness
-      try {
-        console.log('[LoginModal] Checking username uniqueness...');
-        const { data: existing, error: checkError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('username', username)
-          .single();
-        
-        if (checkError && checkError.code !== 'PGRST116') {
-          // PGRST116 = no rows returned, which is what we want
-          console.error('Username check failed:', checkError);
-          setError('无法验证用户名，请重试');
-          return;
-        }
-        
-        if (existing) {
-          setError('用户名已被占用，换一个试试');
-          return;
-        }
-      } catch (err) {
-        console.error('Username check error:', err);
-        setError('无法验证用户名，请重试');
-        return;
-      }
     }
 
     console.log('[LoginModal] Starting auth...');
@@ -73,9 +48,11 @@ export function LoginModal({ onClose, onSuccess, onAnonymous }: LoginModalProps)
           
           if (insertError) {
             console.error('Profile creation failed:', insertError);
+            if (insertError.code === '23505') {
+              setError('用户名已被占用，换一个试试');
+            }
             // 即使 profile 创建失败，用户已经注册了，可以继续
-            // 不要阻止登录
-            console.warn('Profile insert failed but user was created, proceeding...');
+            return;
           }
           onSuccess();
         } else {
