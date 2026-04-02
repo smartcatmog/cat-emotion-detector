@@ -714,10 +714,10 @@ function App() {
           {(currentView === 'upload' || currentView === 'mood') && (
             <div className="flex justify-center gap-3">
               <button onClick={() => setCurrentView('mood')} className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${currentView === 'mood' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-purple-200' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-purple-50 border border-gray-200 dark:border-gray-700'}`}>
-                💭 Match My Mood
+                💭 {lang === 'zh' ? '心情匹配' : 'Match My Mood'}
               </button>
               <button onClick={() => setCurrentView('upload')} className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${currentView === 'upload' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-blue-200' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-50 border border-gray-200 dark:border-gray-700'}`}>
-                🐱 Analyze My Cat
+                🐱 {lang === 'zh' ? '分析猫咪' : 'Analyze My Cat'}
               </button>
             </div>
           )}
@@ -853,18 +853,18 @@ function App() {
           {currentView === 'preview' && selectedFile && (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Ready to analyze?</h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">Review your photo before we read your cat's mind</p>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '准备好分析了吗？' : 'Ready to analyze?'}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">{lang === 'zh' ? '确认照片后，AI 将解读你的猫咪心情' : "Review your photo before we read your cat's mind"}</p>
               </div>
               <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 space-y-5 border border-blue-100 dark:border-gray-700">
                 <img src={preview || ''} alt="Preview" className="w-full h-auto rounded-xl max-h-[80vh] object-contain bg-gray-50 dark:bg-gray-900" />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-                    <p className="text-gray-400 text-xs mb-1">File name</p>
+                    <p className="text-gray-400 text-xs mb-1">{lang === 'zh' ? '文件名' : 'File name'}</p>
                     <p className="font-medium text-gray-900 dark:text-gray-50 truncate">{selectedFile.name}</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-                    <p className="text-gray-400 text-xs mb-1">File size</p>
+                    <p className="text-gray-400 text-xs mb-1">{lang === 'zh' ? '文件大小' : 'File size'}</p>
                     <p className="font-medium text-gray-900 dark:text-gray-50">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 </div>
@@ -886,9 +886,9 @@ function App() {
                 </label>
                 {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>}
                 <div className="flex gap-3">
-                  <button onClick={handleAnalyzeAnother} disabled={isLoading} className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50">Cancel</button>
+                  <button onClick={handleAnalyzeAnother} disabled={isLoading} className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50">{lang === 'zh' ? '取消' : 'Cancel'}</button>
                   <button onClick={handleAnalyze} disabled={isLoading} className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none">
-                    {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Analyzing...</>) : '🔍 Analyze'}
+                    {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{lang === 'zh' ? '分析中...' : 'Analyzing...'}</>) : (lang === 'zh' ? '🔍 开始分析' : '🔍 Analyze')}
                   </button>
                 </div>
               </div>
