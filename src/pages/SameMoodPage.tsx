@@ -109,28 +109,36 @@ function GreetButtons({
   if (sent) {
     const a = GREET_ACTIONS.find(a => a.id === sent)!;
     return (
-      <div className="flex items-center gap-1 text-xs text-green-500 font-medium mt-1">
-        {a.emoji} {lang === 'zh' ? `已${a.zh}！` : `${a.en} sent!`}
+      <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium mt-2 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full w-fit">
+        <span className="text-base">{a.emoji}</span>
+        {lang === 'zh' ? `已${a.zh}！` : `${a.en} sent!`}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-1 mt-1 flex-wrap">
-      {GREET_ACTIONS.map(a => (
-        <button
-          key={a.id}
-          onClick={() => send(a)}
-          disabled={blocked}
-          title={lang === 'zh' ? a.zh : a.en}
-          className={`px-2 py-1 rounded-full text-xs border transition-all select-none
-            ${anim === a.id ? 'scale-125 bg-purple-100 border-purple-400' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-purple-300 hover:bg-purple-50'}
-            ${blocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-110'}`}
-          style={{ transition: 'transform 0.15s ease, background 0.15s ease' }}
-        >
-          {a.emoji}
-        </button>
-      ))}
+    <div className="mt-2">
+      <p className="text-xs text-gray-400 mb-1.5">
+        {lang === 'zh' ? '发送一个互动：' : 'Send a quick reaction:'}
+      </p>
+      <div className="flex gap-1.5 flex-wrap">
+        {GREET_ACTIONS.map(a => (
+          <button
+            key={a.id}
+            onClick={() => send(a)}
+            disabled={blocked}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all select-none
+              ${anim === a.id
+                ? 'scale-125 bg-purple-100 dark:bg-purple-900/40 border-purple-400 text-purple-700'
+                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600'}
+              ${blocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-110'}`}
+            style={{ transition: 'transform 0.15s ease, background 0.15s ease' }}
+          >
+            <span className="text-sm">{a.emoji}</span>
+            {lang === 'zh' ? a.zh : a.en}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -353,6 +361,11 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
                             emotion={emotion}
                             lang={lang}
                           />
+                        )}
+                        {!userId && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {lang === 'zh' ? '登录后可以发送互动 👉🤗💪' : 'Sign in to send reactions 👉🤗💪'}
+                          </p>
                         )}
                       </div>
 
