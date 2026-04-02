@@ -124,6 +124,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   const loadComments = async () => {
     if (commentsLoaded) return;
@@ -143,6 +144,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const submitComment = async () => {
     if (!userId || !commentText.trim() || submitting) return;
     setSubmitting(true);
+    setCommentError(null);
     try {
       const res = await fetch('/api/social/comments', {
         method: 'POST',
@@ -160,8 +162,14 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         setCommentCount(n => n + 1);
         setCommentText('');
         setReplyTo(null);
-        setShowComments(true); // ensure visible after posting
+        setShowComments(true);
+      } else {
+        setCommentError(d.error || `Error ${res.status}`);
+        console.error('[comments] POST failed:', res.status, d);
       }
+    } catch (e) {
+      setCommentError('Network error');
+      console.error('[comments] POST exception:', e);
     } finally {
       setSubmitting(false);
     }
@@ -359,6 +367,9 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
                     {submitting ? '...' : (lang === 'zh' ? '发送' : 'Send')}
                   </button>
                 </div>
+                {commentError && (
+                  <p className="text-xs text-red-500 px-1">{commentError}</p>
+                )}
               </div>
             ) : (
               <p className="text-sm text-gray-400 text-center py-1">
