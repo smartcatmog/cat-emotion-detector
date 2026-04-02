@@ -38,7 +38,7 @@ Return ONLY valid JSON:
   "description": "fun, witty one-liner about this cat's vibe"
 }`;
 
-async function callClaude(base64: string, mediaType: string, saveToGallery: boolean, petName: string, socialLink: string) {
+async function callClaude(base64: string, mediaType: string, saveToGallery: boolean, petName: string, socialLink: string, userId?: string) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
   if (apiKey) {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
@@ -88,7 +88,7 @@ async function callClaude(base64: string, mediaType: string, saveToGallery: bool
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64, mediaType, save_to_gallery: saveToGallery, pet_name: petName || undefined, social_link: socialLink || undefined }),
+      body: JSON.stringify({ image: base64, mediaType, save_to_gallery: saveToGallery, pet_name: petName || undefined, social_link: socialLink || undefined, user_id: userId || undefined }),
     });
     if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Analysis failed'); }
     return response.json();
@@ -253,6 +253,18 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         {nftData && (
           <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
             🏆 NFT #{nftData.token_id?.replace('#', '')}
+          </div>
+        )}
+        {/* Rarity badge */}
+        {!nftData && cat.rarity && cat.rarity !== 'common' && (
+          <div className={`absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1
+            ${cat.rarity === 'legendary' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : ''}
+            ${cat.rarity === 'epic' ? 'bg-gradient-to-r from-purple-500 to-purple-700' : ''}
+            ${cat.rarity === 'rare' ? 'bg-gradient-to-r from-blue-400 to-blue-600' : ''}
+          `}>
+            {cat.rarity === 'legendary' && '🏆 传说'}
+            {cat.rarity === 'epic' && '💎 史诗'}
+            {cat.rarity === 'rare' && '💠 稀有'}
           </div>
         )}
       </div>
@@ -669,7 +681,7 @@ function App() {
         };
         img.onerror = reject; img.src = url;
       });
-      const claudeResult = await callClaude(base64, 'image/jpeg', saveToGallery, petName, socialLink);
+      const claudeResult = await callClaude(base64, 'image/jpeg', saveToGallery, petName, socialLink, user?.id);
       const result: AnalysisResult = {
         id: Math.random().toString(36).substring(2, 11), fileType: 'image',
         fileName: selectedFile.name, fileSize: selectedFile.size,

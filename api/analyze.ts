@@ -68,12 +68,13 @@ export default async function handler(req: Request) {
 
   try {
     const body = await req.json();
-    const { image, mediaType, pet_name, social_link, save_to_gallery } = body as {
+    const { image, mediaType, pet_name, social_link, save_to_gallery, user_id } = body as {
       image: string;
       mediaType: string;
       pet_name?: string;
       social_link?: string;
       save_to_gallery?: boolean;
+      user_id?: string;
     };
 
     if (!image) {
@@ -169,8 +170,24 @@ export default async function handler(req: Request) {
               description: result.description || result.summary || '',
               pet_name: pet_name?.trim() || null,
               social_link: social_link?.trim() || null,
+              uploaded_by: user_id || null,
             }).select('id').single();
-            if (insertData?.id) result.gallery_id = insertData.id;
+            if (insertData?.id) {
+              result.gallery_id = insertData.id;
+              // Assign rarity + notify owner (fire-and-forget)
+              if (user_id) {
+                const { assignRarity, onRarityAssigned } = await import('./social/notify');
+                assignRarity(insertData.id, emotionLabel)
+                  .then(rarity => {
+                    result.rarity = rarity;
+                    return onRarityAssigned(user_id, insertData.id, rarity);
+                  })
+                  .catch(console.error);
+              } else {
+                const { assignRarity } = await import('./social/notify');
+                assignRarity(insertData.id, emotionLabel).catch(console.error);
+              }
+            }
           }
         }
       } catch (saveErr) {

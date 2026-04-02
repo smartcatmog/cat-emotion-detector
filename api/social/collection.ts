@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { onCollect } from './notify';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -64,6 +65,9 @@ export default async function handler(req: any, res: any) {
       if (error.code === '23505') return res.status(409).json({ error: 'Already collected' });
       return res.status(500).json({ error: error.message });
     }
+
+    // Fire-and-forget: notify owner, update count
+    onCollect(cat_image_id).catch(console.error);
 
     return res.status(200).json({ data });
   }

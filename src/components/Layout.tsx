@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLang } from '../lib/i18n';
+import { NotificationBell } from './NotificationBell';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -71,6 +72,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
               {user ? (
                 <div className="flex items-center gap-1">
+                  <NotificationBell userId={user.id!} />
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full text-xs font-medium text-purple-600 dark:text-purple-400">
                     <span>👤</span>
                     <span>{displayName}</span>

@@ -194,6 +194,17 @@ export default async function handler(req: Request) {
     const shuffled = allCats.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, maxItems);
 
+    // Fire resonance notifications for matched cats (fire-and-forget)
+    selected.forEach((cat: any) => {
+      if (cat.id) {
+        fetch(`${new URL(req.url).origin}/api/social/resonance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cat_image_id: cat.id }),
+        }).catch(() => {});
+      }
+    });
+
     return new Response(JSON.stringify({
       success: true,
       data: {
