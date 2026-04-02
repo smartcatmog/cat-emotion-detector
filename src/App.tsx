@@ -319,24 +319,30 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
           </button>
         )}
         
-        <div className="flex gap-2 pt-1">
-          <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>
-            {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : (lang === 'zh' ? '点赞' : 'Like')}
-          </button>
-          {userId && (
-            <button onClick={handleCollect} disabled={collected || collecting} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${collected ? 'bg-green-100 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600'}`}>
-              {collected ? '✅' : collecting ? '...' : '🗂️'} {collected ? (lang === 'zh' ? '已收藏' : 'Saved') : (lang === 'zh' ? '收藏' : 'Collect')}
+        <div className="space-y-2 pt-1">
+          {/* Row 1: Like + Collect */}
+          <div className="flex gap-2">
+            <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>
+              {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : (lang === 'zh' ? '点赞' : 'Like')}
             </button>
-          )}
-          <button onClick={() => onTip(cat)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-200 transition-colors">
-            🪙 {lang === 'zh' ? '打赏' : 'Tip'}
-          </button>
-          <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
-            ⬇️ {lang === 'zh' ? '保存' : 'Save'}
-          </button>
-          <button onClick={() => setShowShareCard(true)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-purple-100 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-200 transition-colors">
-            🔗 {lang === 'zh' ? '分享' : 'Share'}
-          </button>
+            {userId && (
+              <button onClick={handleCollect} disabled={collected || collecting} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all ${collected ? 'bg-green-100 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600'}`}>
+                {collected ? '✅' : collecting ? '...' : '🗂️'} {collected ? (lang === 'zh' ? '已收藏' : 'Saved') : (lang === 'zh' ? '收藏' : 'Collect')}
+              </button>
+            )}
+          </div>
+          {/* Row 2: Tip + Save + Share */}
+          <div className="flex gap-2">
+            <button onClick={() => onTip(cat)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-200 transition-colors">
+              🪙 {lang === 'zh' ? '打赏' : 'Tip'}
+            </button>
+            <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
+              ⬇️ {lang === 'zh' ? '保存' : 'Save'}
+            </button>
+            <button onClick={() => setShowShareCard(true)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-purple-100 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-200 transition-colors">
+              🔗 {lang === 'zh' ? '分享' : 'Share'}
+            </button>
+          </div>
         </div>
       </div>
       {/* Comments section */}
