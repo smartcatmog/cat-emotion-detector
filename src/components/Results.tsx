@@ -4,6 +4,7 @@ import { saveFeedback, updateCatEmotion } from '../lib/supabase';
 import { ShareCard } from './ShareCard';
 import { NFTCertificate } from './NFTCertificate';
 import { downloadNFTCertificate } from '../utils/downloadNFT';
+import { useLang } from '../lib/i18n';
 
 const EMOTION_LABELS: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
@@ -21,6 +22,7 @@ interface ResultsProps {
 }
 
 export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onViewHistory }) => {
+  const { lang } = useLang();
   const [feedbackState, setFeedbackState] = useState<'idle' | 'wrong' | 'done'>('idle');
   const [selectedCorrect, setSelectedCorrect] = useState<string>('');
   const [correctedEmotion, setCorrectedEmotion] = useState<string | null>(null);
@@ -118,14 +120,14 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
 
         {/* 分析结果 */}
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-3">Analysis</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-3">{lang === 'zh' ? '分析结果' : 'Analysis'}</h3>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{result.interpretation}</p>
         </div>
 
         {/* 建议 */}
         {result.recommendations.length > 0 && (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">Recommendations</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">{lang === 'zh' ? '建议' : 'Recommendations'}</h3>
             <div className="grid gap-3">
               {result.recommendations.map((rec, i) => (
                 <div key={i} className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -148,20 +150,20 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
           {feedbackState === 'idle' && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-                Was this analysis accurate?
+                {lang === 'zh' ? '分析准确吗？' : 'Was this analysis accurate?'}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={handleAccurate}
                   className="flex-1 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                 >
-                  ✅ Accurate
+                  ✅ {lang === 'zh' ? '准确' : 'Accurate'}
                 </button>
                 <button
                   onClick={handleInaccurate}
                   className="flex-1 py-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                 >
-                  ❌ Not accurate
+                  ❌ {lang === 'zh' ? '不准确' : 'Not accurate'}
                 </button>
               </div>
             </div>
@@ -242,11 +244,11 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
               {minting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  铸造中...
+                  {lang === 'zh' ? '铸造中...' : 'Minting...'}
                 </>
               ) : (
                 <>
-                  🏆 铸造 NFT 证书
+                  🏆 {lang === 'zh' ? '铸造 NFT 证书' : 'Mint NFT Certificate'}
                 </>
               )}
             </button>
@@ -275,13 +277,13 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
               onClick={onAnalyzeAnother}
               className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
             >
-              Analyze Another
+              {lang === 'zh' ? '再分析一张' : 'Analyze Another'}
             </button>
             <button
               onClick={() => setShowShareCard(true)}
               className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
             >
-              🔗 Share
+              🔗 {lang === 'zh' ? '分享' : 'Share'}
             </button>
           </div>
         </div>
@@ -314,13 +316,13 @@ export const Results: React.FC<ResultsProps> = ({ result, onAnalyzeAnother, onVi
               onClick={downloadNFTCertificateHandler}
               className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
             >
-              ⬇️ 下载证书
+              ⬇️ {lang === 'zh' ? '下载证书' : 'Download Certificate'}
             </button>
             <button
               onClick={() => setShowShareCard(true)}
               className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors"
             >
-              🔗 分享 NFT
+              🔗 {lang === 'zh' ? '分享 NFT' : 'Share NFT'}
             </button>
           </div>
         </div>

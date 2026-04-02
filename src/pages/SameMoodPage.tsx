@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLang } from '../lib/i18n';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
@@ -17,6 +18,7 @@ const EMOTION_ZH: Record<string, string> = {
 };
 
 export function SameMoodPage({ userId, currentEmotion }: { userId: string; currentEmotion?: string }) {
+  const { lang } = useLang();
   const [emotion, setEmotion] = useState(currentEmotion || '');
   const [users, setUsers] = useState<any[]>([]);
   const [count, setCount] = useState(0);
@@ -79,12 +81,12 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
   return (
     <div className="max-w-lg mx-auto space-y-4">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">同心情广场</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">找到今天和你一样心情的人</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '同心情广场' : 'Same Mood Plaza'}</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">{lang === 'zh' ? '找到今天和你一样心情的人' : 'Find people who feel the same today'}</p>
         {/* 设置社交链接 */}
         {!showLinkInput ? (
           <button onClick={() => setShowLinkInput(true)} className="text-xs text-purple-400 hover:text-purple-600 underline">
-            📱 设置我的社交媒体链接
+            📱 {lang === 'zh' ? '设置我的社交媒体链接' : 'Set my social media link'}
           </button>
         ) : (
           <div className="max-w-sm mx-auto mt-2 space-y-2">
@@ -110,14 +112,14 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
                 className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none min-w-0" />
               <button onClick={saveSocialLink} disabled={savingLink || !socialLink.trim()}
                 className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 disabled:opacity-50 whitespace-nowrap">
-                {savingLink ? '...' : '保存'}
+                {savingLink ? '...' : (lang === 'zh' ? '保存' : 'Save')}
               </button>
               <button onClick={() => setShowLinkInput(false)} className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600">✕</button>
             </div>
             {/* 预览链接 */}
             {socialLink.trim() && (
               <p className="text-xs text-gray-400 text-center">
-                链接：<a href={buildLink()} target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">{buildLink()}</a>
+                {lang === 'zh' ? '链接：' : 'Link: '}<a href={buildLink()} target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">{buildLink()}</a>
               </p>
             )}
             {savedMsg && <p className="text-xs text-green-500 text-center">{savedMsg}</p>}
@@ -127,7 +129,7 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
 
       {/* Emotion selector */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">选择今天的心情：</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{lang === 'zh' ? '选择今天的心情：' : "Pick today's mood:"}</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(EMOTION_EMOJI).map(([e, emoji]) => (
             <button
@@ -153,14 +155,17 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
           ) : (
             <>
               <p className="text-center text-sm text-gray-500">
-                今天有 <span className="text-purple-600 font-bold">{count}</span> 人和你一样感到 {EMOTION_EMOJI[emotion]} {EMOTION_ZH[emotion]} / {emotion}
+                {lang === 'zh'
+                  ? <>今天有 <span className="text-purple-600 font-bold">{count}</span> 人和你一样感到 {EMOTION_EMOJI[emotion]} {EMOTION_ZH[emotion]} / {emotion}</>
+                  : <>{count} people feel {EMOTION_EMOJI[emotion]} {emotion} today</>
+                }
               </p>
 
               {users.length === 0 ? (
                 <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
                   <div className="text-4xl">{EMOTION_EMOJI[emotion]}</div>
-                  <p className="text-gray-500 dark:text-gray-400">你是今天第一个 {EMOTION_ZH[emotion]} / {emotion} 的人</p>
-                  <p className="text-sm text-gray-400">先去打卡，等待同心情的朋友出现</p>
+                  <p className="text-gray-500 dark:text-gray-400">{lang === 'zh' ? `你是今天第一个 ${EMOTION_ZH[emotion]} / ${emotion} 的人` : `You're the first ${emotion} person today`}</p>
+                  <p className="text-sm text-gray-400">{lang === 'zh' ? '先去打卡，等待同心情的朋友出现' : 'Check in first, then wait for others'}</p>
                 </div>
               ) : (
                 <div className="space-y-2">

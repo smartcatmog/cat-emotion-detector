@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLang } from '../lib/i18n';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
@@ -19,6 +20,7 @@ const EMOTION_ZH: Record<string, string> = {
 const ALL_EMOTIONS = Object.keys(EMOTION_EMOJI);
 
 export function CollectionPage({ userId }: { userId: string }) {
+  const { lang } = useLang();
   const [byEmotion, setByEmotion] = useState<Record<string, any[]>>({});
   const [unlocked, setUnlocked] = useState(0);
   const [total, setTotal] = useState(0);
@@ -43,9 +45,12 @@ export function CollectionPage({ userId }: { userId: string }) {
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪图鉴</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '情绪图鉴' : 'Collection'}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          已解锁 <span className="text-purple-600 font-bold">{unlocked}</span> / {ALL_EMOTIONS.length} 种情绪 · 共收集 {total} 张
+          {lang === 'zh'
+            ? <>{`已解锁 `}<span className="text-purple-600 font-bold">{unlocked}</span>{` / ${ALL_EMOTIONS.length} 种情绪 · 共收集 ${total} 张`}</>
+            : <>Unlocked <span className="text-purple-600 font-bold">{unlocked}</span> / {ALL_EMOTIONS.length} emotions · {total} collected</>
+          }
         </p>
         {/* Progress bar */}
         <div className="max-w-xs mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
@@ -74,8 +79,17 @@ export function CollectionPage({ userId }: { userId: string }) {
             >
               <span className="text-2xl">{isUnlocked ? EMOTION_EMOJI[emotion] : '❓'}</span>
               <span className={`mt-1 truncate w-full text-center text-[10px] leading-tight ${isUnlocked ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
-                <span className="block">{EMOTION_ZH[emotion]}</span>
-                <span className="block opacity-60">{emotion}</span>
+                {lang === 'zh' ? (
+                  <>
+                    <span className="block">{EMOTION_ZH[emotion]}</span>
+                    <span className="block opacity-60">{emotion}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="block">{emotion}</span>
+                    <span className="block opacity-60">{EMOTION_ZH[emotion]}</span>
+                  </>
+                )}
               </span>
               {isUnlocked && <span className="text-purple-500 font-bold">{items.length}</span>}
             </button>
@@ -87,7 +101,7 @@ export function CollectionPage({ userId }: { userId: string }) {
       {selected && selectedItems.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow space-y-3">
           <h3 className="font-semibold text-gray-900 dark:text-gray-50">
-            {EMOTION_EMOJI[selected]} {EMOTION_ZH[selected]} / {selected} · {selectedItems.length} 张
+            {EMOTION_EMOJI[selected]} {lang === 'zh' ? `${EMOTION_ZH[selected]} / ${selected}` : `${selected} / ${EMOTION_ZH[selected]}`} · {selectedItems.length} {lang === 'zh' ? '张' : 'photos'}
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {selectedItems.map((item: any, i: number) => (

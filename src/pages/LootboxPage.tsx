@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLang } from '../lib/i18n';
 
 const RARITY_STYLE: Record<string, { label: string; color: string; bg: string; border: string }> = {
   common:    { label: '普通 Common',   color: 'text-gray-600',   bg: 'bg-gray-50',    border: 'border-gray-200' },
@@ -12,6 +13,7 @@ const BOX_EMOJI: Record<string, string> = {
 };
 
 export function LootboxPage({ userId }: { userId?: string }) {
+  const { lang } = useLang();
   const [boxes, setBoxes] = useState<any[]>([]);
   const [openedBoxes, setOpenedBoxes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,14 +98,14 @@ export function LootboxPage({ userId }: { userId?: string }) {
   return (
     <div className="max-w-lg mx-auto space-y-5">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪盲盒 Loot Box</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">每次打卡获得一个盲盒 · 永久收藏</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '情绪盲盒' : 'Loot Box'}</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">{lang === 'zh' ? '每次打卡获得一个盲盒 · 永久收藏' : 'Get a box every check-in · Keep forever'}</p>
       </div>
 
       {/* Reward display */}
       {reward && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-2 border-purple-300 shadow-lg text-center space-y-3">
-          <p className="text-lg font-bold text-gray-900 dark:text-gray-50">🎉 开盒成功！</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '🎉 开盒成功！' : '🎉 Box opened!'}</p>
           {reward.cat_image ? (
             <>
               <img src={reward.cat_image.image_url} alt="reward" className="w-40 h-40 object-cover rounded-xl mx-auto shadow" />
@@ -114,9 +116,9 @@ export function LootboxPage({ userId }: { userId?: string }) {
                 <p className="text-sm text-gray-500 italic">"{reward.cat_image.description}"</p>
               )}
               {reward.is_guest ? (
-                <p className="text-xs text-yellow-600">👻 游客模式 · 登录后可永久收藏</p>
+                <p className="text-xs text-yellow-600">👻 {lang === 'zh' ? '游客模式 · 登录后可永久收藏' : 'Guest mode · Sign in to keep forever'}</p>
               ) : (
-                <p className="text-xs text-green-600">已自动加入你的图鉴 ✓</p>
+                <p className="text-xs text-green-600">{lang === 'zh' ? '已加入图鉴 ✓' : 'Added to your collection ✓'}</p>
               )}
             </>
           ) : (
@@ -133,13 +135,15 @@ export function LootboxPage({ userId }: { userId?: string }) {
           {/* Unopened boxes */}
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
-              未开启 Unopened · {boxes.length} 个
+              {lang === 'zh' ? '未开启' : 'Unopened'} · {boxes.length} 个
             </h3>
             {boxes.length === 0 ? (
               <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
                 <div className="text-4xl">📭</div>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  {userId ? '暂无盲盒，打卡后自动获得' : '体验盲盒已用完，登录后可获得更多'}
+                  {userId
+                    ? (lang === 'zh' ? '暂无盲盒，打卡后自动获得' : 'No boxes yet — check in to get one')
+                    : (lang === 'zh' ? '体验盲盒已用完，登录后可获得更多' : 'Demo boxes used up — sign in for more')}
                 </p>
               </div>
             ) : (
@@ -154,7 +158,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
                       disabled={opening === box.id}
                       className="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
                     >
-                      {opening === box.id ? '开启中...' : '开启 Open'}
+                      {opening === box.id ? (lang === 'zh' ? '开启中...' : 'Opening...') : (lang === 'zh' ? '开启' : 'Open')}
                     </button>
                   </div>
                 ))}
@@ -166,7 +170,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
           {openedBoxes.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
-                已开启历史 History · {openedBoxes.length} 个
+                {lang === 'zh' ? '已开启历史' : 'History'} · {openedBoxes.length} 个
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {openedBoxes.map((box: any) => (

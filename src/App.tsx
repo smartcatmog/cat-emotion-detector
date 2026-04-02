@@ -105,6 +105,7 @@ const EMOTION_EMOJI: Record<string, string> = {
 };
 
 function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string) => void; onTip: (cat: any) => void; userId?: string }) {
+  const { lang } = useLang();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(cat.likes || 0);
   const [editingEmotion, setEditingEmotion] = useState(false);
@@ -198,7 +199,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         <p className="text-sm text-gray-600 dark:text-gray-400 italic">"{cat.description}"</p>
         {cat.social_link && (
           <a href={cat.social_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-purple-500 hover:text-purple-700 font-medium">
-            📱 Follow the owner →
+            📱 {lang === 'zh' ? '关注主人 →' : 'Follow the owner →'}
           </a>
         )}
 
@@ -229,7 +230,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
           </div>
         ) : (
           <button onClick={() => setEditingEmotion(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
-            ✏️ 标签不对？纠正一下
+            ✏️ {lang === 'zh' ? '标签不对？纠正一下' : 'Correct label?'}
           </button>
         )}
         
@@ -246,21 +247,21 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         
         <div className="flex gap-2 pt-1">
           <button onClick={handleLike} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${liked ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-50 hover:text-pink-500'}`}>
-            {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : 'Like'}
+            {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : (lang === 'zh' ? '点赞' : 'Like')}
           </button>
           {userId && (
             <button onClick={handleCollect} disabled={collected || collecting} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-all ${collected ? 'bg-green-100 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600'}`}>
-              {collected ? '✅' : collecting ? '...' : '🗂️'} {collected ? 'Saved' : 'Collect'}
+              {collected ? '✅' : collecting ? '...' : '🗂️'} {collected ? (lang === 'zh' ? '已收藏' : 'Saved') : (lang === 'zh' ? '收藏' : 'Collect')}
             </button>
           )}
           <button onClick={() => onTip(cat)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-200 transition-colors">
-            🪙 Tip
+            🪙 {lang === 'zh' ? '打赏' : 'Tip'}
           </button>
           <button onClick={handleDownload} className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200 transition-colors">
-            ⬇️ Save
+            ⬇️ {lang === 'zh' ? '保存' : 'Save'}
           </button>
           <button onClick={() => setShowShareCard(true)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-purple-100 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-200 transition-colors">
-            🔗 Share
+            🔗 {lang === 'zh' ? '分享' : 'Share'}
           </button>
         </div>
       </div>
