@@ -313,14 +313,32 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
               </p>
 
               {users.length === 0 ? (
-                <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 space-y-2">
-                  <div className="text-4xl">{EMOTION_EMOJI[emotion]}</div>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {lang === 'zh' ? `你是今天第一个 ${EMOTION_ZH[emotion]} 的人` : `You're the first ${emotion} person today`}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {lang === 'zh' ? '先去打卡，等待同心情的朋友出现' : 'Check in first, then wait for others'}
-                  </p>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 p-6 space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="text-4xl">{EMOTION_EMOJI[emotion]}</div>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {lang === 'zh' ? `你是今天第一个 ${EMOTION_ZH[emotion]} 的人` : `You're the first ${emotion} person today`}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {lang === 'zh' ? '等待同心情的朋友出现...' : 'Waiting for others to join...'}
+                    </p>
+                  </div>
+
+                  {/* Demo greet buttons so user knows they exist */}
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <p className="text-xs text-gray-400 text-center mb-2">
+                      {lang === 'zh' ? '当有人加入时，你可以这样互动：' : 'When someone joins, you can react like this:'}
+                    </p>
+                    <div className="flex gap-1.5 flex-wrap justify-center">
+                      {GREET_ACTIONS.map(a => (
+                        <span key={a.id}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-400 select-none">
+                          <span className="text-sm">{a.emoji}</span>
+                          {lang === 'zh' ? a.zh : a.en}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
