@@ -197,7 +197,7 @@ export default async function handler(req: Request) {
     // Fire resonance notifications for matched cats (fire-and-forget)
     selected.forEach((cat: any) => {
       if (cat.id) {
-        fetch(`${new URL(req.url).origin}/api/social/resonance`, {
+        fetch(`${new URL(req.url).origin}/api/social/notify?action=resonance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cat_image_id: cat.id }),

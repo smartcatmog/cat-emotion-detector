@@ -193,31 +193,65 @@ export async function onRarityAssigned(userId: string, catImageId: string, rarit
   }
 }
 
-// GET /api/social/notify — fetch unread notifications
+// GET /api/social/notify — fetch notifications
+// POST /api/social/notify?action=read — mark as read
+// POST /api/social/notify?action=greet — send greeting
+// POST /api/social/notify?action=resonance — record resonance
+// POST /api/social/notify?action=update-profile — update social link
 export default async function handler(req: any, res: any) {
+  const action = req.query.action as string | undefined;
+
+  // ── GREET ──────────────────────────────────────────────────────────────
+  if (action === 'greet') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { from_user_id, to_user_id, action: greetAction, emotion_label } = req.body;
+    const VALID = ['poke', 'hug', 'cheer', 'pat', 'wave'];
+    if (!from_user_id || !to_user_id || !greetAction) return res.status(400).json({ error: 'Missing fields' });
+    if (!VALID.includes(greetAction)) return res.status(400).json({ error: 'Invalid action' });
+    if (from_user_id === to_user_id) return res.status(400).json({ error: 'Cannot greet yourself' });
+    const today = new Date().toISOString().split('T')[0];
+    const { count } = await supabase.from('greetings').select('id', { count: 'exact', head: true })
+      .eq('from_user_id', from_user_id).eq('to_user_id', to_user_id).gte('created_at', `${today}T00:00:00Z`);
+    if ((count || 0) >= 3) return res.status(429).json({ error: 'Too many greetings today' });
+    const { error } = await supabase.from('greetings').insert({ from_user_id, to_user_id, action: greetAction, emotion_label: emotion_label || null });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(201).json({ success: true });
+  }
+
+  // ── RESONANCE ──────────────────────────────────────────────────────────
+  if (action === 'resonance') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { cat_image_id } = req.body;
+    if (!cat_image_id) return res.status(400).json({ error: 'Missing cat_image_id' });
+    await onResonance(cat_image_id).catch(console.error);
+    return res.status(200).json({ success: true });
+  }
+
+  // ── UPDATE PROFILE ─────────────────────────────────────────────────────
+  if (action === 'update-profile') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const { user_id, social_link } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
+    const { error } = await supabase.from('users').update({ social_link }).eq('id', user_id);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ success: true });
+  }
+
+  // ── NOTIFICATIONS (default) ────────────────────────────────────────────
   if (req.method === 'GET') {
     const { user_id } = req.query;
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
-
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user_id)
-      .order('created_at', { ascending: false })
-      .limit(30);
-
+    const { data } = await supabase.from('notifications').select('*')
+      .eq('user_id', user_id).order('created_at', { ascending: false }).limit(30);
     return res.status(200).json({ data: data || [] });
   }
 
-  // POST — mark as read
   if (req.method === 'POST') {
     const { user_id, notification_id } = req.body;
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
-
     const query = notification_id
       ? supabase.from('notifications').update({ is_read: true }).eq('id', notification_id)
       : supabase.from('notifications').update({ is_read: true }).eq('user_id', user_id).eq('is_read', false);
-
     await query;
     return res.status(200).json({ success: true });
   }

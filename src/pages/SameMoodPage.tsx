@@ -95,7 +95,7 @@ function GreetButtons({
     setAnim(action.id);
     setTimeout(() => setAnim(null), 700);
 
-    const res = await fetch('/api/social/greet', {
+    const res = await fetch('/api/social/notify?action=greet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ from_user_id: fromUserId, to_user_id: toUserId, action: action.id, emotion_label: emotion }),
@@ -169,7 +169,7 @@ function SocialLinkInput({
     if (!valid) { setError(lang === 'zh' ? '链接格式不对' : 'Invalid URL'); return; }
     setSaving(true); setError('');
     try {
-      const res = await fetch('/api/social/update-profile', {
+      const res = await fetch('/api/social/notify?action=update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, social_link: preview }),
