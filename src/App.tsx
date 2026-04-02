@@ -594,9 +594,11 @@ function App() {
   const [sameMoodNotif, setSameMoodNotif] = useState<{ count: number; emotion: string } | null>(null);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [inboxPartnerId, setInboxPartnerId] = useState<string | undefined>();
+  const [inboxPartnerName, setInboxPartnerName] = useState<string | undefined>();
 
-  const openDM = (partnerId: string, _partnerName?: string) => {
+  const openDM = (partnerId: string, partnerName?: string) => {
     setInboxPartnerId(partnerId);
+    setInboxPartnerName(partnerName);
     setInboxOpen(true);
   };
 
@@ -1024,7 +1026,8 @@ function App() {
           <Inbox
             myUserId={user.id}
             initialPartnerId={inboxPartnerId}
-            onClose={() => { setInboxOpen(false); setInboxPartnerId(undefined); }}
+            initialPartnerName={inboxPartnerName}
+            onClose={() => { setInboxOpen(false); setInboxPartnerId(undefined); setInboxPartnerName(undefined); }}
           />
         )}
       </Layout>

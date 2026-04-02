@@ -4,11 +4,12 @@ import { DirectMessage } from './DirectMessage';
 
 interface InboxProps {
   myUserId: string;
-  initialPartnerId?: string; // open a specific conversation directly
+  initialPartnerId?: string;
+  initialPartnerName?: string;
   onClose: () => void;
 }
 
-export function Inbox({ myUserId, initialPartnerId, onClose }: InboxProps) {
+export function Inbox({ myUserId, initialPartnerId, initialPartnerName, onClose }: InboxProps) {
   const { lang } = useLang();
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export function Inbox({ myUserId, initialPartnerId, onClose }: InboxProps) {
     if (initialPartnerId && !openPartner) {
       const found = convs.find((c: any) => c.partner_id === initialPartnerId);
       if (found) setOpenPartner(found.partner);
-      else setOpenPartner({ id: initialPartnerId });
+      else setOpenPartner({ id: initialPartnerId, display_name: initialPartnerName, username: initialPartnerName });
     }
   };
 

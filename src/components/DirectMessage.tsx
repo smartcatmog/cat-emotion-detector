@@ -13,6 +13,7 @@ export function DirectMessage({ myUserId, partner, onClose }: DMProps) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const partnerName = partner.display_name || partner.username || '用户';
 
@@ -37,6 +38,7 @@ export function DirectMessage({ myUserId, partner, onClose }: DMProps) {
   const send = async () => {
     if (!text.trim() || sending) return;
     setSending(true);
+    setSendError(null);
     try {
       const res = await fetch('/api/social/messages', {
         method: 'POST',
@@ -47,7 +49,13 @@ export function DirectMessage({ myUserId, partner, onClose }: DMProps) {
       if (res.ok && d.data) {
         setMessages(prev => [...prev, d.data]);
         setText('');
+      } else {
+        setSendError(d.error || `Error ${res.status}`);
+        console.error('[DM] send failed:', res.status, d);
       }
+    } catch (e) {
+      setSendError('Network error');
+      console.error('[DM] send exception:', e);
     } finally {
       setSending(false);
     }
@@ -106,8 +114,12 @@ export function DirectMessage({ myUserId, partner, onClose }: DMProps) {
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex gap-2 flex-shrink-0">
-          <input
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
+          {sendError && (
+            <p className="text-xs text-red-500 mb-2 px-1">{sendError} — {lang === 'zh' ? '请先在 Supabase 执行 supabase-messages.sql' : 'Please run supabase-messages.sql first'}</p>
+          )}
+          <div className="flex gap-2">
+            <input
             type="text"
             value={text}
             onChange={e => setText(e.target.value)}
@@ -123,6 +135,7 @@ export function DirectMessage({ myUserId, partner, onClose }: DMProps) {
           >
             {sending ? '...' : (lang === 'zh' ? '发送' : 'Send')}
           </button>
+          </div>
         </div>
       </div>
     </div>
