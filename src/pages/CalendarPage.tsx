@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLang } from '../lib/i18n';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
@@ -19,6 +20,7 @@ const EMOTION_ZH: Record<string, string> = {
 interface DayRecord { date: string; emotion_label: string; mood_text?: string; }
 
 export function CalendarPage({ userId, onManualCheckin }: { userId: string; onManualCheckin?: (emotion: string) => void }) {
+  const { lang } = useLang();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -37,9 +39,9 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
         body: JSON.stringify({ user_id: userId, emotion_label: emotion }),
       });
       const d = await r.json();
-      if (!r.ok) { setCheckinMsg(`❌ 打卡失败: ${d.error}`); return; }
-      if (d.lootbox) setCheckinMsg('🎉 打卡成功！获得一个盲盒');
-      else setCheckinMsg('✅ 打卡成功');
+      if (!r.ok) { setCheckinMsg(lang === 'zh' ? `❌ 打卡失败: ${d.error}` : `❌ Check-in failed: ${d.error}`); return; }
+      if (d.lootbox) setCheckinMsg(lang === 'zh' ? '🎉 打卡成功！获得一个盲盒' : '🎉 Checked in! You got a loot box');
+      else setCheckinMsg(lang === 'zh' ? '✅ 打卡成功' : '✅ Checked in!');
       // Refresh calendar
       const res = await fetch(`/api/social/calendar?user_id=${userId}&year=${year}&month=${month}`);
       const cal = await res.json();
@@ -76,9 +78,13 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
   return (
     <div className="max-w-lg mx-auto space-y-4">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">情绪日历</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+          {lang === 'zh' ? '情绪日历' : 'Mood Calendar'}
+        </h2>
         {streak > 0 && (
-          <p className="text-purple-600 font-semibold">🔥 已连续记录 {streak} 天</p>
+          <p className="text-purple-600 font-semibold">
+            🔥 {lang === 'zh' ? `已连续记录 ${streak} 天` : `${streak}-day streak`}
+          </p>
         )}
       </div>
 
@@ -86,20 +92,24 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
         {/* Month nav */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={prevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">‹</button>
-          <span className="font-semibold text-gray-900 dark:text-gray-50">{year}年{month}月</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-50">
+            {lang === 'zh' ? `${year}年${month}月` : `${new Date(year, month-1).toLocaleString('en', {month:'long'})} ${year}`}
+          </span>
           <button onClick={nextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">›</button>
         </div>
 
         {/* Day headers */}
         <div className="grid grid-cols-7 mb-2">
-          {['日','一','二','三','四','五','六'].map(d => (
-            <div key={d} className="text-center text-xs text-gray-400 py-1">{d}</div>
+          {['日','一','二','三','四','五','六'].map((d, i) => (
+            <div key={d} className="text-center text-xs text-gray-400 py-1">
+              {lang === 'zh' ? d : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][i]}
+            </div>
           ))}
         </div>
 
         {/* Calendar grid */}
         {loading ? (
-          <div className="text-center py-8 text-gray-400">加载中...</div>
+          <div className="text-center py-8 text-gray-400">{lang === 'zh' ? '加载中...' : 'Loading...'}</div>
         ) : (
           <div className="grid grid-cols-7 gap-1">
             {cells.map((day, i) => {
@@ -125,28 +135,24 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
         )}
       </div>
 
-      <p className="text-center text-xs text-gray-400">每次心情匹配后自动打卡记录</p>
+      <p className="text-center text-xs text-gray-400">
+        {lang === 'zh' ? '每次心情匹配后自动打卡记录' : 'Auto check-in after each mood match'}
+      </p>
 
-      {/* Manual checkin for testing / direct use */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-purple-100 dark:border-gray-700 shadow space-y-3">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">今天还没打卡？选一个心情手动记录：</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+          {lang === 'zh' ? '今天还没打卡？选一个心情手动记录：' : "Haven't checked in today? Pick a mood:"}
+        </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {Object.entries(EMOTION_EMOJI).slice(0, 8).map(([e, emoji]) => (
-            <button
-              key={e}
-              onClick={() => doCheckin(e)}
-              disabled={checkinLoading}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-purple-400 hover:text-purple-600 transition-all disabled:opacity-50"
-            >
-              {emoji} {EMOTION_ZH[e]} / {e}
+            <button key={e} onClick={() => doCheckin(e)} disabled={checkinLoading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-purple-400 hover:text-purple-600 transition-all disabled:opacity-50">
+              {emoji} {lang === 'zh' ? EMOTION_ZH[e] : e}
             </button>
           ))}
-          <button
-            onClick={() => doCheckin('happy')}
-            disabled={checkinLoading}
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-all disabled:opacity-50"
-          >
-            {checkinLoading ? '记录中...' : '更多 →'}
+          <button onClick={() => doCheckin('happy')} disabled={checkinLoading}
+            className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-all disabled:opacity-50">
+            {checkinLoading ? (lang === 'zh' ? '记录中...' : 'Saving...') : (lang === 'zh' ? '更多 →' : 'More →')}
           </button>
         </div>
         {checkinMsg && (

@@ -496,13 +496,18 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
 }
 
 function AuthPrompt({ onLogin, feature }: { onLogin: () => void; feature: string }) {
+  const { lang } = useLang();
   return (
     <div className="text-center py-16 space-y-4">
       <div className="text-5xl">🔒</div>
-      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">{feature}需要登录</h3>
-      <p className="text-gray-500 dark:text-gray-400 text-sm">登录后解锁打卡、收集、盲盒等社交功能</p>
+      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">
+        {lang === 'zh' ? `${feature}需要登录` : `Sign in to use ${feature}`}
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400 text-sm">
+        {lang === 'zh' ? '登录后解锁打卡、收集、盲盒等社交功能' : 'Sign in to unlock check-ins, collection, loot boxes and more'}
+      </p>
       <button onClick={onLogin} className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg">
-        登录 / 注册
+        {lang === 'zh' ? '登录 / 注册' : 'Sign In / Sign Up'}
       </button>
     </div>
   );
@@ -842,8 +847,12 @@ function App() {
           {currentView === 'upload' && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">How is your cat feeling?</h2>
-                <p className="text-gray-500 dark:text-gray-400">Upload a photo and AI will decode your cat's mood 🔍</p>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                  {lang === 'zh' ? '你的猫咪感觉怎么样？' : 'How is your cat feeling?'}
+                </h2>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {lang === 'zh' ? '上传照片，AI 解读你的猫咪心情 🔍' : "Upload a photo and AI will decode your cat's mood 🔍"}
+                </p>
               </div>
               <Upload onFileSelect={handleFileSelect} />
             </div>

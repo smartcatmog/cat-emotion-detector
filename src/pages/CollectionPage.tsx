@@ -38,7 +38,7 @@ export function CollectionPage({ userId }: { userId: string }) {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  if (loading) return <div className="text-center py-12 text-gray-400">加载中...</div>;
+  if (loading) return <div className="text-center py-12 text-gray-400">{lang === 'zh' ? '加载中...' : 'Loading...'}</div>;
 
   const selectedItems = selected ? (byEmotion[selected] || []) : [];
 
