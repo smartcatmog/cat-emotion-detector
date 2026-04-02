@@ -11,9 +11,11 @@ interface LayoutProps {
   isAnonymous?: boolean;
   onLoginClick?: () => void;
   onLogout?: () => void;
+  onOpenInbox?: () => void;
+  unreadMessages?: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, username, isAnonymous, onLoginClick, onLogout }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, username, isAnonymous, onLoginClick, onLogout, onOpenInbox, unreadMessages = 0 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { lang, toggle } = useLang();
 
@@ -73,6 +75,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               {user ? (
                 <div className="flex items-center gap-1">
                   <NotificationBell userId={user.id!} />
+                  {/* Messages inbox button */}
+                  <button
+                    onClick={onOpenInbox}
+                    className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Messages"
+                  >
+                    <span className="text-xl">💬</span>
+                    {unreadMessages > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </button>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full text-xs font-medium text-purple-600 dark:text-purple-400">
                     <span>👤</span>
                     <span>{displayName}</span>

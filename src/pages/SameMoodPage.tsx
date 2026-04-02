@@ -234,7 +234,7 @@ function SocialLinkInput({
   );
 }
 
-export function SameMoodPage({ userId, currentEmotion }: { userId: string; currentEmotion?: string }) {
+export function SameMoodPage({ userId, currentEmotion, onMessage }: { userId: string; currentEmotion?: string; onMessage?: (partnerId: string, partnerName: string) => void }) {
   const { lang } = useLang();
   const [emotion, setEmotion] = useState(currentEmotion || '');
   const [users, setUsers] = useState<any[]>([]);
@@ -371,12 +371,20 @@ export function SameMoodPage({ userId, currentEmotion }: { userId: string; curre
 
                         {/* Quick greet buttons — only for logged-in users, not self */}
                         {userId && u.user_id !== userId && (
-                          <GreetButtons
-                            toUserId={u.user_id}
-                            fromUserId={userId}
-                            emotion={emotion}
-                            lang={lang}
-                          />
+                          <>
+                            <GreetButtons
+                              toUserId={u.user_id}
+                              fromUserId={userId}
+                              emotion={emotion}
+                              lang={lang}
+                            />
+                            <button
+                              onClick={() => onMessage && onMessage(u.user_id, u.users?.display_name || u.users?.username || '用户')}
+                              className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-100 transition-colors"
+                            >
+                              💬 {lang === 'zh' ? '发消息' : 'Message'}
+                            </button>
+                          </>
                         )}
                         {!userId && (
                           <p className="text-xs text-gray-400 mt-1">

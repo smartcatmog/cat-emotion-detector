@@ -18,6 +18,7 @@
     "api/social/comments.ts": { "maxDuration": 10 },
     "api/social/greet.ts": { "maxDuration": 10 },
     "api/social/notify.ts": { "maxDuration": 10 },
-    "api/social/resonance.ts": { "maxDuration": 10 }
+    "api/social/resonance.ts": { "maxDuration": 10 },
+    "api/social/messages.ts": { "maxDuration": 10 }
   }
 }

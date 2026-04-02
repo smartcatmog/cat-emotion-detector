@@ -15,6 +15,7 @@ import { CollectionPage } from './pages/CollectionPage';
 import { LootboxPage } from './pages/LootboxPage';
 import { SameMoodPage } from './pages/SameMoodPage';
 import { NFTPreviewPage } from './pages/NFTPreviewPage';
+import { Inbox } from './components/Inbox';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
@@ -591,6 +592,13 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [checkinToast, setCheckinToast] = useState<string | null>(null);
   const [sameMoodNotif, setSameMoodNotif] = useState<{ count: number; emotion: string } | null>(null);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [inboxPartnerId, setInboxPartnerId] = useState<string | undefined>();
+
+  const openDM = (partnerId: string, _partnerName?: string) => {
+    setInboxPartnerId(partnerId);
+    setInboxOpen(true);
+  };
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -730,6 +738,7 @@ function App() {
         isAnonymous={isAnonymous}
         onLoginClick={() => setShowLoginModal(true)}
         onLogout={logout}
+        onOpenInbox={() => setInboxOpen(true)}
       >
         <div className="space-y-6">
 
@@ -954,7 +963,7 @@ function App() {
           )}
           {currentView === 'same-mood' && (
             isAuthenticated
-              ? <SameMoodPage userId={user!.id} currentEmotion={moodResult?.emotion_label} />
+              ? <SameMoodPage userId={user!.id} currentEmotion={moodResult?.emotion_label} onMessage={openDM} />
               : <AuthPrompt onLogin={() => setShowLoginModal(true)} feature="同心情广场" />
           )}
           
@@ -1009,6 +1018,13 @@ function App() {
               setAnonymousMode();
               setShowLoginModal(false);
             }}
+          />
+        )}
+        {inboxOpen && user && (
+          <Inbox
+            myUserId={user.id}
+            initialPartnerId={inboxPartnerId}
+            onClose={() => { setInboxOpen(false); setInboxPartnerId(undefined); }}
           />
         )}
       </Layout>
