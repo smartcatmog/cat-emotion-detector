@@ -14,6 +14,8 @@
     "api/social/collection.ts": { "maxDuration": 10 },
     "api/social/lootbox.ts": { "maxDuration": 10 },
     "api/social/update-profile.ts": { "maxDuration": 10 },
-    "api/social/same-mood.ts": { "maxDuration": 10 }
+    "api/social/same-mood.ts": { "maxDuration": 10 },
+    "api/social/comments.ts": { "maxDuration": 10 },
+    "api/social/greet.ts": { "maxDuration": 10 }
   }
 }

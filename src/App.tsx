@@ -116,6 +116,59 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const [nftData, setNftData] = useState<any>(cat.is_nft ? { token_id: cat.nft_token_id, rarity: cat.nft_rarity, minted_at: cat.nft_minted_at } : null);
   const [minting, setMinting] = useState(false);
   const [showNFTModal, setShowNFTModal] = useState(false);
+  // Comments
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+
+  const loadComments = async () => {
+    if (commentsLoaded) return;
+    const res = await fetch(`/api/social/comments?cat_image_id=${cat.id}`);
+    const d = await res.json();
+    const list = d.data || [];
+    setComments(list);
+    setCommentCount(list.length);
+    setCommentsLoaded(true);
+  };
+
+  const toggleComments = () => {
+    if (!showComments) loadComments();
+    setShowComments(v => !v);
+  };
+
+  const submitComment = async () => {
+    if (!userId || !commentText.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/social/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cat_image_id: cat.id,
+          user_id: userId,
+          content: commentText.trim(),
+          parent_comment_id: replyTo?.id || null,
+        }),
+      });
+      const d = await res.json();
+      if (res.ok && d.data) {
+        setComments(prev => [...prev, d.data]);
+        setCommentCount(n => n + 1);
+        setCommentText('');
+        setReplyTo(null);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Build threaded comment tree (top-level + replies)
+  const topLevel = comments.filter(c => !c.parent_comment_id);
+  const replies = (parentId: string) => comments.filter(c => c.parent_comment_id === parentId);
 
   const handleCollect = async () => {
     if (!userId || collected || collecting) return;
@@ -265,6 +318,99 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
           </button>
         </div>
       </div>
+      {/* Comments section */}
+      <div className="border-t border-gray-100 dark:border-gray-700">
+        <button
+          onClick={toggleComments}
+          className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 hover:text-purple-500 transition-colors"
+        >
+          <span>💬 {lang === 'zh' ? `评论${commentCount > 0 ? ` (${commentCount})` : ''}` : `Comments${commentCount > 0 ? ` (${commentCount})` : ''}`}</span>
+          <span className="text-xs">{showComments ? '▲' : '▼'}</span>
+        </button>
+
+        {showComments && (
+          <div className="px-4 pb-4 space-y-3">
+            {/* Comment list */}
+            {topLevel.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-2">
+                {lang === 'zh' ? '还没有评论，来说第一句话吧' : 'No comments yet — be the first!'}
+              </p>
+            )}
+            {topLevel.map(c => (
+              <div key={c.id} className="space-y-1.5">
+                <div className="flex gap-2">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                    {(c.users?.display_name || c.users?.username || '?')[0]}
+                  </div>
+                  <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      {c.users?.display_name || c.users?.username || '匿名'}
+                    </p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">{c.content}</p>
+                  </div>
+                </div>
+                {/* Reply button */}
+                {userId && (
+                  <button
+                    onClick={() => setReplyTo(replyTo?.id === c.id ? null : { id: c.id, username: c.users?.display_name || c.users?.username || '匿名' })}
+                    className="ml-8 text-xs text-gray-400 hover:text-purple-500 transition-colors"
+                  >
+                    {replyTo?.id === c.id ? (lang === 'zh' ? '取消回复' : 'Cancel') : (lang === 'zh' ? '回复' : 'Reply')}
+                  </button>
+                )}
+                {/* Replies */}
+                {replies(c.id).map(r => (
+                  <div key={r.id} className="ml-8 flex gap-2">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                      {(r.users?.display_name || r.users?.username || '?')[0]}
+                    </div>
+                    <div className="flex-1 bg-blue-50 dark:bg-gray-600 rounded-xl px-3 py-2">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {r.users?.display_name || r.users?.username || '匿名'}
+                      </p>
+                      <p className="text-sm text-gray-800 dark:text-gray-200">{r.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {/* Input */}
+            {userId ? (
+              <div className="space-y-1.5">
+                {replyTo && (
+                  <p className="text-xs text-purple-500 ml-1">
+                    ↩ {lang === 'zh' ? `回复 ${replyTo.username}` : `Replying to ${replyTo.username}`}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                    placeholder={lang === 'zh' ? '说点什么...' : 'Say something...'}
+                    maxLength={500}
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
+                  />
+                  <button
+                    onClick={submitComment}
+                    disabled={submitting || !commentText.trim()}
+                    className="px-3 py-2 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 disabled:opacity-40 transition-colors"
+                  >
+                    {submitting ? '...' : (lang === 'zh' ? '发送' : 'Send')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center">
+                {lang === 'zh' ? '登录后才能评论' : 'Sign in to comment'}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {showShareCard && (
         <ShareCard
           imageUrl={cat.image_url}
