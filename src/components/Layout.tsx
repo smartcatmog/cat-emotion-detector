@@ -94,7 +94,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               )}
 
               <a href="https://github.com/smartcatmog/cat-emotion-detector" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity">
+                className="hidden flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity">
                 ⭐ Star
               </a>
             </div>

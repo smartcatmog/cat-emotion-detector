@@ -86,12 +86,12 @@ function GreetButtons({
 }: {
   toUserId: string; fromUserId: string; emotion: string; lang: string;
 }) {
-  const [sent, setSent] = useState<string | null>(null);   // action id that was sent
-  const [anim, setAnim] = useState<string | null>(null);   // currently animating
+  const [sent, setSent] = useState<Set<string>>(new Set()); // track all sent actions
+  const [anim, setAnim] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
 
   const send = async (action: typeof GREET_ACTIONS[0]) => {
-    if (blocked || sent) return;
+    if (blocked || sent.has(action.id)) return;
     setAnim(action.id);
     setTimeout(() => setAnim(null), 700);
 
@@ -101,42 +101,42 @@ function GreetButtons({
       body: JSON.stringify({ from_user_id: fromUserId, to_user_id: toUserId, action: action.id, emotion_label: emotion }),
     });
     if (res.status === 429) { setBlocked(true); return; }
-    if (res.ok) setSent(action.id);
+    if (res.ok) setSent(prev => new Set([...prev, action.id]));
   };
-
-  if (sent) {
-    const a = GREET_ACTIONS.find(a => a.id === sent)!;
-    return (
-      <div className="flex items-center gap-1.5 text-sm text-green-500 font-medium mt-2 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full w-fit">
-        <span className="text-base">{a.emoji}</span>
-        {lang === 'zh' ? `已${a.zh}！` : `${a.en} sent!`}
-      </div>
-    );
-  }
 
   return (
     <div className="mt-2">
       <p className="text-xs text-gray-400 mb-1.5">
-        {lang === 'zh' ? '发送一个互动：' : 'Send a quick reaction:'}
+        {lang === 'zh' ? '发送互动：' : 'Send a reaction:'}
       </p>
       <div className="flex gap-1.5 flex-wrap">
-        {GREET_ACTIONS.map(a => (
-          <button
-            key={a.id}
-            onClick={() => send(a)}
-            disabled={blocked}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all select-none
-              ${anim === a.id
-                ? 'scale-125 bg-purple-100 dark:bg-purple-900/40 border-purple-400 text-purple-700'
-                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600'}
-              ${blocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-110'}`}
-            style={{ transition: 'transform 0.15s ease, background 0.15s ease' }}
-          >
-            <span className="text-sm">{a.emoji}</span>
-            {lang === 'zh' ? a.zh : a.en}
-          </button>
-        ))}
+        {GREET_ACTIONS.map(a => {
+          const isSent = sent.has(a.id);
+          return (
+            <button
+              key={a.id}
+              onClick={() => send(a)}
+              disabled={blocked || isSent}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all select-none
+                ${isSent
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-300 text-green-600 cursor-default'
+                  : anim === a.id
+                    ? 'scale-125 bg-purple-100 dark:bg-purple-900/40 border-purple-400 text-purple-700'
+                    : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600'}
+                ${blocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+              style={{ transition: 'transform 0.15s ease, background 0.15s ease' }}
+            >
+              <span className="text-sm">{a.emoji}</span>
+              {isSent ? '✓' : (lang === 'zh' ? a.zh : a.en)}
+            </button>
+          );
+        })}
       </div>
+      {blocked && (
+        <p className="text-xs text-gray-400 mt-1">
+          {lang === 'zh' ? '今天已达互动上限' : 'Daily limit reached'}
+        </p>
+      )}
     </div>
   );
 }
