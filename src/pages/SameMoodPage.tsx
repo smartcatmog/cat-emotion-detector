@@ -20,7 +20,6 @@ const EMOTION_ZH: Record<string, string> = {
 // Platform detection from URL
 const PLATFORMS = [
   { id: 'twitter',      label: 'X',          icon: '𝕏',  color: 'bg-black text-white',          prefix: 'https://x.com/',                          placeholder: 'username' },
-  { id: 'twitter_old', label: 'Twitter',     icon: '🐦', color: 'bg-sky-400 text-white',         prefix: 'https://twitter.com/',                    placeholder: 'username' },
   { id: 'instagram',   label: 'Instagram',   icon: '📸', color: 'bg-pink-500 text-white',        prefix: 'https://instagram.com/',                  placeholder: 'username' },
   { id: 'tiktok',      label: 'TikTok',      icon: '🎵', color: 'bg-gray-900 text-white',        prefix: 'https://tiktok.com/@',                    placeholder: 'username' },
   { id: 'weibo',       label: '微博',         icon: '🌐', color: 'bg-red-500 text-white',         prefix: 'https://weibo.com/u/',                    placeholder: '用户名或ID' },
@@ -31,13 +30,12 @@ const PLATFORMS = [
 // Detect platform from a URL string
 function detectPlatform(url: string) {
   if (!url) return null;
-  if (url.includes('x.com')) return PLATFORMS[0];
-  if (url.includes('twitter.com')) return PLATFORMS[1];
-  if (url.includes('instagram.com')) return PLATFORMS[2];
-  if (url.includes('tiktok.com')) return PLATFORMS[3];
-  if (url.includes('weibo.com')) return PLATFORMS[4];
-  if (url.includes('xiaohongshu.com')) return PLATFORMS[5];
-  return PLATFORMS[6]; // custom
+  if (url.includes('x.com') || url.includes('twitter.com')) return PLATFORMS[0];
+  if (url.includes('instagram.com')) return PLATFORMS[1];
+  if (url.includes('tiktok.com')) return PLATFORMS[2];
+  if (url.includes('weibo.com')) return PLATFORMS[3];
+  if (url.includes('xiaohongshu.com')) return PLATFORMS[4];
+  return PLATFORMS[5]; // custom
 }
 
 // Validate and normalize a URL
