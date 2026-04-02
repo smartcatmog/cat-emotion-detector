@@ -111,65 +111,74 @@ export default async function handler(req: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fallback map: if exact match has no cats, try similar emotions
+    // Fallback map: emotionally similar labels, ordered by closeness
+    // Rule: NEVER cross the positive/negative boundary (e.g. anxious → sleepy is wrong)
     const SIMILAR_EMOTIONS: Record<string, string[]> = {
-      confused: ['suspicious', 'curious'],
-      sad: ['melancholy', 'disappointed', 'resigned'],
-      melancholy: ['sad', 'disappointed', 'resigned'],
-      disappointed: ['sad', 'melancholy', 'resigned'],
-      angry: ['annoyed', 'dramatic', 'hangry'],
-      scared: ['anxious', 'suspicious'],
-      disgusted: ['annoyed', 'angry'],
-      surprised: ['confused', 'curious', 'scared'],
-      loved: ['happy', 'calm'],
-      bored: ['tired', 'resigned', 'sleepy'],
-      ashamed: ['sad', 'anxious', 'resigned'],
-      tired: ['sleepy', 'bored', 'resigned'],
-      anxious: ['scared', 'confused'],
-      clingy: ['sad', 'loved'],
-      resigned: ['tired', 'bored', 'melancholy'],
-      dramatic: ['angry', 'annoyed', 'hangry'],
-      hangry: ['angry', 'annoyed', 'dramatic'],
-      sassy: ['smug', 'annoyed'],
-      zoomies: ['happy', 'curious'],
-      suspicious: ['confused', 'curious'],
-      smug: ['sassy', 'happy'],
-      happy: ['loved', 'zoomies', 'calm'],
-      calm: ['sleepy', 'loved', 'happy'],
-      sleepy: ['tired', 'calm', 'bored'],
-      curious: ['confused', 'suspicious'],
-      annoyed: ['angry', 'dramatic', 'sassy'],
+      // Negative-arousal cluster
+      anxious:     ['scared', 'dramatic', 'suspicious', 'confused', 'ashamed'],
+      scared:      ['anxious', 'suspicious', 'dramatic', 'confused'],
+      dramatic:    ['anxious', 'angry', 'annoyed', 'scared'],
+      // Low-energy negative
+      sad:         ['melancholy', 'disappointed', 'resigned', 'tired'],
+      melancholy:  ['sad', 'disappointed', 'resigned', 'bored'],
+      disappointed:['sad', 'melancholy', 'resigned'],
+      resigned:    ['tired', 'melancholy', 'disappointed', 'bored'],
+      tired:       ['resigned', 'disappointed', 'melancholy'],
+      ashamed:     ['sad', 'anxious', 'resigned'],
+      // Irritation cluster
+      angry:       ['annoyed', 'dramatic', 'hangry'],
+      annoyed:     ['angry', 'dramatic', 'sassy', 'hangry'],
+      hangry:      ['angry', 'annoyed', 'dramatic'],
+      disgusted:   ['annoyed', 'angry'],
+      // Neutral/curious
+      confused:    ['suspicious', 'curious', 'anxious'],
+      suspicious:  ['confused', 'curious'],
+      curious:     ['confused', 'suspicious'],
+      bored:       ['resigned', 'tired', 'melancholy'],
+      // Positive cluster
+      happy:       ['loved', 'zoomies', 'smug', 'calm'],
+      loved:       ['happy', 'calm', 'clingy'],
+      zoomies:     ['happy', 'curious', 'smug'],
+      smug:        ['sassy', 'happy'],
+      sassy:       ['smug', 'annoyed'],
+      calm:        ['loved', 'happy'],
+      clingy:      ['loved', 'sad'],
+      // Sleepy is its own cluster — only fallback to other low-energy
+      sleepy:      ['tired', 'calm'],
+      surprised:   ['confused', 'curious', 'scared'],
     };
 
-    // Try exact match first
+    const SELECT_COLS = 'id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity';
+
+    // 1. Try exact match first
     let { data: cats, error: dbError } = await supabase
       .from('cat_images')
-      .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
+      .select(SELECT_COLS)
       .eq('emotion_label', emotionLabel);
 
-    // If no results, try similar emotions
+    // 2. Try similar emotions (in order — stop at first hit)
     if (!dbError && (!cats || cats.length === 0)) {
       const fallbacks = SIMILAR_EMOTIONS[emotionLabel] || [];
-      if (fallbacks.length > 0) {
-        const { data: fallbackCats, error: fbError } = await supabase
+      for (const fb of fallbacks) {
+        const { data: fbCats, error: fbError } = await supabase
           .from('cat_images')
-          .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
-          .in('emotion_label', fallbacks);
-        if (!fbError && fallbackCats && fallbackCats.length > 0) {
-          cats = fallbackCats;
+          .select(SELECT_COLS)
+          .eq('emotion_label', fb);
+        if (!fbError && fbCats && fbCats.length > 0) {
+          cats = fbCats;
+          break;
         }
       }
     }
 
-    // Last resort: return random cats from any label
+    // 3. Last resort: any cat — but log a warning so we know the DB is sparse
     if (!dbError && (!cats || cats.length === 0)) {
+      console.warn(`[mood-match] No cats found for "${emotionLabel}" or its fallbacks — returning random`);
       const { data: randomCats } = await supabase
         .from('cat_images')
-        .select('id, image_url, emotion_label, confidence, description, pet_name, social_link, is_nft, nft_token_id, nft_rarity')
+        .select(SELECT_COLS)
         .limit(6);
-      if (randomCats && randomCats.length > 0) {
-        cats = randomCats;
-      }
+      if (randomCats && randomCats.length > 0) cats = randomCats;
     }
 
     if (dbError) {
