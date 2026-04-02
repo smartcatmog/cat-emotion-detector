@@ -117,7 +117,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
   const [minting, setMinting] = useState(false);
   const [showNFTModal, setShowNFTModal] = useState(false);
   // Comments
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(true);  // default open
   const [comments, setComments] = useState<any[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -160,6 +160,7 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
         setCommentCount(n => n + 1);
         setCommentText('');
         setReplyTo(null);
+        setShowComments(true); // ensure visible after posting
       }
     } finally {
       setSubmitting(false);
@@ -322,68 +323,25 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
       <div className="border-t border-gray-100 dark:border-gray-700">
         <button
           onClick={toggleComments}
-          className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 hover:text-purple-500 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 hover:text-purple-500 transition-colors"
         >
-          <span>💬 {lang === 'zh' ? `评论${commentCount > 0 ? ` (${commentCount})` : ''}` : `Comments${commentCount > 0 ? ` (${commentCount})` : ''}`}</span>
-          <span className="text-xs">{showComments ? '▲' : '▼'}</span>
+          <span className="font-medium">💬 {lang === 'zh' ? '评论' : 'Comments'}{commentCount > 0 ? ` (${commentCount})` : ''}</span>
+          <span className="text-xs opacity-60">{showComments ? '收起 ▲' : '展开 ▼'}</span>
         </button>
 
         {showComments && (
-          <div className="px-4 pb-4 space-y-3">
-            {/* Comment list */}
-            {topLevel.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-2">
-                {lang === 'zh' ? '还没有评论，来说第一句话吧' : 'No comments yet — be the first!'}
-              </p>
-            )}
-            {topLevel.map(c => (
-              <div key={c.id} className="space-y-1.5">
-                <div className="flex gap-2">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
-                    {(c.users?.display_name || c.users?.username || '?')[0]}
-                  </div>
-                  <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      {c.users?.display_name || c.users?.username || '匿名'}
-                    </p>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">{c.content}</p>
-                  </div>
-                </div>
-                {/* Reply button */}
-                {userId && (
-                  <button
-                    onClick={() => setReplyTo(replyTo?.id === c.id ? null : { id: c.id, username: c.users?.display_name || c.users?.username || '匿名' })}
-                    className="ml-8 text-xs text-gray-400 hover:text-purple-500 transition-colors"
-                  >
-                    {replyTo?.id === c.id ? (lang === 'zh' ? '取消回复' : 'Cancel') : (lang === 'zh' ? '回复' : 'Reply')}
-                  </button>
-                )}
-                {/* Replies */}
-                {replies(c.id).map(r => (
-                  <div key={r.id} className="ml-8 flex gap-2">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
-                      {(r.users?.display_name || r.users?.username || '?')[0]}
-                    </div>
-                    <div className="flex-1 bg-blue-50 dark:bg-gray-600 rounded-xl px-3 py-2">
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {r.users?.display_name || r.users?.username || '匿名'}
-                      </p>
-                      <p className="text-sm text-gray-800 dark:text-gray-200">{r.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+          <div className="px-4 pb-5 space-y-4">
 
-            {/* Input */}
+            {/* Input — top, always visible */}
             {userId ? (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {replyTo && (
-                  <p className="text-xs text-purple-500 ml-1">
-                    ↩ {lang === 'zh' ? `回复 ${replyTo.username}` : `Replying to ${replyTo.username}`}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-lg">
+                    <span>↩ {lang === 'zh' ? `回复 ${replyTo.username}` : `Replying to ${replyTo.username}`}</span>
+                    <button onClick={() => setReplyTo(null)} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+                  </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={commentText}
@@ -391,21 +349,71 @@ function CatCard({ cat, onLike, onTip, userId }: { cat: any; onLike: (id: string
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
                     placeholder={lang === 'zh' ? '说点什么...' : 'Say something...'}
                     maxLength={500}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
+                    className="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-purple-400 outline-none"
                   />
                   <button
                     onClick={submitComment}
                     disabled={submitting || !commentText.trim()}
-                    className="px-3 py-2 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 disabled:opacity-40 transition-colors"
+                    className="px-4 py-2.5 bg-purple-500 text-white rounded-2xl text-sm font-medium hover:bg-purple-600 disabled:opacity-40 transition-colors whitespace-nowrap"
                   >
                     {submitting ? '...' : (lang === 'zh' ? '发送' : 'Send')}
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-sm text-gray-400 text-center py-1">
                 {lang === 'zh' ? '登录后才能评论' : 'Sign in to comment'}
               </p>
+            )}
+
+            {/* Comment list */}
+            {topLevel.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-3">
+                {lang === 'zh' ? '还没有评论，来说第一句话吧 👇' : 'No comments yet — be the first!'}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {topLevel.map(c => (
+                  <div key={c.id} className="space-y-2">
+                    {/* Comment */}
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {(c.users?.display_name || c.users?.username || '?')[0]}
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-2.5">
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            {c.users?.display_name || c.users?.username || '匿名'}
+                          </p>
+                          <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{c.content}</p>
+                        </div>
+                        {userId && (
+                          <button
+                            onClick={() => setReplyTo(replyTo?.id === c.id ? null : { id: c.id, username: c.users?.display_name || c.users?.username || '匿名' })}
+                            className="mt-1 ml-2 text-xs text-gray-400 hover:text-purple-500 transition-colors"
+                          >
+                            {replyTo?.id === c.id ? (lang === 'zh' ? '取消' : 'Cancel') : (lang === 'zh' ? '回复' : 'Reply')}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {/* Replies */}
+                    {replies(c.id).map(r => (
+                      <div key={r.id} className="ml-11 flex gap-3">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          {(r.users?.display_name || r.users?.username || '?')[0]}
+                        </div>
+                        <div className="flex-1 bg-blue-50 dark:bg-gray-600 rounded-2xl px-4 py-2.5">
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            {r.users?.display_name || r.users?.username || '匿名'}
+                          </p>
+                          <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{r.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
