@@ -779,6 +779,7 @@ function App() {
 
               {moodResult && (
                 <div className="max-w-3xl mx-auto space-y-5">
+                  {moodResult.cats.length === 0 ? (
                     <div className="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow border border-dashed border-purple-200 dark:border-gray-700">
                       <div className="text-5xl mb-3">🐱</div>
                       <p className="text-gray-600 dark:text-gray-400 font-medium">No cats match this mood yet.</p>
