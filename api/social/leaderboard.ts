@@ -20,21 +20,12 @@ export default async function handler(req: any, res: any) {
 
       const { data: cats, error } = await supabase
         .from('cat_images')
-        .select('id, image_url, emotion_label, likes_count, uploaded_by, pet_name, created_at')
+        .select('id, image_url, emotion_label, likes_count, pet_name, created_at')
         .gte('created_at', cutoffDate)
         .order('likes_count', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-
-      // 获取上传者信息
-      const uploaderIds = [...new Set((cats || []).map(c => c.uploaded_by).filter(Boolean))];
-      const { data: uploaders } = uploaderIds.length > 0
-        ? await supabase.from('users').select('id, username, display_name, avatar_url').in('id', uploaderIds)
-        : { data: [] };
-
-      const uploaderMap: Record<string, any> = {};
-      (uploaders || []).forEach((u: any) => { uploaderMap[u.id] = u; });
 
       data = (cats || []).map((cat: any, idx: number) => ({
         rank: idx + 1,
@@ -42,26 +33,24 @@ export default async function handler(req: any, res: any) {
         image_url: cat.image_url,
         emotion_label: cat.emotion_label,
         likes_count: cat.likes_count,
-        uploader: uploaderMap[cat.uploaded_by] || { username: '匿名', display_name: '匿名' },
         pet_name: cat.pet_name,
       }));
     } else if (type === 'contributors') {
-      // 情绪贡献榜
-      const { data: contributors, error } = await supabase
-        .from('cat_images')
-        .select('uploaded_by, emotion_label')
-        .not('uploaded_by', 'is', null);
+      // 情绪贡献榜 - 直接从 daily_mood_records 统计
+      const { data: records, error } = await supabase
+        .from('daily_mood_records')
+        .select('user_id, emotion_label');
 
       if (error) throw error;
 
       // 统计每个用户上传的数量和最常上传的情绪
       const stats: Record<string, { count: number; emotions: Record<string, number> }> = {};
-      (contributors || []).forEach((c: any) => {
-        if (!stats[c.uploaded_by]) {
-          stats[c.uploaded_by] = { count: 0, emotions: {} };
+      (records || []).forEach((r: any) => {
+        if (!stats[r.user_id]) {
+          stats[r.user_id] = { count: 0, emotions: {} };
         }
-        stats[c.uploaded_by].count++;
-        stats[c.uploaded_by].emotions[c.emotion_label] = (stats[c.uploaded_by].emotions[c.emotion_label] || 0) + 1;
+        stats[r.user_id].count++;
+        stats[r.user_id].emotions[r.emotion_label] = (stats[r.user_id].emotions[r.emotion_label] || 0) + 1;
       });
 
       // 获取用户信息

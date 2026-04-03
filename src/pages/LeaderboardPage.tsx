@@ -140,10 +140,6 @@ export function LeaderboardPage() {
                             {item.pet_name || 'Unnamed Cat'}
                           </p>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {lang === 'zh' ? '上传者：' : 'By: '}
-                          {item.uploader?.display_name || item.uploader?.username}
-                        </p>
                         <p className="text-sm font-bold text-pink-600 dark:text-pink-400 mt-1">
                           ❤️ {item.likes_count} {lang === 'zh' ? '点赞' : 'likes'}
                         </p>
