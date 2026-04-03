@@ -21,7 +21,7 @@ const FORECAST_COPY: Record<string, { zh: string; en: string }> = {
   tired:       { zh: '昨天大家都很累，今天给自己多一点温柔 🫶', en: 'A tired day yesterday — be gentle with yourself today 🫶' },
   anxious:     { zh: '昨天焦虑情绪偏高，今天深呼吸，会好的 🌬️', en: 'Anxiety was high yesterday — breathe, it gets better 🌬️' },
   sad:         { zh: '昨天有点低落，今天来一只开心的猫治愈一下 🐱', en: 'Yesterday felt heavy — a happy cat might help today 🐱' },
-  dramatic:    { zh: '昨天大家都在崩溃，今天一起撑过去 💪', en: 'Yesterday was dramatic — we\'re all in this together 💪' },
+  dramatic:    { zh: '昨天大家都在崩溃，今天一起撑过去 💪', en: 'Yesterday was dramatic — we are all in this together 💪' },
   angry:       { zh: '昨天火气有点大，今天冷静一下，猫猫帮你降火 😸', en: 'Tempers ran high yesterday — let cats cool you down 😸' },
   loved:       { zh: '昨天爱意满满，今天继续传递温暖 💕', en: 'Love was in the air yesterday — keep spreading warmth 💕' },
   curious:     { zh: '昨天大家都很好奇，今天去探索点新东西吧 🔍', en: 'Curiosity was high yesterday — go explore something new 🔍' },
