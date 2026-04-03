@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLang } from '../lib/i18n';
 import { NotificationBell } from './NotificationBell';
 
@@ -15,166 +15,111 @@ interface LayoutProps {
   unreadMessages?: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, user, username, isAnonymous, onLoginClick, onLogout, onOpenInbox, unreadMessages = 0 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+// Bottom tab items (most important 5)
+const BOTTOM_TABS = (lang: string) => [
+  { view: 'mood',       emoji: '💭', label: lang === 'zh' ? '发现' : 'Discover' },
+  { view: 'treehouse',  emoji: '🌳', label: lang === 'zh' ? '树洞' : 'Confess' },
+  { view: 'upload',     emoji: '🐱', label: lang === 'zh' ? '上传' : 'Upload' },
+  { view: 'same-mood',  emoji: '🤝', label: lang === 'zh' ? '同频' : 'Vibe' },
+  { view: 'collection', emoji: '🗂️', label: lang === 'zh' ? '我的' : 'Mine' },
+];
+
+// Secondary nav (accessible from top)
+const MORE_TABS = (lang: string) => [
+  { view: 'calendar',  emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
+  { view: 'lootbox',   emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
+];
+
+export const Layout: React.FC<LayoutProps> = ({
+  children, onNavigate, currentView, user, username, isAnonymous,
+  onLoginClick, onLogout, onOpenInbox,
+}) => {
   const { lang, toggle } = useLang();
-
-  // 核心导航 - 精简到最重要的
-  const navItems = [
-    { view: 'mood',       emoji: '💭', label: lang === 'zh' ? '心情匹配' : 'Mood Match' },
-    { view: 'upload',     emoji: '🐱', label: lang === 'zh' ? '分析猫咪' : 'Analyze' },
-    { view: 'calendar',   emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
-    { view: 'collection', emoji: '🗂️', label: lang === 'zh' ? '图鉴' : 'Collection' },
-    { view: 'lootbox',    emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
-    { view: 'same-mood',  emoji: '🤝', label: lang === 'zh' ? '同心情' : 'Same Mood' },
-    { view: 'treehouse',  emoji: '🌳', label: lang === 'zh' ? '树洞' : 'Tree Hole' },
-  ];
-
-  // 显示名称：优先 username，其次 email @ 前缀，最后 Me
   const displayName = username || (user?.email && !user.email.includes('-') ? user.email.split('@')[0] : null) || 'Me';
+  const bottomTabs = BOTTOM_TABS(lang);
+  const moreTabs = MORE_TABS(lang);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-purple-100 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
-            {/* Logo */}
-            <button onClick={() => onNavigate?.('mood')} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-              <span className="text-xl">🐱</span>
-              <span className="text-base font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-                MoodCat
-              </span>
-            </button>
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #fff5f7 0%, #fdf4ff 50%, #f0f4ff 100%)' }}>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map(({ view, emoji, label }) => (
-                <button
-                  key={view}
-                  onClick={() => onNavigate?.(view)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap
-                    ${currentView === view
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700 hover:text-purple-600'
-                    }`}
-                >
-                  <span>{emoji}</span>
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
+      {/* ── Top bar ── */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-pink-100">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
 
-            {/* Right side: lang + user */}
-            <div className="hidden lg:flex items-center gap-2 shrink-0">
-              <button
-                onClick={toggle}
-                className="px-2.5 py-1.5 rounded-full text-xs font-semibold border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-purple-400 hover:text-purple-600 transition-all"
-              >
-                {lang === 'zh' ? 'EN' : '中文'}
+          {/* Logo */}
+          <button onClick={() => onNavigate?.('mood')} className="flex items-center gap-1.5">
+            <span className="text-2xl">🐱</span>
+            <span className="text-lg font-black" style={{ background: 'linear-gradient(90deg, #e879a0, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              MoodCat
+            </span>
+          </button>
+
+          {/* Secondary tabs — calendar, lootbox */}
+          <div className="hidden sm:flex items-center gap-1">
+            {moreTabs.map(({ view, emoji, label }) => (
+              <button key={view} onClick={() => onNavigate?.(view)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all
+                  ${currentView === view
+                    ? 'bg-pink-100 text-pink-600'
+                    : 'text-gray-500 hover:bg-gray-100'}`}>
+                {emoji} {label}
               </button>
-
-              {user ? (
-                <div className="flex items-center gap-1">
-                  <NotificationBell userId={user.id!} />
-                  {/* Messages inbox button */}
-                  <button
-                    onClick={onOpenInbox}
-                    className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    aria-label="Messages"
-                  >
-                    <span className="text-xl">💬</span>
-                    {unreadMessages > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {unreadMessages > 9 ? '9+' : unreadMessages}
-                      </span>
-                    )}
-                  </button>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full text-xs font-medium text-purple-600 dark:text-purple-400">
-                    <span>👤</span>
-                    <span>{displayName}</span>
-                  </div>
-                  {onLogout && (
-                    <button onClick={onLogout} className="px-2.5 py-1.5 rounded-full text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                      退出
-                    </button>
-                  )}
-                </div>
-              ) : isAnonymous ? (
-                <button onClick={onLoginClick} className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:bg-gray-100 transition-all">
-                  <span>👻</span><span>Guest</span>
-                </button>
-              ) : (
-                <button onClick={onLoginClick} className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500 text-white hover:bg-purple-600 transition-colors">
-                  <span>🔑</span><span>Sign In</span>
-                </button>
-              )}
-
-              <a href="https://github.com/smartcatmog/cat-emotion-detector" target="_blank" rel="noopener noreferrer"
-                className="hidden flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity">
-                ⭐ Star
-              </a>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Toggle menu">
-              <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
-            </button>
+            ))}
           </div>
 
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="lg:hidden pb-4 space-y-1">
-              {navItems.map(({ view, emoji, label }) => (
-                <button key={view} onClick={() => { onNavigate?.(view); setMobileMenuOpen(false); }}
-                  className={`flex items-center gap-2 w-full text-left px-4 py-3 rounded-xl transition-colors font-medium
-                    ${currentView === view ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700' : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700'}`}>
-                  <span>{emoji}</span><span>{label}</span>
+          {/* Right: lang + user actions */}
+          <div className="flex items-center gap-1.5">
+            <button onClick={toggle}
+              className="px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 text-gray-500 hover:border-pink-300 hover:text-pink-500 transition-all">
+              {lang === 'zh' ? 'EN' : '中'}
+            </button>
+
+            {user ? (
+              <>
+                <NotificationBell userId={user.id!} />
+                <button onClick={onOpenInbox}
+                  className="p-1.5 rounded-full hover:bg-pink-50 transition-colors text-lg">
+                  💬
                 </button>
-              ))}
-              <div className="flex items-center gap-2 px-4 py-2">
-                <button onClick={toggle} className="text-sm text-gray-500 hover:text-purple-500">
-                  🌐 {lang === 'zh' ? 'Switch to English' : '切换中文'}
+                <button onClick={onLogout}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90 transition-opacity">
+                  {displayName[0].toUpperCase()}
                 </button>
-              </div>
-              {user ? (
-                <div className="px-4 py-2 flex items-center justify-between">
-                  <span className="text-sm text-purple-600 font-medium">👤 {displayName}</span>
-                  {onLogout && <button onClick={onLogout} className="text-sm text-red-400 hover:text-red-600">退出</button>}
-                </div>
-              ) : (
-                <button onClick={() => { onLoginClick?.(); setMobileMenuOpen(false); }}
-                  className="w-full mx-4 py-2 bg-purple-500 text-white rounded-xl text-sm font-semibold hover:bg-purple-600 transition-colors" style={{width: 'calc(100% - 2rem)'}}>
-                  🔑 登录 / 注册
-                </button>
-              )}
-            </nav>
-          )}
+              </>
+            ) : (
+              <button onClick={onLoginClick}
+                className="px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90 transition-opacity shadow-sm shadow-pink-200">
+                {lang === 'zh' ? '登录' : 'Sign In'}
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      {/* ── Main content ── */}
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-24">
         {children}
       </main>
 
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🐱</span>
-              <span className="font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">MoodCat</span>
-              <span className="text-gray-400 text-sm">— AI-powered cat emotion detector</span>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              <button onClick={() => onNavigate?.('privacy')} className="hover:text-purple-500 transition-colors">🔒 Privacy</button>
-              <a href="mailto:vivicui@gmail.com" className="hover:text-purple-500 transition-colors">✉️ Contact</a>
-              <a href="https://twitter.com/viviancuicui" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">🐦 @viviancuicui</a>
-              <span>© 2026 MoodCat</span>
-            </div>
-          </div>
+      {/* ── Bottom tab bar (mobile-first, always visible) ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-pink-100 safe-area-pb">
+        <div className="max-w-2xl mx-auto flex items-center justify-around px-2 py-2">
+          {bottomTabs.map(({ view, emoji, label }) => {
+            const isActive = currentView === view;
+            return (
+              <button key={view} onClick={() => onNavigate?.(view)}
+                className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all min-w-0"
+                style={isActive ? { background: 'linear-gradient(135deg, #fce7f3, #ede9fe)' } : {}}>
+                <span className={`text-xl transition-transform ${isActive ? 'scale-110' : ''}`}>{emoji}</span>
+                <span className={`text-[10px] font-semibold truncate transition-colors
+                  ${isActive ? 'text-pink-600' : 'text-gray-400'}`}>
+                  {label}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </footer>
+      </nav>
     </div>
   );
 };
