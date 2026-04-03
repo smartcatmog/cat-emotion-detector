@@ -1,30 +1,32 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLang } from '../lib/i18n';
 import { saveCatSignature } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { CatIllustration } from '../components/CatIllustrations';
 
-interface CatSignature {
-  personality: string;
+interface CatSignatureResult {
+  catId: string;
+  name: string;
   emoji: string;
-  subtitle: string;
   explanation: string;
-  advice: string;
-  softSuggestions: string[];
+  suggestion: string;
+  notSuitable: string[];
   recoveryMethods: string[];
+  neighbor: string;
 }
 
 export function CatSignaturePage() {
   const { lang } = useLang();
   const { user } = useAuth();
   const [moodInput, setMoodInput] = useState('');
-  const [signature, setSignature] = useState<CatSignature | null>(null);
+  const [bodyState, setBodyState] = useState('');
+  const [need, setNeed] = useState('');
+  const [signature, setSignature] = useState<CatSignatureResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedExit, setSelectedExit] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [personalityId, setPersonalityId] = useState<string | null>(null);
 
   const generateSignature = async () => {
     if (!moodInput.trim()) {
@@ -35,12 +37,17 @@ export function CatSignaturePage() {
     setIsLoading(true);
     setError(null);
     setSignature(null);
+    setFeedback(null);
 
     try {
       const response = await fetch('/api/social/cat-signature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mood_text: moodInput.trim() }),
+        body: JSON.stringify({
+          mood_text: moodInput.trim(),
+          body_state: bodyState,
+          need,
+        }),
       });
 
       if (!response.ok) {
@@ -48,18 +55,7 @@ export function CatSignaturePage() {
       }
 
       const data = await response.json();
-      const { personalityId: pId, personality, emoji, explanation, advice, softSuggestions, recoveryMethods } = data.data;
-
-      setPersonalityId(pId);
-      setSignature({
-        personality,
-        emoji,
-        subtitle: `今天的你，${personality}`,
-        explanation: explanation || '你的感受是真实的。',
-        advice: advice || '照顾好自己。',
-        softSuggestions: softSuggestions || [],
-        recoveryMethods: recoveryMethods || [],
-      });
+      setSignature(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error');
       console.error('Signature generation error:', err);
@@ -69,7 +65,7 @@ export function CatSignaturePage() {
   };
 
   const handleSaveToArchive = async () => {
-    if (!user?.id || !signature || !personalityId) {
+    if (!user?.id || !signature) {
       setSaveMessage(lang === 'zh' ? '请先登录' : 'Please sign in first');
       return;
     }
@@ -78,8 +74,8 @@ export function CatSignaturePage() {
     try {
       await saveCatSignature(
         user.id,
-        personalityId,
-        signature.personality,
+        signature.catId,
+        signature.name,
         signature.emoji,
         moodInput,
         {}
@@ -91,6 +87,33 @@ export function CatSignaturePage() {
       console.error('Save error:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangeUnderstanding = async () => {
+    if (!signature) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/social/cat-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mood_text: moodInput.trim(),
+          body_state: bodyState,
+          need,
+          forceNeighbor: signature.neighbor,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed');
+      const data = await response.json();
+      setSignature(data.data);
+      setFeedback(null);
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -106,8 +129,9 @@ export function CatSignaturePage() {
         </p>
       </div>
 
-      {/* Input Section - Always Visible */}
+      {/* Input Section */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+        {/* Mood Input */}
         <label className="block">
           <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
             {lang === 'zh' ? '今天最压着你的感觉是什么？' : 'What\'s weighing on you today?'}
@@ -115,10 +139,47 @@ export function CatSignaturePage() {
           <textarea
             value={moodInput}
             onChange={(e) => setMoodInput(e.target.value)}
-            placeholder={lang === 'zh' ? '用一句话说说，猫会替你翻译' : 'Tell me in one sentence...'}
+            placeholder={lang === 'zh' ? '用一句话说说，比如：胃疼啊、被骂了很委屈、脑子停不下来' : 'Tell me in one sentence...'}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            rows={3}
+            rows={2}
           />
+        </label>
+
+        {/* Body State */}
+        <label className="block">
+          <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
+            {lang === 'zh' ? '身体状态' : 'Body State'}
+          </p>
+          <select
+            value={bodyState}
+            onChange={(e) => setBodyState(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="">{lang === 'zh' ? '选择...' : 'Select...'}</option>
+            <option value="身体不舒服">{lang === 'zh' ? '身体不舒服' : 'Physical discomfort'}</option>
+            <option value="心里堵">{lang === 'zh' ? '心里堵' : 'Emotional block'}</option>
+            <option value="都有">{lang === 'zh' ? '都有' : 'Both'}</option>
+            <option value="说不上来">{lang === 'zh' ? '说不上来' : 'Not sure'}</option>
+          </select>
+        </label>
+
+        {/* Need */}
+        <label className="block">
+          <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
+            {lang === 'zh' ? '现在需要' : 'What I need'}
+          </p>
+          <select
+            value={need}
+            onChange={(e) => setNeed(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="">{lang === 'zh' ? '选择...' : 'Select...'}</option>
+            <option value="休息">{lang === 'zh' ? '休息' : 'Rest'}</option>
+            <option value="被理解">{lang === 'zh' ? '被理解' : 'Understanding'}</option>
+            <option value="发泄">{lang === 'zh' ? '发泄' : 'Release'}</option>
+            <option value="自己待着">{lang === 'zh' ? '自己待着' : 'Alone time'}</option>
+            <option value="被陪着">{lang === 'zh' ? '被陪着' : 'Companionship'}</option>
+          </select>
         </label>
 
         {error && (
@@ -136,165 +197,128 @@ export function CatSignaturePage() {
         </button>
       </div>
 
-      {/* Generated Signature Card */}
+      {/* Result Card */}
       {signature && (
         <div className="space-y-4">
-          {/* Part 1: Cat Personality Result */}
+          {/* Cat Display */}
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-3xl p-8 border border-purple-100 dark:border-purple-700 text-center space-y-4">
             <div className="flex justify-center">
-              <CatIllustration personalityId={personalityId || 'sleepy'} className="w-40 h-40" />
+              <CatIllustration personalityId={signature.catId} className="w-40 h-40" />
             </div>
             <div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-                {signature.personality}
+                {signature.name}
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                {signature.subtitle}
+                {lang === 'zh' ? '【今日猫签】' : '【Today\'s Signature】'}
               </p>
             </div>
           </div>
 
-          {/* Part 2: Explanation */}
+          {/* Explanation */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-50">
-              {lang === 'zh' ? '💭 被读懂的感觉' : '💭 Being Understood'}
+              {lang === 'zh' ? '【一句解释】' : '【Explanation】'}
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               {signature.explanation}
             </p>
           </div>
 
-          {/* Part 3: Light Advice */}
+          {/* Suggestion */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-50">
-              {lang === 'zh' ? '🌱 一个轻建议' : '🌱 A Light Suggestion'}
+              {lang === 'zh' ? '【一个轻建议】' : '【Light Suggestion】'}
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {signature.advice}
+              {signature.suggestion}
             </p>
           </div>
 
-          {/* Part 4: Soft Suggestions */}
-          {signature.softSuggestions.length > 0 && (
+          {/* Not Suitable */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">
+            <h3 className="font-bold text-gray-900 dark:text-gray-50">
+              {lang === 'zh' ? '【今天不适合】' : '【Not Suitable Today】'}
+            </h3>
+            <div className="space-y-2">
+              {signature.notSuitable.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+                  <span className="text-blue-500 font-bold mt-0.5">•</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recovery Methods */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+            <h3 className="font-bold text-gray-900 dark:text-gray-50">
+              {lang === 'zh' ? '【今天适合的恢复方式】' : '【Recovery Methods】'}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {signature.recoveryMethods.map((method) => (
+                <span
+                  key={method}
+                  className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium border border-green-200 dark:border-green-700"
+                >
+                  {method}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Feedback */}
+          {!feedback && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">
               <h3 className="font-bold text-gray-900 dark:text-gray-50">
-                {lang === 'zh' ? '💭 温柔的陪伴建议' : '💭 Gentle Suggestions'}
+                {lang === 'zh' ? '这张签像你吗？' : 'Does this signature feel right?'}
               </h3>
-              <div className="space-y-2">
-                {signature.softSuggestions.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-                    <span className="text-blue-500 font-bold mt-0.5">•</span>
-                    <span>{item}</span>
-                  </div>
+              <div className="grid grid-cols-3 gap-2">
+                {['很像', '还行', '不太像'].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setFeedback(option)}
+                    className="px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-purple-500 transition-colors text-gray-700 dark:text-gray-300 font-medium"
+                  >
+                    {option}
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Part 5: Exit Buttons */}
+          {/* Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">
             <h3 className="font-bold text-gray-900 dark:text-gray-50 mb-4">
-              {lang === 'zh' ? '📤 接下来呢？' : '📤 What\'s Next?'}
+              {lang === 'zh' ? '【下一步】' : '【Next】'}
             </h3>
             <div className="grid grid-cols-1 gap-3">
               <button
-                onClick={() => setSelectedExit('treehouse')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  selectedExit === 'treehouse'
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                }`}
-              >
-                <p className="font-semibold text-gray-900 dark:text-gray-50">
-                  {lang === 'zh' ? '🌳 写进树洞' : '🌳 Share in Treehouse'}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {lang === 'zh' ? '把这个签分享给同频的人' : 'Share with people on the same wavelength'}
-                </p>
-              </button>
-
-              <button
-                onClick={() => {
-                  setSelectedExit('archive');
-                  handleSaveToArchive();
-                }}
+                onClick={handleSaveToArchive}
                 disabled={isSaving}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  selectedExit === 'archive'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="w-full px-4 py-3 rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <p className="font-semibold text-gray-900 dark:text-gray-50">
-                  {lang === 'zh' ? '📚 存进猫档案' : '📚 Save to Archive'}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {lang === 'zh' ? '积累你的情绪记录，看见自己的模式' : 'Build your emotional record'}
-                </p>
+                {lang === 'zh' ? '📚 存进猫档案' : '📚 Save to Archive'}
               </button>
 
               <button
                 onClick={() => {
                   setSignature(null);
                   setMoodInput('');
-                  setSelectedExit(null);
+                  setBodyState('');
+                  setNeed('');
+                  setFeedback(null);
                 }}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                  selectedExit === 'again'
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
-                }`}
+                className="w-full px-4 py-3 rounded-xl border-2 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-semibold hover:opacity-90 transition-opacity"
               >
-                <p className="font-semibold text-gray-900 dark:text-gray-50">
-                  {lang === 'zh' ? '🔄 换一种理解方式' : '🔄 Another Perspective'}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {lang === 'zh' ? '看另一只猫怎么说，或者给我一个更轻一点的版本' : 'See another cat\'s perspective'}
-                </p>
+                {lang === 'zh' ? '🔄 换一种理解方式' : '🔄 Another Perspective'}
               </button>
             </div>
           </div>
 
-          {/* Confirm Button */}
-          {selectedExit && (
-            <button className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
-              {lang === 'zh'
-                ? selectedExit === 'treehouse'
-                  ? '发布到树洞'
-                  : selectedExit === 'archive'
-                  ? isSaving ? '保存中...' : '保存到档案'
-                  : '再抽一张'
-                : selectedExit === 'treehouse'
-                ? 'Share to Treehouse'
-                : selectedExit === 'archive'
-                ? isSaving ? 'Saving...' : 'Save to Archive'
-                : 'Draw Again'}
-            </button>
-          )}
-
-          {/* Save Message */}
           {saveMessage && (
             <div className="text-center text-sm font-medium text-green-600 dark:text-green-400">
               {saveMessage}
-            </div>
-          )}
-
-          {/* Recovery Methods Reference */}
-          {signature.recoveryMethods.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
-              <h3 className="font-bold text-gray-900 dark:text-gray-50">
-                {lang === 'zh' ? '💚 你的恢复方式' : '💚 Your Recovery Methods'}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {signature.recoveryMethods.map((method) => (
-                  <span
-                    key={method}
-                    className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium border border-green-200 dark:border-green-700"
-                  >
-                    {method}
-                  </span>
-                ))}
-              </div>
             </div>
           )}
         </div>
