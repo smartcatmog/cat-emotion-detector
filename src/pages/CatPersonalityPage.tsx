@@ -124,6 +124,22 @@ export function CatPersonalityPage({ onNavigate }: { onNavigate?: (view: string)
             {lang === 'zh' ? '请登录查看你的猫人格周记' : 'Sign in to see your cat personality week'}
           </p>
         </div>
+      ) : weekData.every(d => !d.fullData) ? (
+        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-8 border border-purple-100 dark:border-purple-700 text-center space-y-4">
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            {lang === 'zh' ? '还没有猫签记录呢' : 'No cat signatures yet'}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {lang === 'zh' 
+              ? '生成你的第一张猫系签，开始记录你的情绪旅程吧' 
+              : 'Generate your first cat signature to start your emotional journey'}
+          </p>
+          <button 
+            onClick={() => onNavigate?.('cat-signature')}
+            className="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:opacity-90 transition-opacity">
+            {lang === 'zh' ? '✨ 生成今日猫系签' : '✨ Generate Cat Signature'}
+          </button>
+        </div>
       ) : (
         <>
           {/* Calendar View */}
