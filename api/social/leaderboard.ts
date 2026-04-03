@@ -67,13 +67,14 @@ export default async function handler(req: any, res: any) {
         .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 10)
         .map(([userId, stat], idx) => {
-          const topEmotion = Object.entries(stat.emotions).sort((a, b) => b[1] - a[1])[0];
+          const emotionEntries = Object.entries(stat.emotions).sort((a, b) => (b[1] as number) - (a[1] as number));
+          const topEmotion = emotionEntries.length > 0 ? emotionEntries[0][0] : null;
           return {
             rank: idx + 1,
             user_id: userId,
             user: userMap[userId] || { username: '用户', display_name: '用户' },
             upload_count: stat.count,
-            top_emotion: topEmotion ? topEmotion[0] : null,
+            top_emotion: topEmotion,
           };
         });
     } else if (type === 'collectors') {
