@@ -29,6 +29,7 @@ const MORE_TABS = (lang: string) => [
   { view: 'calendar',    emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
   { view: 'lootbox',     emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
   { view: 'leaderboard', emoji: '🏆', label: lang === 'zh' ? '排行榜' : 'Leaderboard' },
+  { view: 'animation',   emoji: '🎬', label: lang === 'zh' ? '动画' : 'Animation' },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({
