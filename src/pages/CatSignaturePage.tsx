@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLang } from '../lib/i18n';
 import { saveCatSignature } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { CatIllustration } from '../components/CatIllustrations';
 
 interface CatSignature {
   personality: string;
@@ -225,7 +226,9 @@ export function CatSignaturePage() {
         <div className="space-y-4">
           {/* Part 1: Cat Personality Result */}
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-3xl p-8 border border-purple-100 dark:border-purple-700 text-center space-y-4">
-            <div className="text-6xl">{signature.emoji}</div>
+            <div className="flex justify-center">
+              <CatIllustration personalityId={personalityId || 'sleepy'} className="w-40 h-40" />
+            </div>
             <div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
                 {signature.personality}
