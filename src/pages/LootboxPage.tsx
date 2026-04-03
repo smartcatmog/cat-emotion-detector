@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../lib/i18n';
+import { CatCharacter } from '../components/CatCharacter';
 
 const RARITY_STYLE: Record<string, { label: string; color: string; bg: string; border: string }> = {
   common:    { label: '普通 Common',   color: 'text-gray-600',   bg: 'bg-gray-50',    border: 'border-gray-200' },
@@ -20,6 +21,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
   const [opening, setOpening] = useState<string | null>(null);
   const [reward, setReward] = useState<any>(null);
   const [guestBoxCount, setGuestBoxCount] = useState(3); // 游客模式默认3个盲盒
+  const [catAnimation, setCatAnimation] = useState<'jump' | 'wag' | 'idle'>('idle');
 
   const fetchBoxes = () => {
     if (!userId) {
@@ -62,6 +64,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
             ...data,
             is_guest: true,
           });
+          setCatAnimation('jump');
           // 移除已开启的盲盒
           setBoxes(prev => prev.filter(b => b.id !== boxId));
           setGuestBoxCount(prev => prev - 1);
@@ -84,6 +87,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
       const data = await res.json();
       if (res.ok) {
         setReward(data);
+        setCatAnimation('wag');
         // Move box from unopened to opened locally
         if (box) {
           setBoxes(prev => prev.filter(b => b.id !== boxId));
@@ -98,6 +102,7 @@ export function LootboxPage({ userId }: { userId?: string }) {
   return (
     <div className="max-w-lg mx-auto space-y-5">
       <div className="text-center space-y-1">
+        <CatCharacter animate={catAnimation} size="lg" className="mx-auto mb-2" />
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '情绪盲盒' : 'Loot Box'}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">{lang === 'zh' ? '每次打卡获得一个盲盒 · 永久收藏' : 'Get a box every check-in · Keep forever'}</p>
       </div>

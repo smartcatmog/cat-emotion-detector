@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../lib/i18n';
+import { NumberRoll } from '../components/NumberRoll';
+import { MedalDrop } from '../components/MedalDrop';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy: '😸', calm: '😌', sleepy: '😴', curious: '🐱', annoyed: '😾',
@@ -21,6 +23,7 @@ export function LeaderboardPage() {
   const [period, setPeriod] = useState<Period>('week');
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -30,7 +33,15 @@ export function LeaderboardPage() {
         const res = await fetch(url);
         const d = await res.json();
         if (res.ok) {
-          setData(d.data || []);
+          const newData = d.data || [];
+          // Track rank changes
+          const newRanks: Record<string, number> = {};
+          newData.forEach((item: any, idx: number) => {
+            const key = item.id || item.pet_name || idx;
+            newRanks[key] = idx;
+          });
+          setPrevRanks(newRanks);
+          setData(newData);
         } else {
           console.error('Leaderboard error:', d.error);
         }
@@ -118,24 +129,36 @@ export function LeaderboardPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {data.map((item: any, idx: number) => (
-            <div
-              key={idx}
-              className={`rounded-2xl p-4 border transition-all
-                ${idx < 3
-                  ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-700'
-                  : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
-                }`}
-            >
-              <div className="flex items-center gap-4">
-                {/* Rank */}
-                <div className="text-3xl font-bold w-12 text-center">
-                  {idx < 3 ? MEDALS[idx] : `#${item.rank}`}
-                </div>
+          {data.map((item: any, idx: number) => {
+            const key = item.id || item.pet_name || idx;
+            const prevRank = prevRanks[key];
+            const rankChanged = prevRank !== undefined && prevRank !== idx;
+            const rankUp = rankChanged && prevRank > idx;
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {type === 'popular_cats' && (
+            return (
+              <div
+                key={idx}
+                className={`rounded-2xl p-4 border transition-all
+                  ${idx < 3
+                    ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-700'
+                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+                  }`}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Rank with Medal Drop */}
+                  <div className="text-3xl font-bold w-12 text-center relative">
+                    {idx < 3 ? (
+                      <MedalDrop rank={idx + 1} animate={rankChanged} />
+                    ) : (
+                      <div className={rankUp ? 'animate-rank-up' : rankChanged ? 'animate-rank-down' : ''}>
+                        #{item.rank || idx + 1}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    {type === 'popular_cats' && (
                     <div className="flex gap-3 items-start">
                       <img
                         src={item.image_url}
@@ -150,13 +173,13 @@ export function LeaderboardPage() {
                           </p>
                         </div>
                         <p className="text-sm font-bold text-pink-600 dark:text-pink-400 mt-1">
-                          ❤️ {item.likes_count} {lang === 'zh' ? '点赞' : 'likes'}
+                          ❤️ <NumberRoll from={0} to={item.likes_count} /> {lang === 'zh' ? '点赞' : 'likes'}
                         </p>
                       </div>
                     </div>
                   )}
 
-                  {type === 'contributors' && (
+                    {type === 'contributors' && (
                     <div className="flex gap-3 items-center">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold flex-shrink-0">
                         {item.user?.display_name?.[0] || item.user?.username?.[0] || '?'}
@@ -166,14 +189,14 @@ export function LeaderboardPage() {
                           {item.user?.display_name || item.user?.username}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {item.upload_count} {lang === 'zh' ? '张猫图' : 'uploads'}
+                          <NumberRoll from={0} to={item.upload_count} /> {lang === 'zh' ? '张猫图' : 'uploads'}
                           {item.top_emotion && ` • ${EMOTION_EMOJI[item.top_emotion]} ${item.top_emotion}`}
                         </p>
                       </div>
                     </div>
                   )}
 
-                  {type === 'collectors' && (
+                    {type === 'collectors' && (
                     <div className="flex gap-3 items-center">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white font-bold flex-shrink-0">
                         {item.user?.display_name?.[0] || item.user?.username?.[0] || '?'}
@@ -190,14 +213,14 @@ export function LeaderboardPage() {
                             />
                           </div>
                           <p className="text-sm font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">
-                            {item.unlocked_count}/{item.total_count}
+                            <NumberRoll from={0} to={item.unlocked_count} />/{item.total_count}
                           </p>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {type === 'streaks' && (
+                    {type === 'streaks' && (
                     <div className="flex gap-3 items-center">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center text-white font-bold flex-shrink-0">
                         {item.user?.display_name?.[0] || item.user?.username?.[0] || '?'}
@@ -207,16 +230,17 @@ export function LeaderboardPage() {
                           {item.user?.display_name || item.user?.username}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          🔥 {item.streak_days} {lang === 'zh' ? '天连续打卡' : 'day streak'}
+                          🔥 <NumberRoll from={0} to={item.streak_days} /> {lang === 'zh' ? '天连续打卡' : 'day streak'}
                           {item.current_emotion && ` • ${EMOTION_EMOJI[item.current_emotion]}`}
                         </p>
                       </div>
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../lib/i18n';
+import { BadgeUnlock } from '../components/BadgeUnlock';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
@@ -26,6 +27,7 @@ export function CollectionPage({ userId }: { userId: string }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
+  const [unlockedBadge, setUnlockedBadge] = useState<any>(null);
 
   useEffect(() => {
     fetch(`/api/social/collection?user_id=${userId}`)
@@ -34,6 +36,15 @@ export function CollectionPage({ userId }: { userId: string }) {
         setByEmotion(d.by_emotion || {});
         setUnlocked(d.unlocked || 0);
         setTotal(d.total || 0);
+        // Show badge unlock animation if new emotion unlocked
+        if (d.newly_unlocked) {
+          setUnlockedBadge({
+            id: d.newly_unlocked,
+            name: EMOTION_ZH[d.newly_unlocked] || d.newly_unlocked,
+            icon: EMOTION_EMOJI[d.newly_unlocked] || '🐱',
+            color: 'bg-gradient-to-br from-purple-400 to-pink-400',
+          });
+        }
       })
       .finally(() => setLoading(false));
   }, [userId]);
@@ -44,6 +55,9 @@ export function CollectionPage({ userId }: { userId: string }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
+      {unlockedBadge && (
+        <BadgeUnlock badge={unlockedBadge} onComplete={() => setUnlockedBadge(null)} />
+      )}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">{lang === 'zh' ? '情绪图鉴' : 'Collection'}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
