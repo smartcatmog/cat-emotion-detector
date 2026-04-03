@@ -17,20 +17,21 @@ interface LayoutProps {
 
 // Bottom tab items (most important 5)
 const BOTTOM_TABS = (lang: string) => [
-  { view: 'mood',       emoji: '💭', label: lang === 'zh' ? '发现' : 'Discover' },
-  { view: 'treehouse',  emoji: '🌳', label: lang === 'zh' ? '树洞' : 'Confess' },
-  { view: 'upload',     emoji: '🐱', label: lang === 'zh' ? '上传' : 'Upload' },
-  { view: 'same-mood',  emoji: '🤝', label: lang === 'zh' ? '同频' : 'Vibe' },
-  { view: 'collection', emoji: '🗂️', label: lang === 'zh' ? '我的' : 'Mine' },
+  { view: 'mood',           emoji: '💭', label: lang === 'zh' ? '发现' : 'Discover' },
+  { view: 'cat-signature',  emoji: '✨', label: lang === 'zh' ? '猫签' : 'Signature' },
+  { view: 'treehouse',      emoji: '🌳', label: lang === 'zh' ? '树洞' : 'Confess' },
+  { view: 'same-mood',      emoji: '🤝', label: lang === 'zh' ? '同频' : 'Vibe' },
+  { view: 'collection',     emoji: '🗂️', label: lang === 'zh' ? '我的' : 'Mine' },
 ];
 
 // Secondary nav (accessible from top)
 const MORE_TABS = (lang: string) => [
-  { view: 'calendar',    emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
-  { view: 'lootbox',     emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
-  { view: 'leaderboard', emoji: '🏆', label: lang === 'zh' ? '排行榜' : 'Leaderboard' },
-  { view: 'animation',   emoji: '🎬', label: lang === 'zh' ? '动画' : 'Animation' },
-  { view: 'cat-personality', emoji: '🐱', label: lang === 'zh' ? '猫人格' : 'Cat Personality' },
+  { view: 'upload',          emoji: '🐱', label: lang === 'zh' ? '上传' : 'Upload' },
+  { view: 'calendar',        emoji: '📅', label: lang === 'zh' ? '日历' : 'Calendar' },
+  { view: 'lootbox',         emoji: '📦', label: lang === 'zh' ? '盲盒' : 'Loot Box' },
+  { view: 'leaderboard',     emoji: '🏆', label: lang === 'zh' ? '排行榜' : 'Leaderboard' },
+  { view: 'animation',       emoji: '🎬', label: lang === 'zh' ? '动画' : 'Animation' },
+  { view: 'cat-personality', emoji: '📊', label: lang === 'zh' ? '周记' : 'Weekly' },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({

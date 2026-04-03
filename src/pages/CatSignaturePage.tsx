@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLang } from '../lib/i18n';
-import { saveCatSignature, getThisWeekSignatures } from '../lib/supabase';
+import { saveCatSignature } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
 interface CatSignature {
@@ -190,39 +190,37 @@ export function CatSignaturePage() {
         </p>
       </div>
 
-      {/* Input Section */}
-      {!signature && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
-          <label className="block">
-            <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
-              {lang === 'zh' ? '今天最压着你的感觉是什么？' : 'What\'s weighing on you today?'}
-            </p>
-            <textarea
-              value={moodInput}
-              onChange={(e) => setMoodInput(e.target.value)}
-              placeholder={lang === 'zh' ? '用一句话说说，猫会替你翻译' : 'Tell me in one sentence...'}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              rows={3}
-            />
-          </label>
+      {/* Input Section - Always Visible */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+        <label className="block">
+          <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
+            {lang === 'zh' ? '今天最压着你的感觉是什么？' : 'What\'s weighing on you today?'}
+          </p>
+          <textarea
+            value={moodInput}
+            onChange={(e) => setMoodInput(e.target.value)}
+            placeholder={lang === 'zh' ? '用一句话说说，猫会替你翻译' : 'Tell me in one sentence...'}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            rows={3}
+          />
+        </label>
 
-          {error && (
-            <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
-          )}
+        {error && (
+          <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
+        )}
 
-          <button
-            onClick={generateSignature}
-            disabled={isLoading}
-            className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isLoading
-              ? (lang === 'zh' ? '生成中...' : 'Generating...')
-              : (lang === 'zh' ? '生成我的今日猫签' : 'Generate My Signature')}
-          </button>
-        </div>
-      )}
+        <button
+          onClick={generateSignature}
+          disabled={isLoading}
+          className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {isLoading
+            ? (lang === 'zh' ? '生成中...' : 'Generating...')
+            : (lang === 'zh' ? '生成我的今日猫签' : 'Generate My Signature')}
+        </button>
+      </div>
 
-      {/* Main Signature Card */}
+      {/* Generated Signature Card */}
       {signature && (
         <div className="space-y-4">
           {/* Part 1: Cat Personality Result */}
