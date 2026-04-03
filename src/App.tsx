@@ -21,12 +21,13 @@ import { TreehousePage } from './pages/TreehousePage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { AnimationPreviewPage } from './pages/AnimationPreviewPage';
 import { CatPersonalityPage } from './pages/CatPersonalityPage';
+import { CatSignaturePage } from './pages/CatSignaturePage';
 import { AnalysisResult } from './types';
 import { saveAnalysisResult, saveMoodFeedback, updateCatEmotion, supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { useLang, t } from './lib/i18n';
 
-type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood' | 'treehouse' | 'leaderboard' | 'animation' | 'cat-personality';
+type AppView = 'upload' | 'preview' | 'results' | 'history' | 'annotate' | 'privacy' | 'mood' | 'calendar' | 'collection' | 'lootbox' | 'same-mood' | 'treehouse' | 'leaderboard' | 'animation' | 'cat-personality' | 'cat-signature';
 
 const PROMPT = `You are an expert in cat behavior and feline body language. Analyze the cat in this photo.
 
@@ -1033,6 +1034,10 @@ function App() {
 
           {currentView === 'cat-personality' && (
             <CatPersonalityPage />
+          )}
+
+          {currentView === 'cat-signature' && (
+            <CatSignaturePage />
           )}
           
           {/* NFT Preview Page - removed, NFT is now integrated in CatCard and Results */}
