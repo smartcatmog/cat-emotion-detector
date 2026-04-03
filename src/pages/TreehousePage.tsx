@@ -27,17 +27,19 @@ function PostCard({ post, userId, lang }: { post: any; userId?: string; lang: st
 
   // Load a matching cat image for the post's emotion
   useEffect(() => {
-    if (post.emotion_label) {
+    if (post.emotion_label || post.content) {
+      // Use post content for better AI matching, fallback to emotion label
+      const moodText = post.content?.slice(0, 200) || post.emotion_label;
       fetch('/api/mood-match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mood_text: post.emotion_label }),
+        body: JSON.stringify({ mood_text: moodText }),
       }).then(r => r.json()).then(d => {
         const cats = d.data?.cats || [];
         if (cats.length > 0) setCatImage(cats[0].image_url);
       }).catch(() => {});
     }
-  }, [post.emotion_label]);
+  }, [post.emotion_label, post.content]);
 
   const loadReplies = async () => {
     const res = await fetch(`/api/social/same-mood?action=treehouse-reply&post_id=${post.id}`);
@@ -224,12 +226,13 @@ export function TreehousePage({ userId }: { userId?: string }) {
         setPosts(prev => [{ ...d.data, reply_count: 0, author: isAnon ? null : { display_name: '你' } }, ...prev]);
         setContent('');
 
-        // Fetch a matching cat for the emotion
-        if (emotion) {
+        // Fetch a matching cat for the emotion using the post content as mood context
+        if (emotion || content.trim()) {
+          const moodText = content.trim().slice(0, 200); // Use actual post content for better AI matching
           const catRes = await fetch('/api/mood-match', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mood_text: emotion }),
+            body: JSON.stringify({ mood_text: moodText }),
           });
           const catData = await catRes.json();
           const cats = catData.data?.cats || [];
