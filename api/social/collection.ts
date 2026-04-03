@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { onCollect } from './notify';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -28,9 +27,11 @@ export default async function handler(req: any, res: any) {
 
     // Batch fetch cat images to avoid N+1
     const catImageIds = [...new Set((data || []).map((item: any) => item.cat_image_id).filter(Boolean))];
-    const { data: catImages } = catImageIds.length > 0
-      ? await supabase.from('cat_images').select('id, image_url, description, is_nft, nft_token_id, nft_rarity').in('id', catImageIds)
-      : { data: [] };
+    const { data: catImages, error: catError } = catImageIds.length > 0
+      ? await supabase.from('cat_images').select('id, image_url, description, is_nft, nft_token_id, nft_rarity, rarity').in('id', catImageIds)
+      : { data: [], error: null };
+
+    if (catError) console.error('[collection] cat_images fetch error:', catError.message);
     const catImageMap: Record<string, any> = {};
     (catImages || []).forEach((img: any) => { catImageMap[img.id] = img; });
 
@@ -66,8 +67,8 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: error.message });
     }
 
-    // Fire-and-forget: notify owner, update count
-    onCollect(cat_image_id).catch(console.error);
+    // Fire-and-forget: notify owner, update count (dynamic import to isolate errors)
+    import('./notify').then(m => m.onCollect(cat_image_id)).catch(console.error);
 
     return res.status(200).json({ data });
   }

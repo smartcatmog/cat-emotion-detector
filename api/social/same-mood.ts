@@ -87,8 +87,12 @@ export default async function handler(req: any, res: any) {
         post_id, user_id: user_id || null, content: content.trim().slice(0, 300), is_anonymous,
       }).select('id, content, is_anonymous, created_at').single();
       if (error) return res.status(500).json({ error: error.message });
-      // Like the post (resonance)
-      await supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }).catch(() => {});
+      // Increment likes on the post
+      await supabase.rpc('increment_likes', { cat_id: post_id }).catch(() => {
+        // fallback: direct update
+        supabase.from('treehouse_posts').select('likes_count').eq('id', post_id).single()
+          .then(({ data: p }) => supabase.from('treehouse_posts').update({ likes_count: (p?.likes_count || 0) + 1 }).eq('id', post_id));
+      });
       return res.status(201).json({ data });
     }
   }
@@ -97,8 +101,9 @@ export default async function handler(req: any, res: any) {
   if (action === 'treehouse-like' && req.method === 'POST') {
     const { post_id } = req.body;
     if (!post_id) return res.status(400).json({ error: 'Missing post_id' });
-    await supabase.from('treehouse_posts').update({ likes_count: supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }) as any }).eq('id', post_id);
-    await supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }).catch(() => {});
+    // Direct increment
+    const { data: p } = await supabase.from('treehouse_posts').select('likes_count').eq('id', post_id).single();
+    await supabase.from('treehouse_posts').update({ likes_count: (p?.likes_count || 0) + 1 }).eq('id', post_id);
     return res.status(200).json({ success: true });
   }
 

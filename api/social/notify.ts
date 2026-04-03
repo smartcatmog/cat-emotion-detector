@@ -253,8 +253,6 @@ export default async function handler(req: any, res: any) {
       // Follow
       const { error } = await supabase.from('user_follows').insert({ follower_id, following_id });
       if (error && error.code !== '23505') return res.status(500).json({ error: error.message });
-      // Update counts
-      await supabase.rpc('increment_follow_counts', { p_follower: follower_id, p_following: following_id }).catch(() => {});
       // Notify
       const { data: follower } = await supabase.from('users').select('display_name, username').eq('id', follower_id).single();
       const name = follower?.display_name || follower?.username || '有人';
