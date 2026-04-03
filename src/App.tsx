@@ -760,20 +760,60 @@ function App() {
 
           {/* Mood Match View */}
           {currentView === 'mood' && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">{t.howFeeling[lang]}</h2>
-                <p className="text-gray-500 dark:text-gray-400">{t.moodSubtitle[lang]}</p>
-              </div>
-              <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 space-y-4 border border-purple-100 dark:border-gray-700">
-                <textarea value={moodText} onChange={(e) => setMoodText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleMoodMatch(); }}} placeholder={t.moodPlaceholder[lang]} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 resize-none focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none" rows={3} />
-                {moodError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{moodError}</p>}
-                <button onClick={handleMoodMatch} disabled={moodLoading} className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-purple-200 dark:shadow-none">
-                  {moodLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.findingCat[lang]}</>) : t.findCat[lang]}
-                </button>
+            <div className="space-y-8">
+              {/* Hero */}
+              <div className="text-center space-y-3 pt-2">
+                <div className="text-6xl animate-bounce" style={{animationDuration:'2s'}}>🐱</div>
+                <h2 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-gray-50 leading-tight">
+                  {lang === 'zh' ? '今天，你感觉怎么样？' : 'How are you feeling today?'}
+                </h2>
+                <p className="text-gray-400 dark:text-gray-500 text-base max-w-sm mx-auto">
+                  {lang === 'zh' ? '告诉我，我帮你找到懂你的猫 🐾' : "Tell me — I'll find the cat that gets you 🐾"}
+                </p>
               </div>
 
-              {/* Global mood pulse — always visible on mood page */}
+              {/* Input card — warmer, rounder */}
+              <div className="max-w-xl mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 space-y-4 border-2 border-purple-100 dark:border-gray-700">
+                  <textarea
+                    value={moodText}
+                    onChange={(e) => setMoodText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleMoodMatch(); }}}
+                    placeholder={t.moodPlaceholder[lang]}
+                    className="w-full px-4 py-3 border-0 bg-purple-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 resize-none focus:ring-2 focus:ring-purple-300 outline-none rounded-2xl text-base placeholder-gray-400"
+                    rows={3}
+                  />
+                  {moodError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl">{moodError}</p>}
+                  <button
+                    onClick={handleMoodMatch}
+                    disabled={moodLoading}
+                    className="w-full py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white rounded-2xl font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-pink-200 dark:shadow-none"
+                  >
+                    {moodLoading
+                      ? (<><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.findingCat[lang]}</>)
+                      : <>{t.findCat[lang]}</>
+                    }
+                  </button>
+                </div>
+
+                {/* Quick mood shortcuts */}
+                <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                  {[
+                    { text: lang === 'zh' ? '😮‍💨 好累' : '😮‍💨 exhausted', val: lang === 'zh' ? '好累' : 'exhausted' },
+                    { text: lang === 'zh' ? '😸 开心' : '😸 happy', val: lang === 'zh' ? '开心' : 'happy' },
+                    { text: lang === 'zh' ? '🙀 焦虑' : '🙀 anxious', val: lang === 'zh' ? '焦虑' : 'anxious' },
+                    { text: lang === 'zh' ? '😒 无聊' : '😒 bored', val: lang === 'zh' ? '无聊' : 'bored' },
+                    { text: lang === 'zh' ? '💀 崩溃' : '💀 dramatic', val: lang === 'zh' ? '崩溃' : 'dramatic' },
+                  ].map(q => (
+                    <button key={q.val} onClick={() => { setMoodText(q.val); }}
+                      className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full text-sm text-gray-600 dark:text-gray-300 hover:border-purple-400 hover:text-purple-600 transition-all shadow-sm">
+                      {q.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mood pulse */}
               <div className="max-w-xl mx-auto">
                 <MoodPulse />
               </div>

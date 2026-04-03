@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useLang } from '../lib/i18n';
+import { useState, useEffect } from 'react';import { useLang } from '../lib/i18n';
 
 const EMOTION_EMOJI: Record<string, string> = {
   happy:'😸',calm:'😌',sleepy:'😴',curious:'🐱',annoyed:'😾',anxious:'🙀',
@@ -24,6 +23,21 @@ function PostCard({ post, userId, lang }: { post: any; userId?: string; lang: st
   const [sending, setSending] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes_count || 0);
+  const [catImage, setCatImage] = useState<string | null>(null);
+
+  // Load a matching cat image for the post's emotion
+  useEffect(() => {
+    if (post.emotion_label) {
+      fetch('/api/mood-match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood_text: post.emotion_label }),
+      }).then(r => r.json()).then(d => {
+        const cats = d.data?.cats || [];
+        if (cats.length > 0) setCatImage(cats[0].image_url);
+      }).catch(() => {});
+    }
+  }, [post.emotion_label]);
 
   const loadReplies = async () => {
     const res = await fetch(`/api/social/same-mood?action=treehouse-reply&post_id=${post.id}`);
@@ -104,6 +118,16 @@ function PostCard({ post, userId, lang }: { post: any; userId?: string; lang: st
         {/* Content */}
         <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{post.content}</p>
 
+        {/* Matched cat image */}
+        {catImage && (
+          <div className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl p-2.5">
+            <img src={catImage} alt="mood cat" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+            <p className="text-xs text-purple-600 dark:text-purple-400">
+              {lang === 'zh' ? '🐱 这只猫懂你的感受' : '🐱 This cat understands'}
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center gap-4 pt-1">
           <button onClick={like} className={`flex items-center gap-1 text-xs transition-colors ${liked ? 'text-pink-500' : 'text-gray-400 hover:text-pink-400'}`}>
@@ -172,6 +196,7 @@ export function TreehousePage({ userId }: { userId?: string }) {
   const [posting, setPosting] = useState(false);
   const [filterEmotion, setFilterEmotion] = useState('');
   const [showEmotionPicker, setShowEmotionPicker] = useState(false);
+  const [matchedCat, setMatchedCat] = useState<any>(null); // cat matched after posting
 
   const load = async (emotionFilter = filterEmotion) => {
     setLoading(true);
@@ -187,6 +212,7 @@ export function TreehousePage({ userId }: { userId?: string }) {
   const post = async () => {
     if (!content.trim() || posting) return;
     setPosting(true);
+    setMatchedCat(null);
     try {
       const res = await fetch('/api/social/same-mood?action=treehouse', {
         method: 'POST',
@@ -197,6 +223,18 @@ export function TreehousePage({ userId }: { userId?: string }) {
       if (res.ok && d.data) {
         setPosts(prev => [{ ...d.data, reply_count: 0, author: isAnon ? null : { display_name: '你' } }, ...prev]);
         setContent('');
+
+        // Fetch a matching cat for the emotion
+        if (emotion) {
+          const catRes = await fetch('/api/mood-match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mood_text: emotion }),
+          });
+          const catData = await catRes.json();
+          const cats = catData.data?.cats || [];
+          if (cats.length > 0) setMatchedCat(cats[Math.floor(Math.random() * Math.min(cats.length, 3))]);
+        }
         setEmotion('');
       }
     } finally { setPosting(false); }
@@ -252,6 +290,24 @@ export function TreehousePage({ userId }: { userId?: string }) {
           </div>
         )}
       </div>
+
+      {/* Matched cat after posting */}
+      {matchedCat && (
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border border-purple-200 dark:border-purple-700 p-4 flex gap-4 items-center">
+          <img src={matchedCat.image_url} alt="matched cat" className="w-20 h-20 rounded-xl object-cover flex-shrink-0 shadow-md" />
+          <div>
+            <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-1">
+              🐱 {lang === 'zh' ? '这只猫懂你' : 'This cat gets you'}
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+              {matchedCat.description || (lang === 'zh' ? '它也有同样的感受' : 'It feels the same way')}
+            </p>
+            <button onClick={() => setMatchedCat(null)} className="mt-2 text-xs text-gray-400 hover:text-gray-600">
+              {lang === 'zh' ? '关闭' : 'Dismiss'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
