@@ -45,28 +45,28 @@ const NEIGHBORS: Record<CatId, CatId> = {
 async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
   try {
     const cat = CATS[catId];
-    // Build OR filter for multiple emotions
-    const filters = cat.supabaseEmotions.map(e => `emotion_label.eq.${e}`).join(',');
     
-    const response = await fetch(
-      `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?or=(${filters})&select=image_url&limit=100`,
-      {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
-        },
-      }
-    );
+    // Try each emotion until we get results
+    for (const emotion of cat.supabaseEmotions) {
+      const response = await fetch(
+        `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=100`,
+        {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
+          },
+        }
+      );
 
-    if (!response.ok) {
-      console.error('Supabase response error:', response.status, response.statusText);
-      return null;
+      if (!response.ok) continue;
+      
+      const images = await response.json();
+      if (Array.isArray(images) && images.length > 0) {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        return images[randomIndex].image_url;
+      }
     }
     
-    const images = await response.json();
-    if (!Array.isArray(images) || images.length === 0) return null;
-    
-    const randomIndex = Math.floor(Math.random() * images.length);
-    return images[randomIndex].image_url;
+    return null;
   } catch (error) {
     console.error('Error fetching cat photo:', error);
     return null;
