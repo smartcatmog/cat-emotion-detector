@@ -45,18 +45,22 @@ const NEIGHBORS: Record<CatId, CatId> = {
 async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
   try {
     const cat = CATS[catId];
-    const emotions = cat.supabaseEmotions.map(e => `"${e}"`).join(',');
+    // Build OR filter for multiple emotions
+    const filters = cat.supabaseEmotions.map(e => `emotion_label.eq.${e}`).join(',');
     
     const response = await fetch(
-      `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=in.(${emotions})&select=image_url&limit=100`,
+      `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?or=(${filters})&select=image_url&limit=100`,
       {
         headers: {
-          'apikey': process.env.SUPABASE_ANON_KEY || '',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
         },
       }
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error('Supabase response error:', response.status, response.statusText);
+      return null;
+    }
     
     const images = await response.json();
     if (!Array.isArray(images) || images.length === 0) return null;
