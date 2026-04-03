@@ -49,42 +49,29 @@ async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
     // Try each emotion until we get results
     for (const emotion of cat.supabaseEmotions) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
         const response = await fetch(
-          `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=100`,
+          `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=50`,
           {
             headers: {
               'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
             },
-            signal: controller.signal,
           }
         );
-        
-        clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          console.log(`Emotion ${emotion} returned status ${response.status}`);
-          continue;
-        }
+        if (!response.ok) continue;
         
         const images = await response.json();
         if (Array.isArray(images) && images.length > 0) {
           const randomIndex = Math.floor(Math.random() * images.length);
-          console.log(`Found ${images.length} images for ${emotion}, returning one`);
           return images[randomIndex].image_url;
         }
       } catch (err) {
-        console.log(`Error fetching emotion ${emotion}:`, err instanceof Error ? err.message : err);
         continue;
       }
     }
     
-    console.log(`No cat photos found for ${catId}`);
     return null;
   } catch (error) {
-    console.error('Error in getRandomCatPhoto:', error);
     return null;
   }
 }
