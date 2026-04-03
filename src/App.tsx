@@ -750,20 +750,109 @@ function App() {
       >
         <div className="space-y-6">
 
-          {/* Tab Nav */}
-          {(currentView === 'upload' || currentView === 'mood') && (
-            <div className="flex justify-center gap-3">
-              <button onClick={() => setCurrentView('mood')} className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${currentView === 'mood' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-purple-200' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-purple-50 border border-gray-200 dark:border-gray-700'}`}>
-                💭 {lang === 'zh' ? '心情匹配' : 'Match My Mood'}
-              </button>
-              <button onClick={() => setCurrentView('upload')} className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${currentView === 'upload' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-blue-200' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-50 border border-gray-200 dark:border-gray-700'}`}>
-                🐱 {lang === 'zh' ? '分析猫咪' : 'Analyze My Cat'}
-              </button>
+          {/* Main Homepage - Two Featured Functions */}
+          {currentView === 'mood' && !moodResult && (
+            <div className="space-y-6">
+              {/* Hero */}
+              <div className="text-center space-y-2">
+                <h1 className="text-4xl font-black text-gray-900 dark:text-gray-50">
+                  {lang === 'zh' ? '🐱 MoodCat' : '🐱 MoodCat'}
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {lang === 'zh' ? '用猫咪理解你的情绪' : 'Understand your emotions through cats'}
+                </p>
+              </div>
+
+              {/* Two Main Features */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                {/* Feature 1: Cat Signature & Weekly Record */}
+                <button
+                  onClick={() => setCurrentView('cat-personality')}
+                  className="group relative overflow-hidden rounded-3xl p-8 text-left transition-all hover:shadow-xl"
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity" />
+                  <div className="relative space-y-4">
+                    <div className="text-5xl">📅</div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-2">
+                        {lang === 'zh' ? '我的猫人格周记' : 'My Cat Personality Week'}
+                      </h2>
+                      <p className="text-white/80 text-sm">
+                        {lang === 'zh' 
+                          ? '生成猫系签，记录你的情绪旅程，看见自己的模式' 
+                          : 'Generate cat signatures, track your emotional journey, see your patterns'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/90 text-sm font-medium pt-2">
+                      <span>{lang === 'zh' ? '开始记录' : 'Start tracking'}</span>
+                      <span>→</span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Feature 2: Analyze Cat */}
+                <button
+                  onClick={() => setCurrentView('upload')}
+                  className="group relative overflow-hidden rounded-3xl p-8 text-left transition-all hover:shadow-xl"
+                  style={{
+                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity" />
+                  <div className="relative space-y-4">
+                    <div className="text-5xl">🔍</div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-2">
+                        {lang === 'zh' ? '分析你的猫咪' : 'Analyze Your Cat'}
+                      </h2>
+                      <p className="text-white/80 text-sm">
+                        {lang === 'zh' 
+                          ? '上传猫咪照片，AI 解读它的心情和身体语言' 
+                          : 'Upload a photo and AI will decode your cat\'s mood and body language'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/90 text-sm font-medium pt-2">
+                      <span>{lang === 'zh' ? '开始分析' : 'Start analyzing'}</span>
+                      <span>→</span>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Quick Access */}
+              <div className="max-w-4xl mx-auto">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 text-center">
+                  {lang === 'zh' ? '或者' : 'Or'}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { icon: '💭', label: lang === 'zh' ? '心情匹配' : 'Match Mood', view: 'mood-match' },
+                    { icon: '🌳', label: lang === 'zh' ? '树洞' : 'Treehouse', view: 'treehouse' },
+                    { icon: '🏆', label: lang === 'zh' ? '排行榜' : 'Leaderboard', view: 'leaderboard' },
+                    { icon: '📚', label: lang === 'zh' ? '收集' : 'Collection', view: 'collection' },
+                  ].map(item => (
+                    <button
+                      key={item.view}
+                      onClick={() => {
+                        if (item.view === 'mood-match') setCurrentView('mood');
+                        else setCurrentView(item.view as AppView);
+                      }}
+                      className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-purple-300 hover:shadow-md transition-all text-center space-y-2"
+                    >
+                      <div className="text-3xl">{item.icon}</div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{item.label}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Mood Match View */}
-          {currentView === 'mood' && (
+          {/* Mood Match View - when showing results */}
+          {currentView === 'mood' && moodResult && (
             <div className="space-y-5">
               {/* Hero — compact, warm */}
               <div className="text-center space-y-2 pt-1">
