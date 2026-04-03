@@ -25,11 +25,20 @@ export function LeaderboardPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const url = `/api/social/leaderboard?type=${type}&period=${period}`;
-      const res = await fetch(url);
-      const d = await res.json();
-      setData(d.data || []);
-      setLoading(false);
+      try {
+        const url = `/api/social/leaderboard?type=${type}&period=${period}`;
+        const res = await fetch(url);
+        const d = await res.json();
+        if (res.ok) {
+          setData(d.data || []);
+        } else {
+          console.error('Leaderboard error:', d.error);
+        }
+      } catch (e) {
+        console.error('Leaderboard fetch error:', e);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [type, period]);

@@ -182,6 +182,6 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ data });
   } catch (err) {
     console.error('Leaderboard error:', err);
-    return res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    return res.status(500).json({ error: String(err) });
   }
 }
