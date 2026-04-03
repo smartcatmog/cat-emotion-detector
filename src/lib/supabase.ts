@@ -220,3 +220,109 @@ export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
+
+
+// Cat Signature types
+export interface CatSignature {
+  id: string;
+  user_id: string;
+  personality_id: string;
+  personality_name: string;
+  emoji: string;
+  mood_input: string;
+  emotion_vector: {
+    energy: 'low' | 'medium' | 'high';
+    emotion: 'positive' | 'neutral' | 'negative';
+    socialNeed: 'alone' | 'together';
+    control: 'high' | 'low';
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+// Save cat signature
+export async function saveCatSignature(
+  userId: string,
+  personalityId: string,
+  personalityName: string,
+  emoji: string,
+  moodInput: string,
+  emotionVector: any
+) {
+  try {
+    const { data, error } = await supabase
+      .from('cat_signatures')
+      .insert([
+        {
+          user_id: userId,
+          personality_id: personalityId,
+          personality_name: personalityName,
+          emoji: emoji,
+          mood_input: moodInput,
+          emotion_vector: emotionVector,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+    return data?.[0];
+  } catch (error) {
+    console.error('Error saving cat signature:', error);
+    throw error;
+  }
+}
+
+// Get user's cat signatures
+export async function getUserCatSignatures(userId: string, limit = 30, offset = 0) {
+  try {
+    const { data, error, count } = await supabase
+      .from('cat_signatures')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    return { data, count };
+  } catch (error) {
+    console.error('Error fetching cat signatures:', error);
+    throw error;
+  }
+}
+
+// Get user's signature statistics
+export async function getUserSignatureStats(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_signature_stats', { user_id_param: userId });
+
+    if (error) throw error;
+    return data?.[0];
+  } catch (error) {
+    console.error('Error fetching signature stats:', error);
+    throw error;
+  }
+}
+
+// Get this week's signatures
+export async function getThisWeekSignatures(userId: string) {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data, error } = await supabase
+      .from('cat_signatures')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching this week signatures:', error);
+    throw error;
+  }
+}

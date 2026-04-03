@@ -1033,7 +1033,7 @@ function App() {
           )}
 
           {currentView === 'cat-personality' && (
-            <CatPersonalityPage />
+            <CatPersonalityPage onNavigate={(view) => setCurrentView(view as AppView)} />
           )}
 
           {currentView === 'cat-signature' && (
