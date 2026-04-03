@@ -6,23 +6,27 @@ type EmotionCategory = 'low_energy' | 'anxiety' | 'hurt' | 'physical' | 'mixed';
 // 8 cat personalities
 type CatId = 'sleepy' | 'hiding' | 'spiky' | 'licking' | 'sad' | 'frantic' | 'aloof' | 'sunny';
 
+// Supabase emotion labels for real cat photos
+type SupabaseEmotion = 'sleepy' | 'calm' | 'suspicious' | 'angry' | 'annoyed' | 'melancholy' | 'ashamed' | 'dramatic' | 'hangry' | 'happy' | 'loved' | 'curious' | 'smug';
+
 interface CatPersonality {
   id: CatId;
   name: string;
   emoji: string;
   energy: 'low' | 'high' | 'medium';
   social: 'alone' | 'together' | 'medium';
+  supabaseEmotions: SupabaseEmotion[];
 }
 
 const CATS: Record<CatId, CatPersonality> = {
-  sleepy: { id: 'sleepy', name: '困困猫', emoji: '😴', energy: 'low', social: 'together' },
-  hiding: { id: 'hiding', name: '躲柜子猫', emoji: '🙈', energy: 'low', social: 'alone' },
-  spiky: { id: 'spiky', name: '炸毛猫', emoji: '😾', energy: 'high', social: 'alone' },
-  licking: { id: 'licking', name: '舔毛猫', emoji: '😼', energy: 'medium', social: 'alone' },
-  sad: { id: 'sad', name: '委屈猫', emoji: '😿', energy: 'low', social: 'together' },
-  frantic: { id: 'frantic', name: '暴冲猫', emoji: '🐱', energy: 'high', social: 'alone' },
-  aloof: { id: 'aloof', name: '高冷观察猫', emoji: '😸', energy: 'medium', social: 'alone' },
-  sunny: { id: 'sunny', name: '晒太阳猫', emoji: '😻', energy: 'medium', social: 'together' },
+  sleepy: { id: 'sleepy', name: '困困猫', emoji: '😴', energy: 'low', social: 'together', supabaseEmotions: ['sleepy', 'calm'] },
+  hiding: { id: 'hiding', name: '躲柜子猫', emoji: '🙈', energy: 'low', social: 'alone', supabaseEmotions: ['suspicious', 'ashamed'] },
+  spiky: { id: 'spiky', name: '炸毛猫', emoji: '😾', energy: 'high', social: 'alone', supabaseEmotions: ['angry', 'annoyed'] },
+  licking: { id: 'licking', name: '舔毛猫', emoji: '😼', energy: 'medium', social: 'alone', supabaseEmotions: ['calm', 'curious'] },
+  sad: { id: 'sad', name: '委屈猫', emoji: '😿', energy: 'low', social: 'together', supabaseEmotions: ['melancholy', 'ashamed'] },
+  frantic: { id: 'frantic', name: '暴冲猫', emoji: '🐱', energy: 'high', social: 'alone', supabaseEmotions: ['dramatic', 'hangry'] },
+  aloof: { id: 'aloof', name: '高冷观察猫', emoji: '😸', energy: 'medium', social: 'alone', supabaseEmotions: ['suspicious', 'smug'] },
+  sunny: { id: 'sunny', name: '晒太阳猫', emoji: '😻', energy: 'medium', social: 'together', supabaseEmotions: ['happy', 'loved'] },
 };
 
 // Neighbor cats for "换一种理解方式"
@@ -36,6 +40,34 @@ const NEIGHBORS: Record<CatId, CatId> = {
   aloof: 'hiding',
   sunny: 'sleepy',
 };
+
+// Helper to get random cat photo from Supabase
+async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
+  try {
+    const cat = CATS[catId];
+    const emotions = cat.supabaseEmotions.map(e => `"${e}"`).join(',');
+    
+    const response = await fetch(
+      `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=in.(${emotions})&select=image_url&limit=100`,
+      {
+        headers: {
+          'apikey': process.env.SUPABASE_ANON_KEY || '',
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+    
+    const images = await response.json();
+    if (!Array.isArray(images) || images.length === 0) return null;
+    
+    const randomIndex = Math.floor(Math.random() * images.length);
+    return images[randomIndex].image_url;
+  } catch (error) {
+    console.error('Error fetching cat photo:', error);
+    return null;
+  }
+}
 
 // Keywords for emotion classification
 const KEYWORDS: Record<EmotionCategory, string[]> = {
@@ -339,6 +371,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const suggestion = generateSuggestion(catId, category);
     const notSuitable = generateNotSuitable(catId, category);
     const recoveryMethods = generateRecoveryMethods(catId);
+    
+    // Get random cat photo
+    const catPhoto = await getRandomCatPhoto(catId);
 
     return res.status(200).json({
       success: true,
@@ -351,6 +386,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         notSuitable,
         recoveryMethods,
         neighbor: NEIGHBORS[catId],
+        catPhoto,
       },
     });
   } catch (error) {

@@ -13,6 +13,7 @@ interface CatSignatureResult {
   notSuitable: string[];
   recoveryMethods: string[];
   neighbor: string;
+  catPhoto: string | null;
 }
 
 export function CatSignaturePage() {
@@ -203,7 +204,15 @@ export function CatSignaturePage() {
           {/* Cat Display */}
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-3xl p-8 border border-purple-100 dark:border-purple-700 text-center space-y-4">
             <div className="flex justify-center">
-              <CatIllustration personalityId={signature.catId} className="w-40 h-40" />
+              {signature.catPhoto ? (
+                <img 
+                  src={signature.catPhoto} 
+                  alt={signature.name}
+                  className="w-40 h-40 rounded-2xl object-cover shadow-lg"
+                />
+              ) : (
+                <CatIllustration personalityId={signature.catId} className="w-40 h-40" />
+              )}
             </div>
             <div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
