@@ -6,6 +6,103 @@ const supabase = createClient(
 );
 
 export default async function handler(req: any, res: any) {
+  const { action } = req.query;
+
+  // ── TREEHOUSE ──────────────────────────────────────────────────────────
+  if (action === 'treehouse') {
+    if (req.method === 'GET') {
+      const { emotion, limit = '20', offset = '0' } = req.query;
+      let query = supabase
+        .from('treehouse_posts')
+        .select('id, content, emotion_label, is_anonymous, likes_count, created_at, user_id')
+        .order('created_at', { ascending: false })
+        .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+      if (emotion) query = query.eq('emotion_label', emotion);
+      const { data, error } = await query;
+      if (error) return res.status(500).json({ error: error.message });
+
+      // Fetch usernames for non-anonymous posts
+      const publicUserIds = (data || []).filter(p => !p.is_anonymous && p.user_id).map(p => p.user_id);
+      const userMap: Record<string, any> = {};
+      if (publicUserIds.length > 0) {
+        const { data: users } = await supabase.from('users').select('id, username, display_name').in('id', publicUserIds);
+        (users || []).forEach((u: any) => { userMap[u.id] = u; });
+      }
+
+      // Fetch reply counts
+      const postIds = (data || []).map(p => p.id);
+      const replyCounts: Record<string, number> = {};
+      if (postIds.length > 0) {
+        const { data: replies } = await supabase.from('treehouse_replies').select('post_id').in('post_id', postIds);
+        (replies || []).forEach((r: any) => { replyCounts[r.post_id] = (replyCounts[r.post_id] || 0) + 1; });
+      }
+
+      const enriched = (data || []).map(p => ({
+        ...p,
+        author: p.is_anonymous ? null : (userMap[p.user_id] || null),
+        reply_count: replyCounts[p.id] || 0,
+        user_id: undefined, // don't expose user_id for anonymous
+      }));
+      return res.status(200).json({ data: enriched });
+    }
+
+    if (req.method === 'POST') {
+      const { user_id, content, emotion_label, is_anonymous = true } = req.body;
+      if (!content?.trim()) return res.status(400).json({ error: 'Missing content' });
+      const { data, error } = await supabase.from('treehouse_posts').insert({
+        user_id: user_id || null,
+        content: content.trim().slice(0, 500),
+        emotion_label: emotion_label || null,
+        is_anonymous,
+      }).select('id, content, emotion_label, is_anonymous, likes_count, created_at').single();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(201).json({ data });
+    }
+  }
+
+  // ── TREEHOUSE REPLIES ──────────────────────────────────────────────────
+  if (action === 'treehouse-reply') {
+    if (req.method === 'GET') {
+      const { post_id } = req.query;
+      if (!post_id) return res.status(400).json({ error: 'Missing post_id' });
+      const { data, error } = await supabase.from('treehouse_replies')
+        .select('id, content, is_anonymous, created_at, user_id')
+        .eq('post_id', post_id).order('created_at', { ascending: true });
+      if (error) return res.status(500).json({ error: error.message });
+
+      const publicIds = (data || []).filter(r => !r.is_anonymous && r.user_id).map(r => r.user_id);
+      const userMap: Record<string, any> = {};
+      if (publicIds.length > 0) {
+        const { data: users } = await supabase.from('users').select('id, username, display_name').in('id', publicIds);
+        (users || []).forEach((u: any) => { userMap[u.id] = u; });
+      }
+      const enriched = (data || []).map(r => ({ ...r, author: r.is_anonymous ? null : userMap[r.user_id], user_id: undefined }));
+      return res.status(200).json({ data: enriched });
+    }
+
+    if (req.method === 'POST') {
+      const { post_id, user_id, content, is_anonymous = true } = req.body;
+      if (!post_id || !content?.trim()) return res.status(400).json({ error: 'Missing fields' });
+      const { data, error } = await supabase.from('treehouse_replies').insert({
+        post_id, user_id: user_id || null, content: content.trim().slice(0, 300), is_anonymous,
+      }).select('id, content, is_anonymous, created_at').single();
+      if (error) return res.status(500).json({ error: error.message });
+      // Like the post (resonance)
+      await supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }).catch(() => {});
+      return res.status(201).json({ data });
+    }
+  }
+
+  // ── TREEHOUSE LIKE ─────────────────────────────────────────────────────
+  if (action === 'treehouse-like' && req.method === 'POST') {
+    const { post_id } = req.body;
+    if (!post_id) return res.status(400).json({ error: 'Missing post_id' });
+    await supabase.from('treehouse_posts').update({ likes_count: supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }) as any }).eq('id', post_id);
+    await supabase.rpc('increment_treehouse_likes', { p_post_id: post_id }).catch(() => {});
+    return res.status(200).json({ success: true });
+  }
+
+  // ── SAME MOOD (default) ────────────────────────────────────────────────
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const { user_id, emotion_label } = req.query;

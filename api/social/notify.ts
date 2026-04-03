@@ -237,6 +237,51 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ success: true });
   }
 
+  // ── FOLLOW / UNFOLLOW ──────────────────────────────────────────────────
+  if (action === 'follow') {
+    const { follower_id, following_id } = req.method === 'GET' ? req.query : req.body;
+    if (!follower_id || !following_id) return res.status(400).json({ error: 'Missing fields' });
+
+    if (req.method === 'GET') {
+      // Check if following
+      const { data } = await supabase.from('user_follows')
+        .select('id').eq('follower_id', follower_id).eq('following_id', following_id).single();
+      return res.status(200).json({ following: !!data });
+    }
+
+    if (req.method === 'POST') {
+      // Follow
+      const { error } = await supabase.from('user_follows').insert({ follower_id, following_id });
+      if (error && error.code !== '23505') return res.status(500).json({ error: error.message });
+      // Update counts
+      await supabase.rpc('increment_follow_counts', { p_follower: follower_id, p_following: following_id }).catch(() => {});
+      // Notify
+      const { data: follower } = await supabase.from('users').select('display_name, username').eq('id', follower_id).single();
+      const name = follower?.display_name || follower?.username || '有人';
+      await supabase.from('notifications').insert({ user_id: following_id, type: 'follow', title: `${name} 关注了你 👤`, body: '去看看他们的主页吧' });
+      return res.status(201).json({ success: true });
+    }
+
+    if (req.method === 'DELETE') {
+      // Unfollow
+      await supabase.from('user_follows').delete().eq('follower_id', follower_id).eq('following_id', following_id);
+      return res.status(200).json({ success: true });
+    }
+  }
+
+  // ── GET FOLLOWERS / FOLLOWING LIST ─────────────────────────────────────
+  if (action === 'followers' || action === 'following') {
+    const { user_id } = req.query;
+    if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
+    const col = action === 'followers' ? 'following_id' : 'follower_id';
+    const otherCol = action === 'followers' ? 'follower_id' : 'following_id';
+    const { data } = await supabase.from('user_follows').select(`${otherCol}`).eq(col, user_id);
+    const ids = (data || []).map((r: any) => r[otherCol]);
+    if (ids.length === 0) return res.status(200).json({ data: [] });
+    const { data: users } = await supabase.from('users').select('id, username, display_name, follower_count, following_count').in('id', ids);
+    return res.status(200).json({ data: users || [] });
+  }
+
   // ── NOTIFICATIONS (default) ────────────────────────────────────────────
   if (req.method === 'GET') {
     const { user_id } = req.query;

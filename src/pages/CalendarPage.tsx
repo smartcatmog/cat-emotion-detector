@@ -29,6 +29,8 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
   const [loading, setLoading] = useState(true);
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [checkinMsg, setCheckinMsg] = useState<string | null>(null);
+  const [moodNote, setMoodNote] = useState('');
+  const [showAllEmotions, setShowAllEmotions] = useState(false);
 
   const doCheckin = async (emotion: string) => {
     setCheckinLoading(true);
@@ -36,12 +38,13 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
       const r = await fetch('/api/social/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, emotion_label: emotion }),
+        body: JSON.stringify({ user_id: userId, emotion_label: emotion, mood_text: moodNote.trim() || null }),
       });
       const d = await r.json();
       if (!r.ok) { setCheckinMsg(lang === 'zh' ? `❌ 打卡失败: ${d.error}` : `❌ Check-in failed: ${d.error}`); return; }
       if (d.lootbox) setCheckinMsg(lang === 'zh' ? '🎉 打卡成功！获得一个盲盒' : '🎉 Checked in! You got a loot box');
       else setCheckinMsg(lang === 'zh' ? '✅ 打卡成功' : '✅ Checked in!');
+      setMoodNote('');
       // Refresh calendar
       const res = await fetch(`/api/social/calendar?user_id=${userId}&year=${year}&month=${month}`);
       const cal = await res.json();
@@ -143,17 +146,28 @@ export function CalendarPage({ userId, onManualCheckin }: { userId: string; onMa
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
           {lang === 'zh' ? '今天还没打卡？选一个心情手动记录：' : "Haven't checked in today? Pick a mood:"}
         </p>
+        {/* Mood note input */}
+        <textarea
+          value={moodNote}
+          onChange={e => setMoodNote(e.target.value)}
+          placeholder={lang === 'zh' ? '今天想说点什么？（可选）' : 'Anything on your mind today? (optional)'}
+          rows={2}
+          maxLength={300}
+          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 resize-none focus:ring-2 focus:ring-purple-400 outline-none"
+        />
         <div className="flex flex-wrap gap-2 justify-center">
-          {Object.entries(EMOTION_EMOJI).slice(0, 8).map(([e, emoji]) => (
+          {Object.entries(EMOTION_EMOJI).slice(0, showAllEmotions ? undefined : 8).map(([e, emoji]) => (
             <button key={e} onClick={() => doCheckin(e)} disabled={checkinLoading}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-purple-400 hover:text-purple-600 transition-all disabled:opacity-50">
               {emoji} {lang === 'zh' ? EMOTION_ZH[e] : e}
             </button>
           ))}
-          <button onClick={() => doCheckin('happy')} disabled={checkinLoading}
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-all disabled:opacity-50">
-            {checkinLoading ? (lang === 'zh' ? '记录中...' : 'Saving...') : (lang === 'zh' ? '更多 →' : 'More →')}
-          </button>
+          {!showAllEmotions && (
+            <button onClick={() => setShowAllEmotions(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200 transition-all">
+              {lang === 'zh' ? '更多 →' : 'More →'}
+            </button>
+          )}
         </div>
         {checkinMsg && (
           <p className="text-center text-sm font-medium text-green-600 dark:text-green-400">{checkinMsg}</p>
