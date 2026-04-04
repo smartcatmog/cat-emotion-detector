@@ -233,6 +233,61 @@ function classifyEmotion(text: string, bodyState: string, need: string): { keywo
   return { keywords };
 }
 
+// Fallback matching function when Claude API is not available
+function fallbackCatMatching(mood_text: string, body_state: string, need: string): { primary_cat: string; neighbor_cat: string; emotion_tags: string[] } {
+  const lower = mood_text.toLowerCase();
+  
+  // Scene keyword matching (highest priority)
+  if (lower.includes('睡不着') || lower.includes('脑子停不下来')) {
+    return { primary_cat: '失眠猫', neighbor_cat: '绷紧猫', emotion_tags: ['焦虑', '疲惫', '无法入睡'] };
+  }
+  if (lower.includes('不想和世界说话') || lower.includes('不想回消息') || lower.includes('不想社交')) {
+    return { primary_cat: '装死猫', neighbor_cat: '躲柜子猫', emotion_tags: ['疲惫', '社交电量耗尽', '需要独处'] };
+  }
+  if (lower.includes('迷茫') || lower.includes('不知道') || lower.includes('没方向')) {
+    return { primary_cat: '迷路猫', neighbor_cat: '假睡猫', emotion_tags: ['茫然', '困惑', '无方向'] };
+  }
+  if (lower.includes('被气到') || lower.includes('气到') || lower.includes('某某人让我')) {
+    return { primary_cat: '炸锅猫', neighbor_cat: '炸毛猫', emotion_tags: ['愤怒', '被冒犯', '边界被踩'] };
+  }
+  if (lower.includes('等消息') || lower.includes('等结果') || lower.includes('等回复')) {
+    return { primary_cat: '等门猫', neighbor_cat: '玻璃猫', emotion_tags: ['焦虑', '等待', '无法控制'] };
+  }
+  
+  // Body state + need combination matching
+  if (body_state === '身体不舒服' && need === '休息') {
+    return { primary_cat: '困困猫', neighbor_cat: '纸箱猫', emotion_tags: ['疲惫', '身体不适', '需要休息'] };
+  }
+  if (body_state === '心里堵' && need === '自己待着') {
+    return { primary_cat: '躲柜子猫', neighbor_cat: '装死猫', emotion_tags: ['压抑', '需要独处', '不想被看见'] };
+  }
+  if (body_state === '心里堵' && need === '被理解') {
+    return { primary_cat: '委屈猫', neighbor_cat: '被遗忘猫', emotion_tags: ['委屈', '被误解', '需要陪伴'] };
+  }
+  if (body_state === '心里堵' && need === '发泄') {
+    return { primary_cat: '炸毛猫', neighbor_cat: '炸锅猫', emotion_tags: ['烦躁', '易被刺激', '需要发泄'] };
+  }
+  
+  // Emotion intensity matching
+  if (lower.includes('累') || lower.includes('没电')) {
+    if (body_state === '身体不舒服') {
+      return { primary_cat: '困困猫', neighbor_cat: '晒太阳猫', emotion_tags: ['疲惫', '耗尽', '需要休息'] };
+    }
+    return { primary_cat: '绷紧猫', neighbor_cat: '舔毛猫', emotion_tags: ['疲惫', '压力大', '一直在用力'] };
+  }
+  
+  // Default based on need
+  if (need === '被陪着') {
+    return { primary_cat: '黏人猫', neighbor_cat: '撒欢猫', emotion_tags: ['需要陪伴', '精力充沛', '想分享'] };
+  }
+  if (need === '自己待着') {
+    return { primary_cat: '躲柜子猫', neighbor_cat: '纸箱猫', emotion_tags: ['需要独处', '能量低', '想安静'] };
+  }
+  
+  // Default fallback
+  return { primary_cat: '发呆猫', neighbor_cat: '窗台猫', emotion_tags: ['莫名其妙', '不在线', '需要思考'] };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -245,54 +300,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'mood_text is required' });
     }
 
-    // Call Claude API for intelligent cat matching
-    const userMessage = `心情：${mood_text}
+    let matchResult;
+
+    // Try Claude API if key is available
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const userMessage = `心情：${mood_text}
 身体状态：${body_state || '说不上来'}
 现在需要：${need || '被理解'}`;
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('ANTHROPIC_API_KEY not set');
-      return res.status(500).json({ error: 'API key not configured' });
-    }
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 500,
+            temperature: 0.3,
+            system: SYSTEM_PROMPT,
+            messages: [
+              { role: 'user', content: userMessage }
+            ],
+          }),
+        });
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 500,
-        temperature: 0.3,
-        system: SYSTEM_PROMPT,
-        messages: [
-          { role: 'user', content: userMessage }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Claude API error:', response.status, response.statusText, errorData);
-      return res.status(500).json({ error: `Claude API error: ${response.status}` });
-    }
-
-    const data = await response.json();
-    if (!data.content || !data.content[0]) {
-      console.error('Invalid Claude response structure:', data);
-      return res.status(500).json({ error: 'Invalid response from Claude' });
-    }
-    const resultText = data.content[0].text.trim();
-
-    // Parse JSON response
-    let matchResult;
-    try {
-      matchResult = JSON.parse(resultText);
-    } catch (e) {
-      console.error('Failed to parse Claude response:', resultText);
-      return res.status(500).json({ error: 'Invalid response format from Claude' });
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Claude API error:', response.status, response.statusText, errorData);
+          // Fall back to local matching
+          matchResult = fallbackCatMatching(mood_text, body_state, need);
+        } else {
+          const data = await response.json();
+          if (!data.content || !data.content[0]) {
+            console.error('Invalid Claude response structure:', data);
+            matchResult = fallbackCatMatching(mood_text, body_state, need);
+          } else {
+            const resultText = data.content[0].text.trim();
+            try {
+              matchResult = JSON.parse(resultText);
+            } catch (e) {
+              console.error('Failed to parse Claude response:', resultText);
+              matchResult = fallbackCatMatching(mood_text, body_state, need);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Claude API call failed:', error);
+        matchResult = fallbackCatMatching(mood_text, body_state, need);
+      }
+    } else {
+      // Use fallback matching when API key is not available
+      console.warn('ANTHROPIC_API_KEY not set, using fallback matching');
+      matchResult = fallbackCatMatching(mood_text, body_state, need);
     }
 
     // Get the primary cat
