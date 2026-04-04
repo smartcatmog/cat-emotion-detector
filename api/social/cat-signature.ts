@@ -3,14 +3,17 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 interface Cat {
   id: string;
   name: string;
+  tagline: string;
   explanation: string;
   suggestion: string;
   avoid: string[];
   recovery_tags: string[];
   neighbor_cats: string[];
+  energy: 'high' | 'medium' | 'low';
+  trigger_type: string;
 }
 
-const SYSTEM_PROMPT = `你是MoodCat的情绪分析师，专门帮助用户找到今天最懂他们的那只猫。
+const SYSTEM_PROMPT = `你是喵懂了的情绪分析师，专门帮助用户找到今天最懂他们的那只猫。
 
 用户会提供三个信息：
 1. 今天最压着你的感觉是什么（一句话描述）
@@ -377,6 +380,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: {
         catId: primaryCat.id,
         name: primaryCat.name,
+        tagline: primaryCat.tagline,
         emoji: '😺',
         explanation: primaryCat.explanation,
         suggestion: primaryCat.suggestion,
@@ -385,6 +389,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         neighbor: neighborCat.id,
         neighborName: neighborCat.name,
         catPhoto,
+        energy: primaryCat.energy,
+        triggerType: primaryCat.trigger_type,
       },
     });
   } catch (error) {

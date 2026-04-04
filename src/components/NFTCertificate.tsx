@@ -64,7 +64,7 @@ export const NFTCertificate: React.FC<NFTCertificateProps> = ({
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               <span className="text-2xl">🏆</span>
-              <h2 className="text-2xl font-bold text-white">MoodCat NFT</h2>
+              <h2 className="text-2xl font-bold text-white">喵懂了 NFT</h2>
               <span className="text-2xl">🏆</span>
             </div>
             <div className={`inline-block px-4 py-1 rounded-full bg-gradient-to-r ${config.color} text-white text-sm font-semibold`}>
@@ -116,7 +116,7 @@ export const NFTCertificate: React.FC<NFTCertificateProps> = ({
           {/* 底部认证标记 */}
           <div className="text-center pt-2 border-t border-gray-700">
             <p className="text-gray-500 text-xs">
-              ✨ Certified by MoodCat AI ✨
+              ✨ Certified by 喵懂了 AI ✨
             </p>
             <p className="text-gray-600 text-xs mt-1">
               This is a unique digital collectible
@@ -134,7 +134,7 @@ export const NFTCertificatePreview: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <h1 className="text-4xl font-bold text-white text-center mb-12">
-          MoodCat NFT 证书样本
+          喵懂了 NFT 证书样本
         </h1>
         
         <div className="grid md:grid-cols-2 gap-8">

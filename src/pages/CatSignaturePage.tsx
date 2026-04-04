@@ -3,10 +3,12 @@ import { useLang } from '../lib/i18n';
 import { saveCatSignature } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { CatIllustration } from '../components/CatIllustrations';
+import { CatSignaturePoster } from '../components/CatSignaturePoster';
 
 interface CatSignatureResult {
   catId: string;
   name: string;
+  tagline: string;
   emoji: string;
   explanation: string;
   suggestion: string;
@@ -14,6 +16,8 @@ interface CatSignatureResult {
   recoveryMethods: string[];
   neighbor: string;
   catPhoto: string | null;
+  energy: 'high' | 'medium' | 'low';
+  triggerType: string;
 }
 
 export function CatSignaturePage() {
@@ -295,6 +299,18 @@ export function CatSignaturePage() {
               </div>
             </div>
           )}
+
+          {/* Poster */}
+          <CatSignaturePoster
+            catName={signature.name}
+            catPhoto={signature.catPhoto}
+            tagline={signature.tagline}
+            explanation={signature.explanation}
+            bodyState={bodyState}
+            need={need}
+            catEnergy={signature.energy}
+            triggerType={signature.triggerType}
+          />
 
           {/* Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-3">

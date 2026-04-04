@@ -53,9 +53,12 @@ export const Layout: React.FC<LayoutProps> = ({
           {/* Logo */}
           <button onClick={() => onNavigate?.('mood')} className="flex items-center gap-1.5">
             <span className="text-2xl">🐱</span>
-            <span className="text-lg font-black" style={{ background: 'linear-gradient(90deg, #e879a0, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              MoodCat
-            </span>
+            <div className="flex flex-col">
+              <span className="text-lg font-black" style={{ background: 'linear-gradient(90deg, #e879a0, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                喵懂了
+              </span>
+              <span className="text-xs text-gray-400">说不出来的，猫知道</span>
+            </div>
           </button>
 
           {/* Secondary tabs — calendar, lootbox */}

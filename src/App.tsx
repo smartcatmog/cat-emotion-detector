@@ -756,7 +756,7 @@ function App() {
               {/* Hero */}
               <div className="text-center space-y-2">
                 <h1 className="text-4xl font-black text-gray-900 dark:text-gray-50">
-                  {lang === 'zh' ? '🐱 MoodCat' : '🐱 MoodCat'}
+                  {lang === 'zh' ? '🐱 喵懂了' : '🐱 MoodCat'}
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400">
                   {lang === 'zh' ? '用猫咪理解你的情绪' : 'Understand your emotions through cats'}

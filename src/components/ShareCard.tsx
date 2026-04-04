@@ -138,7 +138,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ imageUrl, emotion, emotion
     ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.textAlign = 'center';
-    ctx.fillText('🐱 MoodCat', CARD_W / 2, CARD_H - 55);
+    ctx.fillText('🐱 喵懂了', CARD_W / 2, CARD_H - 55);
   }, [loadImage, emotion, emotionEmoji]);
 
   useEffect(() => {

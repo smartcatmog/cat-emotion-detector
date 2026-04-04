@@ -11,7 +11,7 @@ export const NFTPreviewPage: React.FC = () => {
         {/* 页面标题 */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            🎨 MoodCat NFT 证书设计
+            🎨 喵懂了 NFT 证书设计
           </h1>
           <p className="text-gray-300 text-lg">
             根据情绪稀有度，NFT 分为 4 个等级
