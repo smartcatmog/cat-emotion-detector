@@ -1,174 +1,84 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
-type CatId = string;
-
-interface CatData {
-  id: CatId;
+interface Cat {
+  id: string;
   name: string;
-  tagline: string;
   explanation: string;
   suggestion: string;
   avoid: string[];
   recovery_tags: string[];
   neighbor_cats: string[];
-  energy: string;
-  social: string;
-  trigger_type: string;
 }
 
-// Import cats data
-const catsData = require('../../src/data/cats.json');
-const CATS: Record<CatId, CatData> = {};
-catsData.cats.forEach((cat: CatData) => {
-  CATS[cat.id] = cat;
-});
+// All 37 cats data
+const CATS: Record<string, Cat> = {
+  kun_kun_mao: { id: 'kun_kun_mao', name: '困困猫', explanation: '你不是懒，是真的耗尽了，身体比你先知道你需要休息。', suggestion: '今天不用完成任何事，休息本身就是今天最重要的任务。', avoid: ['别逼自己撑着把事情做完','别为休息感到愧疚','别喝咖啡硬撑'], recovery_tags: ['睡觉', '躺着', '不设闹钟', '被照顾'], neighbor_cats: ['纸箱猫', '晒太阳猫'] },
+  duo_guizi_mao: { id: 'duo_guizi_mao', name: '躲柜子猫', explanation: '你不是逃避，只是今天需要一个没有人的角落，先把自己收回来。', suggestion: '找一个安静角落待10分钟，让自己先从被看见里退出来。', avoid: ['今天先别硬撑着社交','别解释自己为什么不想说话','别觉得躲起来是软弱'], recovery_tags: ['一个人待着', '安静', '不用解释', '先缩回来'], neighbor_cats: ['纸箱猫', '装死猫'] },
+  zha_mao_mao: { id: 'zha_mao_mao', name: '炸毛猫', explanation: '你现在的烦躁是真实的信号，不需要压下去，需要一个出口。', suggestion: '先离开让你烦躁的环境，哪怕只是走出去五分钟。', avoid: ['别在这个状态做重要决定','别跟容易刺激你的人待在一起','别逼自己冷静'], recovery_tags: ['运动', '发泄', '离开现场', '一个人待够了再回来'], neighbor_cats: ['炸锅猫', '暴冲猫'] },
+  tian_mao_mao: { id: 'tian_mao_mao', name: '舔毛猫', explanation: '你在用自我整理来应对不安，这是一种本能，没有什么不对。', suggestion: '做一件让自己感觉有秩序的小事，整理桌面、洗个澡、列一个清单。', avoid: ['别让焦虑变成反复检查','别要求自己马上平静下来','别把整理变成新的压力'], recovery_tags: ['整理', '洗澡', '列清单', '找回秩序感'], neighbor_cats: ['绷紧猫', '独自修炼猫'] },
+  wei_qu_mao: { id: 'wei_qu_mao', name: '委屈猫', explanation: '委屈说不出口的原因，往往是因为你还在替对方找理由。', suggestion: '今天允许自己委屈，不用马上原谅，不用假装没事。', avoid: ['别说服自己算了没关系','别一个人把委屈咽下去','别急着和解'], recovery_tags: ['说出来', '被听见', '哭一下也行', '不用马上原谅'], neighbor_cats: ['被遗忘猫', '讨好猫'] },
+  bao_chong_mao: { id: 'bao_chong_mao', name: '暴冲猫', explanation: '你现在的状态是高转速，不是出了问题，是能量找不到出口。', suggestion: '把这股劲用在一件具体的事上，比什么都不做强。', avoid: ['别在这个状态做需要耐心的事','别跟慢节奏的人产生摩擦','别强迫自己慢下来'], recovery_tags: ['运动', '做事', '消耗掉', '找到出口'], neighbor_cats: ['撒欢猫', '炸毛猫'] },
+  gaoleng_guancha_mao: { id: 'gaoleng_guancha_mao', name: '高冷观察猫', explanation: '抽离有时候是一种保护，你在用距离给自己缓冲。', suggestion: '今天做旁观者就好，不用强迫自己参与任何事。', avoid: ['别被拉进不想参与的事','别解释自己为什么冷淡','别觉得抽离是问题'], recovery_tags: ['保持距离', '观察', '不表态', '等状态回来'], neighbor_cats: ['窗台猫', '装死猫'] },
+  shai_taiyang_mao: { id: 'shai_taiyang_mao', name: '晒太阳猫', explanation: '稳定本身就是一种好状态，不需要什么特别的理由。', suggestion: '今天的状态值得被好好用，做一件一直想做的事。', avoid: ['别浪费这个好状态在内耗上','别因为好状态就过度消耗','别让别人的负能量把你拉下来'], recovery_tags: ['享受', '做喜欢的事', '充电', '好好吃饭'], neighbor_cats: ['撒欢猫', '困困猫'] },
+  sa_huan_mao: { id: 'sa_huan_mao', name: '撒欢猫', explanation: '能量满格的时候不用分析原因，直接用就行。', suggestion: '把今天的能量用在一件你一直想做但没做的事上。', avoid: ['今天别浪费在无聊的事上','别让别人的低能量把你拉下来','别对这种好状态过度分析'], recovery_tags: ['出门', '找人一起', '做想做的事', '记住今天的感觉'], neighbor_cats: ['暴冲猫', '黏人猫'] },
+  nian_ren_mao: { id: 'nian_ren_mao', name: '黏人猫', explanation: '需要陪伴不是依赖，是你今天的能量需要一个接收者。', suggestion: '主动约一个你想见的人，今天的你值得被陪伴。', avoid: ['别一个人把能量憋着','别等别人主动来找你','别觉得需要人陪是麻烦别人'], recovery_tags: ['主动联系', '找人出门', '说说话', '被陪着'], neighbor_cats: ['撒欢猫', '被遗忘猫'] },
+  beng_jin_mao: { id: 'beng_jin_mao', name: '绷紧猫', explanation: '你不是脆弱，你是一直在用力，从来没有真正松过。', suggestion: '今天不用解决任何问题，只需要让肩膀往下沉三厘米。', avoid: ['今天别逼自己想开点','别跟任何人解释你有多累','别假装一切都还好'], recovery_tags: ['热水', '不说话', '躺着发呆', '有人陪着但不用聊'], neighbor_cats: ['玻璃猫', '舔毛猫'] },
+  boli_mao: { id: 'boli_mao', name: '玻璃猫', explanation: '你焦虑的不是现在，是那个你看不见、控制不了的明天。', suggestion: '把万一怎么办这个问题暂停一次，只看今天还剩几个小时。', avoid: ['今天别刷那些让你更慌的信息','别跟自己说别想了','别一个人扛着不说出来'], recovery_tags: ['说出来', '被抱一下', '做一件能完成的小事', '今天只要活着就够了'], neighbor_cats: ['绷紧猫', '等门猫'] },
+  jia_shui_mao: { id: 'jia_shui_mao', name: '假睡猫', explanation: '你不是真的不在乎，你只是先假装不在乎，万一真的得不到，至少不那么难看。', suggestion: '今天不用决定到底躺不躺，允许自己同时想要又害怕。', avoid: ['今天别看别人的进度','别逼自己想清楚以后要怎样','别对自己说我这样不对'], recovery_tags: ['承认自己还是在乎', '不评判自己', '做一件只为自己的小事', '不用今天想通'], neighbor_cats: ['玻璃猫', '窗台猫'] },
+  zhouri_wanshang_mao: { id: 'zhouri_wanshang_mao', name: '周日晚上猫', explanation: '你难受的不是现在，是那个还没发生但你已经能感觉到重量的明天。', suggestion: '今晚不用提前承受明天，今晚只是今晚。', avoid: ['别提前演练明天会有多难','别看任何跟工作相关的内容','别假装没事早点睡'], recovery_tags: ['拖延一会儿', '吃点好的', '看废片', '允许自己摆烂到12点'], neighbor_cats: ['绷紧猫', '晒太阳猫'] },
+  zhongwu_mao: { id: 'zhongwu_mao', name: '中午猫', explanation: '不是出了什么事，只是今天的某个时刻，存在感特别低。', suggestion: '出去走五分钟，不用想任何事，就是换一下空气。', avoid: ['别在这个时间做重要决定','别刷让你更空洞的内容','别逼自己振作起来'], recovery_tags: ['阳光', '咖啡', '换个地方坐', '发呆五分钟'], neighbor_cats: ['发呆猫', '纸箱猫'] },
+  shimian_mao: { id: 'shimian_mao', name: '失眠猫', explanation: '你不是睡不着，是有太多没处理完的情绪还挂在后台运行。', suggestion: '不用强迫自己睡，先允许自己醒着，反而会松一点。', avoid: ['别看手机看到更清醒','别开始复盘今天哪里做错了','别跟自己说明天会很惨'], recovery_tags: ['白噪音', '不看时间', '把脑子里的事写下来', '告诉自己躺着也是休息'], neighbor_cats: ['绷紧猫', '玻璃猫'] },
+  huanji_mao: { id: 'huanji_mao', name: '换季猫', explanation: '有些低落不需要原因，身体比你先感觉到了某种变化。', suggestion: '今天对自己宽松一点，不在状态也是一种状态。', avoid: ['别逼自己找原因','别觉得这样不正常','别硬撑着表现正常'], recovery_tags: ['晒太阳', '喝热的', '早点睡', '什么都不用解释'], neighbor_cats: ['困困猫', '发呆猫'] },
+  jiaqijieshu_mao: { id: 'jiaqijieshu_mao', name: '假期结束猫', explanation: '你难受的不是假期结束，是你太需要那段喘息的时间了。', suggestion: '最后这几小时不用提前交出去，它还是你的。', avoid: ['别提前准备明天的事','别计算还有多少天才能休息','别让愧疚偷走最后的快乐'], recovery_tags: ['就在当下', '最后一顿好的', '不看日历', '明天的事明天再说'], neighbor_cats: ['周日晚上猫', '绷紧猫'] },
+  kaoshi_mao: { id: 'kaoshi_mao', name: '考前猫', explanation: '焦虑不代表你没准备好，它只是说明你在乎这件事。', suggestion: '现在能做的都做了，剩下的交出去，你已经尽力了。', avoid: ['别临时抱佛脚到崩溃','别问自己万一没过怎么办','别跟别人比准备进度'], recovery_tags: ['深呼吸', '早点睡', '相信自己', '结果不代表你这个人'], neighbor_cats: ['玻璃猫', '第一次猫'] },
+  milu_mao: { id: 'milu_mao', name: '迷路猫', explanation: '茫然不是失败，是你诚实地承认了现在还看不清楚。', suggestion: '今天不用找到方向，只需要停下来，看看脚下在哪里。', avoid: ['别强迫自己想清楚未来','别因为没方向就否定自己','别跟那些很清楚自己要什么的人比'], recovery_tags: ['不做决定', '和信任的人聊', '做一件当下的小事', '允许自己不知道'], neighbor_cats: ['假睡猫', '脱毛猫'] },
+  shengri_mao: { id: 'shengri_mao', name: '生日猫', explanation: '生日的复杂感不是矫情，是你真实感受到了时间的重量。', suggestion: '今天不用表演开心，你怎么过都是对的。', avoid: ['别逼自己今天要特别开心','别拿现在跟一年前比较','别让别人的祝福变成压力'], recovery_tags: ['只做自己想做的', '不解释心情', '给自己买一个', '安静也可以'], neighbor_cats: ['老地方猫', '换季猫'] },
+  zhuangsi_mao: { id: 'zhuangsi_mao', name: '装死猫', explanation: '你不是冷漠，只是今天给不出任何回应，连嗯都觉得很重。', suggestion: '消息可以明天回，今天先把自己充上电。', avoid: ['别勉强自己回复每一条消息','别为已读不回感到愧疚','别解释自己为什么不想说话'], recovery_tags: ['静音所有群', '一个人待着', '不用交代任何人', '明天再说'], neighbor_cats: ['躲柜子猫', '高冷观察猫'] },
+  dengmen_mao: { id: 'dengmen_mao', name: '等门猫', explanation: '你焦虑的不是结果，是这段什么都做不了只能等的时间。', suggestion: '把手机放到够不着的地方，去做一件跟这件事完全无关的事。', avoid: ['别反复看那条消息有没有被读','别开始预演各种结果','别把等待的焦虑发泄给别人'], recovery_tags: ['放下手机', '做点手工的事', '转移注意力', '结果来了再说'], neighbor_cats: ['玻璃猫', '窗台猫'] },
+  zhaguo_mao: { id: 'zhaguo_mao', name: '炸锅猫', explanation: '你生气是因为你在乎，或者因为你的边界被踩了，这两个都是正当的。', suggestion: '先把这口气出掉，不用现在就决定怎么处理那个人。', avoid: ['别在气头上发消息','别逼自己大度一点','别把愤怒憋回去假装没事'], recovery_tags: ['先发泄', '跟信任的人说', '运动', '冷静后再处理'], neighbor_cats: ['炸毛猫', '边界猫'] },
+  beiyiwang_mao: { id: 'beiyiwang_mao', name: '被遗忘猫', explanation: '这种安静的难过最难说出口，因为你没办法怪任何人。', suggestion: '今天主动联系一个你想到的人，不用说原因，就是打个招呼。', avoid: ['别一个人把这个感觉放大','别用反正也没人在乎说服自己','别假装这种感觉不存在'], recovery_tags: ['主动联系', '被看见一次', '不用解释', '你是有人在乎的'], neighbor_cats: ['委屈猫', '黏人猫'] },
+  jidu_mao: { id: 'jidu_mao', name: '嫉妒猫', explanation: '嫉妒不是你的错，它只是在说：你也想要那个东西。', suggestion: '承认自己羡慕，比假装不在乎诚实，也比较不会内耗。', avoid: ['别逼自己真心为别人高兴','别因为嫉妒就否定自己','别刷那个人的动态刷到更难受'], recovery_tags: ['承认自己想要', '不评判自己', '想想自己有什么', '把羡慕变成方向'], neighbor_cats: ['假睡猫', '迷路猫'] },
+  taohao_mao: { id: 'taohao_mao', name: '讨好猫', explanation: '你不是虚伪，你只是今天用了太多力气去让别人舒服，忘了自己。', suggestion: '今天剩下的时间，只做让自己舒服的事，不用再表演了。', avoid: ['别继续迎合任何人','别反思我是不是太假了','别觉得照顾自己是自私'], recovery_tags: ['一个人待着', '说真话', '不用解释', '今天先对自己好'], neighbor_cats: ['委屈猫', '边界猫'] },
+  bianjie_mao: { id: 'bianjie_mao', name: '边界猫', explanation: '没说出口不代表你软弱，只是你还没准备好，或者当时来不及。', suggestion: '下次不用当场完美反应，感觉到不舒服就已经是信号了，听它的。', avoid: ['别责怪自己为什么没拒绝','别说服自己算了没什么大不了','别继续压着这口气'], recovery_tags: ['承认被冒犯了', '说给信任的人听', '下次可以不一样', '你的感受是对的'], neighbor_cats: ['炸锅猫', '高冷观察猫'] },
+  lengzhan_mao: { id: 'lengzhan_mao', name: '冷战猫', explanation: '沉默不是解决，只是暂时停火。但你现在需要这个停火，也没关系。', suggestion: '今天不用强迫自己先开口，但可以想想你真正想说的是什么。', avoid: ['别在还没想清楚的时候硬聊','别让第三个人介入','别把气撒在不相关的事上'], recovery_tags: ['先冷静', '想清楚自己要什么', '不用谁先道歉', '时机对了再说'], neighbor_cats: ['炸毛猫', '舔毛猫'] },
+  tuomao_mao: { id: 'tuomao_mao', name: '脱毛猫', explanation: '不舒服不代表出了问题，有时候是你正在长出新的部分。', suggestion: '今天不用搞清楚变化的终点，只需要允许这个过程发生。', avoid: ['别逼自己变化要快点完成','别拿现在的自己跟以前比','别觉得不稳定是失控'], recovery_tags: ['耐心等待', '记录当下', '相信过程', '不用现在就看清楚'], neighbor_cats: ['迷路猫', '刚洗完澡猫'] },
+  gangxizaowan_mao: { id: 'gangxizaowan_mao', name: '刚洗完澡猫', explanation: '能哭出来是好事，说明你还有力气感受，还没麻木。', suggestion: '现在什么都不用做，就让自己空着，空是一种恢复。', avoid: ['别马上填满这个空','别复盘刚才哭了什么','别觉得哭完要立刻振作'], recovery_tags: ['喝点水', '什么都不想', '让自己空着', '明天会不一样'], neighbor_cats: ['晒太阳猫', '困困猫'] },
+  chuangtai_mao: { id: 'chuangtai_mao', name: '窗台猫', explanation: '抽离不是冷漠，是你今天需要一点距离才能看清楚。', suggestion: '今天做一个观察者，不表态，不评论，只是看着。', avoid: ['别被拉进不想参与的讨论','别强迫自己有立场','别觉得置身事外是错的'], recovery_tags: ['观察', '不表态', '保持距离', '今天只看不说'], neighbor_cats: ['高冷观察猫', '晒太阳猫'] },
+  duzilianxi_mao: { id: 'duzilianxi_mao', name: '独自修炼猫', explanation: '你不是在孤立自己，你是在认真对待某件事，这需要空间。', suggestion: '今天可以关掉不必要的通知，这不是冷漠，是尊重自己的状态。', avoid: ['别让别人的节奏打乱你的','别为不够社交道歉','别分心去处理不紧急的事'], recovery_tags: ['专注', '关掉通知', '一次只做一件事', '保护这个状态'], neighbor_cats: ['高冷观察猫', '暴冲猫'] },
+  laodifang_mao: { id: 'laodifang_mao', name: '老地方猫', explanation: '熟悉感会同时带来温暖和惆怅，两种感觉都是真的，不矛盾。', suggestion: '今天允许自己停在这个感觉里多待一会儿，不用急着离开。', avoid: ['别急着分析这种感觉从哪来','别强迫自己向前看','别觉得怀旧是软弱'], recovery_tags: ['让感觉流过', '不分析', '记录一下', '过去是你的一部分'], neighbor_cats: ['发呆猫', '晒太阳猫'] },
+  diyici_mao: { id: 'diyici_mao', name: '第一次猫', explanation: '第一次会紧张是因为你认真对待它，这种紧张是好的信号。', suggestion: '不用第一次就做到最好，第一次的任务只是完成，然后你就有经验了。', avoid: ['别跟有经验的人比表现','别在开始前就预判自己会失败','别因为紧张就退缩'], recovery_tags: ['深呼吸', '专注当下', '完成比完美重要', '第一次都是这样的'], neighbor_cats: ['考前猫', '暴冲猫'] },
+  zhixiang_mao: { id: 'zhixiang_mao', name: '纸箱猫', explanation: '完全关机不是懒，是你的系统在做必要的清空，让它清。', suggestion: '今天不需要输入任何新的东西，空着就是今天该做的事。', avoid: ['今天别接受任何新信息','别逼自己有感受','别觉得什么都不想是问题'], recovery_tags: ['什么都不做', '不输入', '躺着', '空白也是一种状态'], neighbor_cats: ['躲柜子猫', '发呆猫'] },
+  fadai_mao: { id: 'fadai_mao', name: '发呆猫', explanation: '发呆是大脑在后台处理你没意识到的事，不用打断它。', suggestion: '今天允许自己不在场，思绪飘到哪里就跟着去。', avoid: ['别强迫自己集中注意力','别觉得发呆是浪费时间','别接需要全力投入的任务'], recovery_tags: ['随便飘', '不用在场', '低刺激环境', '让大脑自己转'], neighbor_cats: ['纸箱猫', '窗台猫'] },
+};
 
-function classifyEmotion(text: string, bodyState: string, need: string): { category: string; keywords: CatId[] } {
+// Cat ID to image URL mapping - ready for your real cat photos
+const CAT_IMAGES: Record<string, string> = {
+  // Will be populated with real cat photo URLs
+};
+
+function classifyEmotion(text: string, bodyState: string, need: string): { keywords: string[] } {
   const lower = text.toLowerCase();
-  const keywords: CatId[] = [];
+  const keywords: string[] = [];
 
-  // Priority 1: 具体场景词（最高优先级）
-  if (lower.includes('明天') || lower.includes('周一') || lower.includes('上班')) {
-    keywords.push('zhouri_wanshang_mao');
-  }
-  if (lower.includes('睡不着') || lower.includes('失眠')) {
-    keywords.push('shimian_mao');
-  }
-  if (lower.includes('等') && lower.includes('回复')) {
-    keywords.push('dengmen_mao');
-  }
-  if (lower.includes('中午') || lower.includes('下午两点')) {
-    keywords.push('zhongwu_mao');
-  }
-  if (lower.includes('换季') || lower.includes('季节')) {
-    keywords.push('huanji_mao');
-  }
-  if (lower.includes('假期结束') || lower.includes('收假')) {
-    keywords.push('jiaqijieshu_mao');
-  }
-  if (lower.includes('考试') || lower.includes('考前')) {
-    keywords.push('kaoshi_mao');
-  }
-  if (lower.includes('迷路') || lower.includes('不知道')) {
-    keywords.push('milu_mao');
-  }
-  if (lower.includes('生日')) {
-    keywords.push('shengri_mao');
+  if (lower.includes('困') || lower.includes('累') || lower.includes('没电')) keywords.push('kun_kun_mao');
+  if (lower.includes('躲') || lower.includes('安静')) keywords.push('duo_guizi_mao');
+  if (lower.includes('烦躁') || lower.includes('炸毛')) keywords.push('zha_mao_mao');
+  if (lower.includes('焦虑')) keywords.push('beng_jin_mao');
+  if (lower.includes('失眠') || lower.includes('睡不着')) keywords.push('shimian_mao');
+  if (lower.includes('委屈')) keywords.push('wei_qu_mao');
+  if (lower.includes('被骂') || lower.includes('吵架')) keywords.push('zhaguo_mao');
+  if (lower.includes('被遗忘')) keywords.push('beiyiwang_mao');
+  if (lower.includes('迷路') || lower.includes('不知道')) keywords.push('milu_mao');
+  if (lower.includes('生日')) keywords.push('shengri_mao');
+
+  if (keywords.length === 0) {
+    if (bodyState === '身体不舒服') keywords.push('kun_kun_mao');
+    else if (need === '自己待着') keywords.push('duo_guizi_mao');
+    else if (need === '被陪着') keywords.push('nian_ren_mao');
+    else keywords.push('shai_taiyang_mao');
   }
 
-  // Priority 2: 关系触发
-  if (lower.includes('被骂') || lower.includes('吵架') || lower.includes('冲突')) {
-    keywords.push('zhaguo_mao');
-  }
-  if (lower.includes('被遗忘') || lower.includes('没人') || lower.includes('优先级')) {
-    keywords.push('beiyiwang_mao');
-  }
-  if (lower.includes('讨好') || lower.includes('说不出来')) {
-    keywords.push('taohao_mao');
-  }
-  if (lower.includes('嫉妒') || lower.includes('比较')) {
-    keywords.push('jidu_mao');
-  }
-  if (lower.includes('冷战') || lower.includes('不说话')) {
-    keywords.push('lengzhan_mao');
-  }
-  if (lower.includes('装死') || lower.includes('不回应')) {
-    keywords.push('zhuangsi_mao');
-  }
-  if (lower.includes('边界') || lower.includes('说不了')) {
-    keywords.push('bianjie_mao');
-  }
-
-  // Priority 3: 焦虑系
-  if (lower.includes('焦虑') || lower.includes('停不下') || lower.includes('脑子乱')) {
-    keywords.push('beng_jin_mao');
-  }
-  if (lower.includes('随时可能') || lower.includes('失控') || lower.includes('脆弱')) {
-    keywords.push('boli_mao');
-  }
-  if (lower.includes('假睡') || lower.includes('装睡')) {
-    keywords.push('jia_shui_mao');
-  }
-
-  // Priority 4: 低能量
-  if (lower.includes('累') || lower.includes('困') || lower.includes('没电')) {
-    keywords.push('kun_kun_mao');
-  }
-  if (lower.includes('躲') || lower.includes('安静') || lower.includes('独处')) {
-    keywords.push('duo_guizi_mao');
-  }
-
-  // Priority 5: 高能量
-  if (lower.includes('烦躁') || lower.includes('炸毛')) {
-    keywords.push('zha_mao_mao');
-  }
-  if (lower.includes('停不下') || lower.includes('暴冲')) {
-    keywords.push('bao_chong_mao');
-  }
-  if (lower.includes('撒欢') || lower.includes('兴奋')) {
-    keywords.push('sa_huan_mao');
-  }
-  if (lower.includes('黏人') || lower.includes('粘人')) {
-    keywords.push('nian_ren_mao');
-  }
-
-  // Priority 6: 成长触发
-  if (lower.includes('变化') || lower.includes('脱毛')) {
-    keywords.push('tuomao_mao');
-  }
-  if (lower.includes('洗澡')) {
-    keywords.push('gangxizaowan_mao');
-  }
-  if (lower.includes('窗台') || lower.includes('看风景')) {
-    keywords.push('chuangtai_mao');
-  }
-  if (lower.includes('修炼') || lower.includes('独处')) {
-    keywords.push('duzilianxi_mao');
-  }
-  if (lower.includes('老地方') || lower.includes('回到')) {
-    keywords.push('laodifang_mao');
-  }
-  if (lower.includes('第一次') || lower.includes('没做过')) {
-    keywords.push('diyici_mao');
-  }
-
-  // Priority 7: 补充类
-  if (lower.includes('纸箱') || lower.includes('躲')) {
-    keywords.push('zhixiang_mao');
-  }
-  if (lower.includes('发呆') || lower.includes('放空')) {
-    keywords.push('fadai_mao');
-  }
-
-  return { category: 'mixed', keywords };
-}
-
-function matchCat(text: string, bodyState: string, need: string): CatId {
-  const { keywords } = classifyEmotion(text, bodyState, need);
-  
-  // 如果有具体场景词，直接返回第一个
-  if (keywords.length > 0) {
-    return keywords[0];
-  }
-
-  // 否则根据身体状态和需求匹配
-  if (bodyState === '身体不舒服') {
-    return 'kun_kun_mao';
-  }
-  if (need === '自己待着') {
-    return 'duo_guizi_mao';
-  }
-  if (need === '被陪着') {
-    return 'kun_kun_mao';
-  }
-  if (need === '发泄') {
-    return 'zha_mao_mao';
-  }
-  if (need === '被理解') {
-    return 'wei_qu_mao';
-  }
-
-  return 'shai_taiyang_mao';
+  return { keywords };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -183,39 +93,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'mood_text is required' });
     }
 
-    // Match primary cat
-    const primaryCatId = matchCat(mood_text, body_state || '', need || '');
-    const primaryCat = CATS[primaryCatId];
+    const { keywords } = classifyEmotion(mood_text, body_state || '', need || '');
+    const catId = keywords[0] || 'shai_taiyang_mao';
+    const cat = CATS[catId];
 
-    if (!primaryCat) {
+    if (!cat) {
       return res.status(500).json({ error: 'Cat not found' });
     }
 
-    // Get neighbor cat - find first neighbor that exists in CATS
-    let neighborCat = null;
-    for (const neighborId of primaryCat.neighbor_cats) {
-      if (CATS[neighborId]) {
-        neighborCat = CATS[neighborId];
-        break;
-      }
-    }
-    if (!neighborCat) {
-      neighborCat = CATS['shai_taiyang_mao']; // fallback
-    }
-
-    // Get random cat photo
-    const catPhoto = await getRandomCatPhoto(primaryCatId);
+    const neighborCat = CATS[cat.neighbor_cats[0]] || CATS['shai_taiyang_mao'];
+    const catPhoto = CAT_IMAGES[catId] || null;
 
     return res.status(200).json({
       success: true,
       data: {
-        catId: primaryCatId,
-        name: primaryCat.name,
-        emoji: '😺', // emoji from tagline or default
-        explanation: primaryCat.explanation,
-        suggestion: primaryCat.suggestion,
-        notSuitable: primaryCat.avoid,
-        recoveryMethods: primaryCat.recovery_tags,
+        catId,
+        name: cat.name,
+        emoji: '😺',
+        explanation: cat.explanation,
+        suggestion: cat.suggestion,
+        notSuitable: cat.avoid,
+        recoveryMethods: cat.recovery_tags,
         neighbor: neighborCat.id,
         neighborName: neighborCat.name,
         catPhoto,
@@ -224,93 +122,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     console.error('Cat signature error:', error);
     return res.status(500).json({ error: 'Failed to generate signature' });
-  }
-}
-
-
-async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
-  try {
-    // Map each cat personality to Supabase emotion labels
-    const emotionMap: Record<CatId, string[]> = {
-      // 能量×社交类
-      kun_kun_mao: ['sleepy', 'calm', 'loved'],
-      duo_guizi_mao: ['suspicious', 'ashamed', 'calm'],
-      zha_mao_mao: ['angry', 'annoyed', 'dramatic'],
-      tian_mao_mao: ['anxious', 'calm', 'curious'],
-      wei_qu_mao: ['melancholy', 'ashamed', 'loved'],
-      bao_chong_mao: ['dramatic', 'hangry', 'angry'],
-      gaoleng_guancha_mao: ['suspicious', 'smug', 'curious'],
-      shai_taiyang_mao: ['happy', 'loved', 'calm'],
-      sa_huan_mao: ['happy', 'dramatic', 'playful'],
-      nian_ren_mao: ['clingy', 'happy', 'loved'],
-      
-      // 焦虑系
-      beng_jin_mao: ['anxious', 'angry', 'tense'],
-      boli_mao: ['anxious', 'melancholy', 'tense'],
-      jia_shui_mao: ['sleepy', 'calm', 'suspicious'],
-      
-      // 处境触发类
-      zhouri_wanshang_mao: ['melancholy', 'anxious', 'tense'],
-      zhongwu_mao: ['calm', 'sleepy', 'melancholy'],
-      shimian_mao: ['anxious', 'dramatic', 'tense'],
-      huanji_mao: ['melancholy', 'calm', 'curious'],
-      jiaqijieshu_mao: ['melancholy', 'sleepy', 'calm'],
-      kaoshi_mao: ['anxious', 'dramatic', 'tense'],
-      milu_mao: ['curious', 'anxious', 'confused'],
-      shengri_mao: ['happy', 'calm', 'loved'],
-      
-      // 关系触发类
-      zhuangsi_mao: ['sleepy', 'calm', 'suspicious'],
-      dengmen_mao: ['anxious', 'curious', 'tense'],
-      zhaguo_mao: ['angry', 'dramatic', 'annoyed'],
-      beiyiwang_mao: ['melancholy', 'sleepy', 'sad'],
-      jidu_mao: ['anxious', 'annoyed', 'melancholy'],
-      taohao_mao: ['calm', 'clingy', 'loved'],
-      bianjie_mao: ['angry', 'suspicious', 'tense'],
-      lengzhan_mao: ['suspicious', 'calm', 'melancholy'],
-      
-      // 成长触发类
-      tuomao_mao: ['dramatic', 'anxious', 'curious'],
-      gangxizaowan_mao: ['calm', 'sleepy', 'loved'],
-      chuangtai_mao: ['calm', 'curious', 'thoughtful'],
-      duzilianxi_mao: ['calm', 'curious', 'focused'],
-      laodifang_mao: ['calm', 'melancholy', 'thoughtful'],
-      diyici_mao: ['dramatic', 'curious', 'playful'],
-      
-      // 补充类
-      zhixiang_mao: ['sleepy', 'calm', 'relaxed'],
-      fadai_mao: ['calm', 'sleepy', 'thoughtful'],
-    };
-
-    const emotions = emotionMap[catId] || ['sleepy', 'calm'];
-
-    // Try each emotion in order until we find images
-    for (const emotion of emotions) {
-      try {
-        const response = await fetch(
-          `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=50`,
-          {
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
-            },
-          }
-        );
-
-        if (!response.ok) continue;
-
-        const images = await response.json();
-        if (Array.isArray(images) && images.length > 0) {
-          const randomIndex = Math.floor(Math.random() * images.length);
-          return images[randomIndex].image_url;
-        }
-      } catch (err) {
-        continue;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error fetching cat photo:', error);
-    return null;
   }
 }
