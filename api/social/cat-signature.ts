@@ -230,69 +230,87 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 async function getRandomCatPhoto(catId: CatId): Promise<string | null> {
   try {
+    // Map each cat personality to Supabase emotion labels
     const emotionMap: Record<CatId, string[]> = {
-      kun_kun_mao: ['sleepy', 'calm'],
-      duo_guizi_mao: ['suspicious', 'ashamed'],
-      zha_mao_mao: ['angry', 'annoyed'],
-      tian_mao_mao: ['calm', 'curious'],
-      wei_qu_mao: ['melancholy', 'ashamed'],
-      bao_chong_mao: ['dramatic', 'hangry'],
-      gaoleng_guancha_mao: ['suspicious', 'smug'],
-      shai_taiyang_mao: ['happy', 'loved'],
-      sa_huan_mao: ['happy', 'dramatic'],
-      nian_ren_mao: ['clingy', 'happy'],
-      beng_jin_mao: ['angry', 'anxious'],
-      boli_mao: ['anxious', 'melancholy'],
-      jia_shui_mao: ['sleepy', 'calm'],
-      zhouri_wanshang_mao: ['melancholy', 'anxious'],
-      zhongwu_mao: ['calm', 'sleepy'],
-      shimian_mao: ['anxious', 'dramatic'],
-      huanji_mao: ['melancholy', 'calm'],
-      jiaqijieshu_mao: ['melancholy', 'sleepy'],
-      kaoshi_mao: ['anxious', 'dramatic'],
-      milu_mao: ['curious', 'anxious'],
-      shengri_mao: ['happy', 'calm'],
-      zhuangsi_mao: ['sleepy', 'calm'],
-      dengmen_mao: ['anxious', 'curious'],
-      zhaguo_mao: ['angry', 'dramatic'],
-      beiyiwang_mao: ['melancholy', 'sleepy'],
-      jidu_mao: ['anxious', 'annoyed'],
-      taohao_mao: ['calm', 'clingy'],
-      bianjie_mao: ['angry', 'suspicious'],
-      lengzhan_mao: ['suspicious', 'calm'],
-      tuomao_mao: ['dramatic', 'anxious'],
-      gangxizaowan_mao: ['calm', 'sleepy'],
-      chuangtai_mao: ['calm', 'curious'],
-      duzilianxi_mao: ['calm', 'curious'],
-      laodifang_mao: ['calm', 'melancholy'],
-      diyici_mao: ['dramatic', 'curious'],
-      zhixiang_mao: ['sleepy', 'calm'],
-      fadai_mao: ['calm', 'sleepy'],
+      // 能量×社交类
+      kun_kun_mao: ['sleepy', 'calm', 'loved'],
+      duo_guizi_mao: ['suspicious', 'ashamed', 'calm'],
+      zha_mao_mao: ['angry', 'annoyed', 'dramatic'],
+      tian_mao_mao: ['anxious', 'calm', 'curious'],
+      wei_qu_mao: ['melancholy', 'ashamed', 'loved'],
+      bao_chong_mao: ['dramatic', 'hangry', 'angry'],
+      gaoleng_guancha_mao: ['suspicious', 'smug', 'curious'],
+      shai_taiyang_mao: ['happy', 'loved', 'calm'],
+      sa_huan_mao: ['happy', 'dramatic', 'playful'],
+      nian_ren_mao: ['clingy', 'happy', 'loved'],
+      
+      // 焦虑系
+      beng_jin_mao: ['anxious', 'angry', 'tense'],
+      boli_mao: ['anxious', 'melancholy', 'tense'],
+      jia_shui_mao: ['sleepy', 'calm', 'suspicious'],
+      
+      // 处境触发类
+      zhouri_wanshang_mao: ['melancholy', 'anxious', 'tense'],
+      zhongwu_mao: ['calm', 'sleepy', 'melancholy'],
+      shimian_mao: ['anxious', 'dramatic', 'tense'],
+      huanji_mao: ['melancholy', 'calm', 'curious'],
+      jiaqijieshu_mao: ['melancholy', 'sleepy', 'calm'],
+      kaoshi_mao: ['anxious', 'dramatic', 'tense'],
+      milu_mao: ['curious', 'anxious', 'confused'],
+      shengri_mao: ['happy', 'calm', 'loved'],
+      
+      // 关系触发类
+      zhuangsi_mao: ['sleepy', 'calm', 'suspicious'],
+      dengmen_mao: ['anxious', 'curious', 'tense'],
+      zhaguo_mao: ['angry', 'dramatic', 'annoyed'],
+      beiyiwang_mao: ['melancholy', 'sleepy', 'sad'],
+      jidu_mao: ['anxious', 'annoyed', 'melancholy'],
+      taohao_mao: ['calm', 'clingy', 'loved'],
+      bianjie_mao: ['angry', 'suspicious', 'tense'],
+      lengzhan_mao: ['suspicious', 'calm', 'melancholy'],
+      
+      // 成长触发类
+      tuomao_mao: ['dramatic', 'anxious', 'curious'],
+      gangxizaowan_mao: ['calm', 'sleepy', 'loved'],
+      chuangtai_mao: ['calm', 'curious', 'thoughtful'],
+      duzilianxi_mao: ['calm', 'curious', 'focused'],
+      laodifang_mao: ['calm', 'melancholy', 'thoughtful'],
+      diyici_mao: ['dramatic', 'curious', 'playful'],
+      
+      // 补充类
+      zhixiang_mao: ['sleepy', 'calm', 'relaxed'],
+      fadai_mao: ['calm', 'sleepy', 'thoughtful'],
     };
 
     const emotions = emotionMap[catId] || ['sleepy', 'calm'];
 
+    // Try each emotion in order until we find images
     for (const emotion of emotions) {
-      const response = await fetch(
-        `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=50`,
-        {
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
-          },
+      try {
+        const response = await fetch(
+          `https://gfrbubfyznmkqchwjhtn.supabase.co/rest/v1/cat_images?emotion_label=eq.${emotion}&select=image_url&limit=50`,
+          {
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcmJ1YmZ5em5ta3FjaHdqaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzY0MTIsImV4cCI6MjA5MDM1MjQxMn0.-wUxxmKZWrasN19Gq_6exQAgHwsI5edlMa3OTsE5Hh0',
+            },
+          }
+        );
+
+        if (!response.ok) continue;
+
+        const images = await response.json();
+        if (Array.isArray(images) && images.length > 0) {
+          const randomIndex = Math.floor(Math.random() * images.length);
+          return images[randomIndex].image_url;
         }
-      );
-
-      if (!response.ok) continue;
-
-      const images = await response.json();
-      if (Array.isArray(images) && images.length > 0) {
-        const randomIndex = Math.floor(Math.random() * images.length);
-        return images[randomIndex].image_url;
+      } catch (err) {
+        continue;
       }
     }
 
     return null;
   } catch (error) {
+    console.error('Error fetching cat photo:', error);
     return null;
   }
 }
