@@ -250,15 +250,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 身体状态：${body_state || '说不上来'}
 现在需要：${need || '被理解'}`;
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY not set');
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 500,
         temperature: 0.3,
         system: SYSTEM_PROMPT,
@@ -269,11 +274,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (!response.ok) {
-      console.error('Claude API error:', response.status, response.statusText);
-      return res.status(500).json({ error: 'Failed to call Claude API' });
+      const errorData = await response.text();
+      console.error('Claude API error:', response.status, response.statusText, errorData);
+      return res.status(500).json({ error: `Claude API error: ${response.status}` });
     }
 
     const data = await response.json();
+    if (!data.content || !data.content[0]) {
+      console.error('Invalid Claude response structure:', data);
+      return res.status(500).json({ error: 'Invalid response from Claude' });
+    }
     const resultText = data.content[0].text.trim();
 
     // Parse JSON response
