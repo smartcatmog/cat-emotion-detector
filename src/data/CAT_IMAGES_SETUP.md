@@ -2,47 +2,62 @@
 
 ## 快速开始
 
-### 方式1：使用Supabase Storage（推荐）
+### 当前方案：本地存储 + 部署到Vercel
+
+API已配置为从 `public/cats/` 目录加载图片。
+
+**步骤：**
+
+1. **准备37张猫图片**
+   - 文件名格式：`{cat_name}.jpg` 或 `{cat_name}.png`
+   - 例如：`困困猫.jpg`, `躲柜子猫.jpg`, `炸毛猫.jpg` 等
+   - 或使用英文ID：`kun_kun_mao.jpg`, `duo_guizi_mao.jpg` 等
+
+2. **上传到 `public/cats/` 目录**
+   ```bash
+   # 将所有37张猫图片放在这个目录
+   public/cats/
+   ├── 困困猫.png
+   ├── 躲柜子猫.jpg
+   ├── 炸毛猫.jpg
+   └── ... (34张更多图片)
+   ```
+
+3. **提交并部署**
+   ```bash
+   git add public/cats/
+   git commit -m "Add 37 cat images"
+   git push origin main
+   # Vercel 会自动部署
+   ```
+
+4. **验证**
+   - 访问 https://cat-emotion-detector.vercel.app/cats/困困猫.png
+   - 应该能看到图片
+
+### 备选方案1：使用Supabase Storage
+
+如果图片太多或需要动态管理：
 
 1. **上传图片到Supabase**
    - 登录 Supabase Dashboard
    - 进入 Storage → 创建新 bucket: `cat-photos`
-   - 上传37张猫图片，命名格式：`{cat_id}.jpg`
-   - 例如：`kun_kun_mao.jpg`, `duo_guizi_mao.jpg` 等
+   - 上传37张猫图片
 
-2. **获取公开URL**
-   - 每张图片都会有一个公开URL
-   - 格式：`https://{project}.supabase.co/storage/v1/object/public/cat-photos/{cat_id}.jpg`
-
-3. **更新 `cat-images.json`**
-   ```json
-   {
-     "images": {
-       "kun_kun_mao": "https://gfrbubfyznmkqchwjhtn.supabase.co/storage/v1/object/public/cat-photos/kun_kun_mao.jpg",
-       "duo_guizi_mao": "https://gfrbubfyznmkqchwjhtn.supabase.co/storage/v1/object/public/cat-photos/duo_guizi_mao.jpg",
-       ...
-     }
-   }
+2. **更新API中的CAT_IMAGES**
+   编辑 `api/social/cat-signature.ts`：
+   ```typescript
+   const CAT_IMAGES: Record<string, string> = {
+     kun_kun_mao: 'https://gfrbubfyznmkqchwjhtn.supabase.co/storage/v1/object/public/cat-photos/kun_kun_mao.jpg',
+     duo_guizi_mao: 'https://gfrbubfyznmkqchwjhtn.supabase.co/storage/v1/object/public/cat-photos/duo_guizi_mao.jpg',
+     // ... 其他35只
+   };
    ```
 
-### 方式2：使用CDN或图床
+### 备选方案2：使用CDN或图床
 
 - 上传到 Cloudinary、阿里云OSS、七牛云等
-- 获取每张图片的公开URL
-- 更新 `cat-images.json`
-
-### 方式3：本地存储（开发用）
-
-- 将图片放在 `public/cats/` 目录
-- 更新 `cat-images.json`：
-  ```json
-  {
-    "images": {
-      "kun_kun_mao": "/cats/kun_kun_mao.jpg",
-      ...
-    }
-  }
-  ```
+- 更新 `api/social/cat-signature.ts` 中的 `CAT_IMAGES` 对象
 
 ## 37只猫的ID列表
 
@@ -104,13 +119,14 @@
 
 ## 更新API
 
-编辑 `api/social/cat-signature.ts` 中的 `CAT_IMAGES` 对象：
+API已自动配置为从 `public/cats/` 加载图片。如果使用其他存储方案，编辑 `api/social/cat-signature.ts` 中的 `CAT_IMAGES` 对象：
 
 ```typescript
 const CAT_IMAGES: Record<string, string> = {
-  kun_kun_mao: 'https://your-cdn.com/kun_kun_mao.jpg',
-  duo_guizi_mao: 'https://your-cdn.com/duo_guizi_mao.jpg',
-  // ... 其他36只猫
+  kun_kun_mao: '/cats/困困猫.png',
+  duo_guizi_mao: '/cats/躲柜子猫.jpg',
+  zha_mao_mao: '/cats/炸毛猫.jpg',
+  // ... 其他34只
 };
 ```
 

@@ -10,6 +10,122 @@ interface Cat {
   neighbor_cats: string[];
 }
 
+const SYSTEM_PROMPT = `你是MoodCat的情绪分析师，专门帮助用户找到今天最懂他们的那只猫。
+
+用户会提供三个信息：
+1. 今天最压着你的感觉是什么（一句话描述）
+2. 身体状态（身体不舒服 / 心里堵 / 都有 / 说不上来）
+3. 现在需要（休息 / 被理解 / 发泄 / 自己待着 / 被陪着）
+
+你的任务是从以下37只猫中选出最匹配的1只主猫，以及1只邻近猫。
+
+---
+
+【37只猫完整列表】
+
+能量×社交类：
+- 困困猫：身体耗尽、该休息了、低能量、想被陪、适合身体不舒服+需要休息
+- 躲柜子猫：想躲、想安静、不想被看见、低能量、想独处、适合心里堵+自己待着
+- 炸毛猫：烦躁、易被刺激、阈值低、高能量、想独处、适合心里堵+发泄
+- 舔毛猫：焦虑、想把自己整理收回来、中能量、想独处
+- 委屈猫：受伤、被误解、低能量、想被陪、适合心里堵+被理解
+- 暴冲猫：停不下来、超速运转、高能量、想独处
+- 高冷观察猫：抽离、暂时不想投入、中能量、想独处
+- 晒太阳猫：稳定、恢复中、状态不错、中能量、想被陪——注意：只在用户描述积极或平静状态时使用
+- 撒欢猫：状态超好、能量满格、开心停不下来、高能量、想被陪
+- 黏人猫：精力充沛但需要陪伴、想找人分享、高能量、想被陪
+
+焦虑系：
+- 绷紧猫：压迫型焦虑、责任太重、必须撑住、一直在用力从来没松过
+- 玻璃猫：失控型焦虑、结果不在自己手里、随时可能碎、对未来的恐惧
+- 假睡猫：想躺平但躺不平、假装不在乎但其实还在乎、用不在乎保护自己
+
+处境触发类：
+- 周日晚上猫：明天的重量已经压过来、预期性低落、还没到明天但已经难受
+- 中午猫：下午两点空洞感、存在感低、时间很稠、莫名其妙的低落
+- 失眠猫：身体躺下了脑子开夜班、情绪挂在后台运行、睡不着
+- 换季猫：莫名低落、说不出原因、系统在静默更新
+- 假期结束猫：好日子最后几小时、开心提前结束了
+- 考前猫：准备了但不安、结果不在自己手里、在乎所以紧张
+- 迷路猫：不知道走向哪里、茫然、方向感丢失、不是焦虑是空
+- 生日猫：应该开心但有点空、感受到时间重量、复杂的感慨
+
+关系触发类：
+- 装死猫：社交电量耗尽、不想回任何消息、不想和任何人说话——适合"不想和世界说话"类输入
+- 等门猫：发出去了在等回复、等待比结果更难熬、焦虑但只能等
+- 炸锅猫：被某个具体的人气到、定向愤怒、不是泛泛烦躁
+- 被遗忘猫：感觉不在任何人优先级里、安静的难过、没人做错只是被忽略
+- 嫉妒猫：看到别人好消息说不清羡慕还是难受、复杂情绪
+- 讨好猫：说了太多不是真心话、用力让别人舒服忘了自己
+- 边界猫：被越界了想说不没说出口、憋着一口气
+- 冷战猫：有摩擦表面平静内心拉锯、暂时停火
+
+成长触发类：
+- 脱毛猫：正在经历变化、不舒服但知道是必要的
+- 刚洗完澡猫：刚哭过或发泄完、轻了一点但有点空、干净的疲惫
+- 窗台猫：适合观察不适合参与、需要距离才能看清楚
+- 独自修炼猫：在做重要的事、需要专注不想被打扰
+- 老地方猫：回到熟悉场景、感慨说不清好坏、惆怅和温暖同时
+- 第一次猫：做没做过的事、紧张和期待同时存在
+
+补充类：
+- 纸箱猫：彻底关机、不难过不焦虑就是空白、什么都不想
+- 发呆猫：眼神放空、意识漂着、没在线、不是难过只是不在
+
+---
+
+【匹配规则——严格按优先级执行】
+
+第一优先级：场景关键词直接匹配
+如果用户原话包含以下词语，直接优先匹配对应猫，不需要再分析：
+- "不想和世界说话" / "不想回消息" / "不想社交" → 装死猫
+- "睡不着" / "脑子停不下来" → 失眠猫
+- "明天要上班" / "周日" / "假期要结束" → 周日晚上猫或假期结束猫
+- "等消息" / "等结果" / "等回复" → 等门猫
+- "被气到" / "某某人让我" → 炸锅猫
+- "不知道要干嘛" / "迷茫" / "没方向" → 迷路猫
+- "好累" / "累死了" + 身体不舒服 → 困困猫
+- "好累" / "累死了" + 心里堵 → 绷紧猫
+- "想哭" / "刚哭完" → 刚洗完澡猫或委屈猫
+- "焦虑" + 结果未知 → 玻璃猫
+- "焦虑" + 压力大 → 绷紧猫
+
+第二优先级：身体状态 + 现在需要组合匹配
+- 身体不舒服 + 休息 → 困困猫
+- 身体不舒服 + 被陪着 → 困困猫或委屈猫
+- 心里堵 + 自己待着 → 躲柜子猫或装死猫
+- 心里堵 + 被理解 → 委屈猫或被遗忘猫
+- 心里堵 + 发泄 → 炸毛猫或炸锅猫
+- 心里堵 + 休息 → 绷紧猫
+- 都有 + 被理解 → 委屈猫
+- 都有 + 自己待着 → 躲柜子猫
+- 说不上来 + 任何需要 → 换季猫或发呆猫
+
+第三优先级：情绪强度判断
+- 高强度负面（愤怒/崩溃/极度焦虑）→ 炸毛猫、炸锅猫、玻璃猫
+- 中强度负面（委屈/疲惫/烦躁）→ 委屈猫、绷紧猫、舔毛猫
+- 低强度负面（空洞/茫然/莫名）→ 发呆猫、纸箱猫、换季猫、迷路猫
+- 正面状态 → 晒太阳猫、撒欢猫、黏人猫
+
+【重要禁止规则】
+- 晒太阳猫只能在用户描述明显积极或平静恢复状态时使用
+- 绝对不能把"不想和世界说话"匹配到晒太阳猫
+- 绝对不能把负面情绪匹配到撒欢猫或黏人猫
+- 如果用户描述包含任何社交回避信号，优先考虑装死猫或躲柜子猫
+
+---
+
+【输出格式】
+
+严格返回以下JSON格式，不要有任何其他文字、不要有markdown代码块标记：
+
+{
+  "primary_cat": "猫的中文名字",
+  "neighbor_cat": "邻近猫的中文名字",
+  "emotion_tags": ["情绪标签1", "情绪标签2", "情绪标签3"],
+  "match_reason": "一句话说明匹配原因（内部调试用，不展示给用户）"
+}`;
+
 // All 37 cats data
 const CATS: Record<string, Cat> = {
   kun_kun_mao: { id: 'kun_kun_mao', name: '困困猫', explanation: '你不是懒，是真的耗尽了，身体比你先知道你需要休息。', suggestion: '今天不用完成任何事，休息本身就是今天最重要的任务。', avoid: ['别逼自己撑着把事情做完','别为休息感到愧疚','别喝咖啡硬撑'], recovery_tags: ['睡觉', '躺着', '不设闹钟', '被照顾'], neighbor_cats: ['纸箱猫', '晒太阳猫'] },
@@ -129,29 +245,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'mood_text is required' });
     }
 
-    const { keywords } = classifyEmotion(mood_text, body_state || '', need || '');
-    const catId = keywords[0] || 'shai_taiyang_mao';
-    const cat = CATS[catId];
+    // Call Claude API for intelligent cat matching
+    const userMessage = `心情：${mood_text}
+身体状态：${body_state || '说不上来'}
+现在需要：${need || '被理解'}`;
 
-    if (!cat) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20251001',
+        max_tokens: 500,
+        temperature: 0.3,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: 'user', content: userMessage }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Claude API error:', response.status, response.statusText);
+      return res.status(500).json({ error: 'Failed to call Claude API' });
+    }
+
+    const data = await response.json();
+    const resultText = data.content[0].text.trim();
+
+    // Parse JSON response
+    let matchResult;
+    try {
+      matchResult = JSON.parse(resultText);
+    } catch (e) {
+      console.error('Failed to parse Claude response:', resultText);
+      return res.status(500).json({ error: 'Invalid response format from Claude' });
+    }
+
+    // Get the primary cat
+    const primaryCatName = matchResult.primary_cat;
+    const primaryCat = Object.values(CATS).find(cat => cat.name === primaryCatName);
+    
+    if (!primaryCat) {
+      console.error('Cat not found:', primaryCatName);
       return res.status(500).json({ error: 'Cat not found' });
     }
 
-    const neighborCat = CATS[cat.neighbor_cats[0]] || CATS['shai_taiyang_mao'];
-    const catPhotoPath = CAT_IMAGES[catId] || null;
-    // Convert relative path to absolute URL for Vercel deployment
+    const neighborCatName = matchResult.neighbor_cat;
+    const neighborCat = Object.values(CATS).find(cat => cat.name === neighborCatName) || CATS['shai_taiyang_mao'];
+    
+    const catPhotoPath = CAT_IMAGES[primaryCat.id] || null;
     const catPhoto = catPhotoPath ? `https://cat-emotion-detector.vercel.app${catPhotoPath}` : null;
 
     return res.status(200).json({
       success: true,
       data: {
-        catId,
-        name: cat.name,
+        catId: primaryCat.id,
+        name: primaryCat.name,
         emoji: '😺',
-        explanation: cat.explanation,
-        suggestion: cat.suggestion,
-        notSuitable: cat.avoid,
-        recoveryMethods: cat.recovery_tags,
+        explanation: primaryCat.explanation,
+        suggestion: primaryCat.suggestion,
+        notSuitable: primaryCat.avoid,
+        recoveryMethods: primaryCat.recovery_tags,
         neighbor: neighborCat.id,
         neighborName: neighborCat.name,
         catPhoto,

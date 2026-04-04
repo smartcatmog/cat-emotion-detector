@@ -1,0 +1,227 @@
+{
+  "mapping": {
+    "困困猫": {
+      "cat_id": "kun_kun_mao",
+      "emotion_labels": ["sleepy", "tired", "calm"],
+      "image_filename": "困困猫.png",
+      "description": "困倦、疲惫、需要休息的状态"
+    },
+    "躲柜子猫": {
+      "cat_id": "duo_guizi_mao",
+      "emotion_labels": ["anxious", "scared", "resigned"],
+      "image_filename": "躲柜子猫.jpg",
+      "description": "害怕、焦虑、想躲起来的状态"
+    },
+    "炸毛猫": {
+      "cat_id": "zha_mao_mao",
+      "emotion_labels": ["angry", "annoyed", "dramatic"],
+      "image_filename": "炸毛猫.jpg",
+      "description": "烦躁、生气、易被刺激的状态"
+    },
+    "舔毛猫": {
+      "cat_id": "tian_mao_mao",
+      "emotion_labels": ["anxious", "ashamed", "confused"],
+      "image_filename": "需要上传",
+      "description": "焦虑、自我安抚、整理自己的状态"
+    },
+    "委屈猫": {
+      "cat_id": "wei_qu_mao",
+      "emotion_labels": ["sad", "ashamed", "disappointed"],
+      "image_filename": "需要上传",
+      "description": "伤心、委屈、被误解的状态"
+    },
+    "暴冲猫": {
+      "cat_id": "bao_chong_mao",
+      "emotion_labels": ["zoomies", "dramatic", "hangry"],
+      "image_filename": "需要上传",
+      "description": "停不下来、超转、能量爆表的状态"
+    },
+    "高冷观察猫": {
+      "cat_id": "gaoleng_guancha_mao",
+      "emotion_labels": ["sassy", "suspicious", "smug"],
+      "image_filename": "需要上传",
+      "description": "高冷、抽离、观察一切的状态"
+    },
+    "晒太阳猫": {
+      "cat_id": "shai_taiyang_mao",
+      "emotion_labels": ["happy", "loved", "calm"],
+      "image_filename": "需要上传",
+      "description": "稳定、恢复、享受当下的状态"
+    },
+    "撒欢猫": {
+      "cat_id": "sa_huan_mao",
+      "emotion_labels": ["happy", "zoomies", "playful"],
+      "image_filename": "需要上传",
+      "description": "兴奋、充满能量、想要表达的状态"
+    },
+    "黏人猫": {
+      "cat_id": "nian_ren_mao",
+      "emotion_labels": ["clingy", "loved", "happy"],
+      "image_filename": "需要上传",
+      "description": "需要陪伴、黏人、渴望连接的状态"
+    },
+    "绷紧猫": {
+      "cat_id": "beng_jin_mao",
+      "emotion_labels": ["anxious", "scared", "tense"],
+      "image_filename": "需要上传",
+      "description": "紧张、绷紧、一直在用力的状态"
+    },
+    "玻璃猫": {
+      "cat_id": "boli_mao",
+      "emotion_labels": ["anxious", "scared", "worried"],
+      "image_filename": "需要上传",
+      "description": "脆弱、容易被刺激、随时可能崩溃的状态"
+    },
+    "假睡猫": {
+      "cat_id": "jia_shui_mao",
+      "emotion_labels": ["resigned", "suspicious", "confused"],
+      "image_filename": "需要上传",
+      "description": "假装不在乎、装睡、自我保护的状态"
+    },
+    "周日晚上猫": {
+      "cat_id": "zhouri_wanshang_mao",
+      "emotion_labels": ["anxious", "resigned", "dramatic"],
+      "image_filename": "需要上传",
+      "description": "对明天的恐惧、周日晚上的焦虑"
+    },
+    "中午猫": {
+      "cat_id": "zhongwu_mao",
+      "emotion_labels": ["sleepy", "bored", "calm"],
+      "image_filename": "需要上传",
+      "description": "下午两点的低谷、存在感低的状态"
+    },
+    "失眠猫": {
+      "cat_id": "shimian_mao",
+      "emotion_labels": ["anxious", "dramatic", "tired"],
+      "image_filename": "需要上传",
+      "description": "失眠、脑子开夜班、情绪未处理的状态"
+    },
+    "换季猫": {
+      "cat_id": "huanji_mao",
+      "emotion_labels": ["melancholy", "tired", "calm"],
+      "image_filename": "需要上传",
+      "description": "换季不适应、莫名低落的状态"
+    },
+    "假期结束猫": {
+      "cat_id": "jiaqijieshu_mao",
+      "emotion_labels": ["melancholy", "resigned", "disappointed"],
+      "image_filename": "需要上传",
+      "description": "假期结束的失落、从放松回到现实"
+    },
+    "考前猫": {
+      "cat_id": "kaoshi_mao",
+      "emotion_labels": ["anxious", "dramatic", "scared"],
+      "image_filename": "需要上传",
+      "description": "考前的紧张、对未知的焦虑"
+    },
+    "迷路猫": {
+      "cat_id": "milu_mao",
+      "emotion_labels": ["confused", "anxious", "resigned"],
+      "image_filename": "需要上传",
+      "description": "迷茫、不知道方向、看不清楚的状态"
+    },
+    "生日猫": {
+      "cat_id": "shengri_mao",
+      "emotion_labels": ["happy", "melancholy", "surprised"],
+      "image_filename": "需要上传",
+      "description": "生日的复杂情绪、时间流逝的感受"
+    },
+    "装死猫": {
+      "cat_id": "zhuangsi_mao",
+      "emotion_labels": ["resigned", "sleepy", "calm"],
+      "image_filename": "需要上传",
+      "description": "社交电量耗尽、装死、不想回应的状态"
+    },
+    "等门猫": {
+      "cat_id": "dengmen_mao",
+      "emotion_labels": ["anxious", "curious", "confused"],
+      "image_filename": "需要上传",
+      "description": "等待焦虑、坐立不安、什么都做不了的状态"
+    },
+    "炸锅猫": {
+      "cat_id": "zhaguo_mao",
+      "emotion_labels": ["angry", "dramatic", "annoyed"],
+      "image_filename": "需要上传",
+      "description": "被气到、炸锅、想要爆发的状态"
+    },
+    "被遗忘猫": {
+      "cat_id": "beiyiwang_mao",
+      "emotion_labels": ["sad", "melancholy", "disappointed"],
+      "image_filename": "需要上传",
+      "description": "被遗忘、不在优先级里、安静的难过"
+    },
+    "嫉妒猫": {
+      "cat_id": "jidu_mao",
+      "emotion_labels": ["annoyed", "anxious", "melancholy"],
+      "image_filename": "需要上传",
+      "description": "嫉妒、羡慕、在比较中受伤的状态"
+    },
+    "讨好猫": {
+      "cat_id": "taohao_mao",
+      "emotion_labels": ["clingy", "anxious", "resigned"],
+      "image_filename": "需要上传",
+      "description": "讨好、委屈自己、用力让别人舒服的状态"
+    },
+    "边界猫": {
+      "cat_id": "bianjie_mao",
+      "emotion_labels": ["angry", "scared", "anxious"],
+      "image_filename": "需要上传",
+      "description": "被越界、想说不但没说出口、边界困境"
+    },
+    "冷战猫": {
+      "cat_id": "lengzhan_mao",
+      "emotion_labels": ["resigned", "suspicious", "sad"],
+      "image_filename": "需要上传",
+      "description": "冷战、沉默、暂时停火的状态"
+    },
+    "脱毛猫": {
+      "cat_id": "tuomao_mao",
+      "emotion_labels": ["anxious", "dramatic", "confused"],
+      "image_filename": "需要上传",
+      "description": "在蜕变、变化中的不舒服、成长的过程"
+    },
+    "刚洗完澡猫": {
+      "cat_id": "gangxizaowan_mao",
+      "emotion_labels": ["vulnerable", "calm", "tired"],
+      "image_filename": "需要上传",
+      "description": "刚哭过、刚发泄完、有点空但干净的状态"
+    },
+    "窗台猫": {
+      "cat_id": "chuangtai_mao",
+      "emotion_labels": ["curious", "calm", "thoughtful"],
+      "image_filename": "需要上传",
+      "description": "观察、思考、看风景的状态"
+    },
+    "独自修炼猫": {
+      "cat_id": "duzilianxi_mao",
+      "emotion_labels": ["focused", "calm", "curious"],
+      "image_filename": "需要上传",
+      "description": "专注、不想被打扰、认真对待某件事"
+    },
+    "老地方猫": {
+      "cat_id": "laodifang_mao",
+      "emotion_labels": ["melancholy", "calm", "loved"],
+      "image_filename": "需要上传",
+      "description": "回到熟悉的地方、温暖和惆怅并存的感受"
+    },
+    "第一次猫": {
+      "cat_id": "diyici_mao",
+      "emotion_labels": ["curious", "scared", "excited"],
+      "image_filename": "需要上传",
+      "description": "第一次的紧张和期待、新的开始"
+    },
+    "纸箱猫": {
+      "cat_id": "zhixiang_mao",
+      "emotion_labels": ["sleepy", "calm", "resigned"],
+      "image_filename": "需要上传",
+      "description": "彻底关机、躲在纸箱里、完全放空的状态"
+    },
+    "发呆猫": {
+      "cat_id": "fadai_mao",
+      "emotion_labels": ["calm", "sleepy", "thoughtful"],
+      "image_filename": "需要上传",
+      "description": "发呆、放空、大脑在后台处理的状态"
+    }
+  },
+  "notes": "请将真猫图片上传到 public/cats/ 目录，文件名与 image_filename 对应"
+}
