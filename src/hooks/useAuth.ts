@@ -56,6 +56,7 @@ export function useAuth() {
     isLoading: true,
   });
 
+  // Initial load from localStorage
   useEffect(() => {
     const user = getStoredSession();
     if (user) {
@@ -64,6 +65,22 @@ export function useAuth() {
       const anonId = localStorage.getItem('anon_user_id');
       setAuthState({ user: null, isAnonymous: !!anonId, isLoading: false });
     }
+  }, []);
+
+  // Listen for storage changes (e.g., from other tabs or programmatic updates)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const user = getStoredSession();
+      if (user) {
+        setAuthState({ user, isAnonymous: false, isLoading: false });
+      } else {
+        const anonId = localStorage.getItem('anon_user_id');
+        setAuthState({ user: null, isAnonymous: !!anonId, isLoading: false });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const setAnonymousMode = () => {
