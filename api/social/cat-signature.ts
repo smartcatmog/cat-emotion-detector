@@ -51,22 +51,46 @@ const CATS: Record<string, Cat> = {
   fadai_mao: { id: 'fadai_mao', name: '发呆猫', explanation: '发呆是大脑在后台处理你没意识到的事，不用打断它。', suggestion: '今天允许自己不在场，思绪飘到哪里就跟着去。', avoid: ['别强迫自己集中注意力','别觉得发呆是浪费时间','别接需要全力投入的任务'], recovery_tags: ['随便飘', '不用在场', '低刺激环境', '让大脑自己转'], neighbor_cats: ['纸箱猫', '窗台猫'] },
 };
 
-// Cat ID to image URL mapping - will be loaded from config
-let CAT_IMAGES: Record<string, string> = {};
-
-// Load cat images configuration
-function loadCatImages() {
-  try {
-    const imageConfig = require('../../src/data/cat-images.json');
-    CAT_IMAGES = imageConfig.images || {};
-  } catch (err) {
-    console.warn('Could not load cat images config:', err);
-    CAT_IMAGES = {};
-  }
-}
-
-// Initialize on module load
-loadCatImages();
+// Cat ID to image URL mapping - embedded directly
+const CAT_IMAGES: Record<string, string> = {
+  kun_kun_mao: '/cats/困困猫.png',
+  duo_guizi_mao: '/cats/躲柜子猫.jpg',
+  zha_mao_mao: '/cats/炸毛猫.jpg',
+  tian_mao_mao: '/cats/舔毛猫.jpg',
+  wei_qu_mao: '/cats/委屈猫.jpg',
+  bao_chong_mao: '/cats/暴冲猫.jpg',
+  gaoleng_guancha_mao: '/cats/高冷观察猫.jpg',
+  shai_taiyang_mao: '/cats/晒太阳猫.jpg',
+  sa_huan_mao: '/cats/撒欢猫.jpg',
+  nian_ren_mao: '/cats/黏人猫.jpg',
+  beng_jin_mao: '/cats/绷紧猫.jpg',
+  boli_mao: '/cats/玻璃猫.jpg',
+  jia_shui_mao: '/cats/假睡猫.jpg',
+  zhouri_wanshang_mao: '/cats/周日晚上猫.jpg',
+  zhongwu_mao: '/cats/中午猫.jpg',
+  shimian_mao: '/cats/失眠猫.jpg',
+  huanji_mao: '/cats/换季猫.jpg',
+  jiaqijieshu_mao: '/cats/假期结束猫.jpg',
+  kaoshi_mao: '/cats/考前猫.jpg',
+  milu_mao: '/cats/迷路猫.jpg',
+  shengri_mao: '/cats/生日猫.jpg',
+  zhuangsi_mao: '/cats/装死猫.jpg',
+  dengmen_mao: '/cats/等门猫.jpg',
+  zhaguo_mao: '/cats/炸锅猫.jpg',
+  beiyiwang_mao: '/cats/被遗忘猫.jpg',
+  jidu_mao: '/cats/嫉妒猫.jpg',
+  taohao_mao: '/cats/讨好猫.jpg',
+  bianjie_mao: '/cats/边界猫.jpg',
+  lengzhan_mao: '/cats/冷战猫.jpg',
+  tuomao_mao: '/cats/脱毛猫.jpg',
+  gangxizaowan_mao: '/cats/刚洗完澡猫.jpg',
+  chuangtai_mao: '/cats/窗台猫.jpg',
+  duzilianxi_mao: '/cats/独自修炼猫.jpg',
+  laodifang_mao: '/cats/老地方猫.jpg',
+  diyici_mao: '/cats/第一次猫.jpg',
+  zhixiang_mao: '/cats/纸箱猫.jpg',
+  fadai_mao: '/cats/发呆猫.jpg',
+};
 
 function classifyEmotion(text: string, bodyState: string, need: string): { keywords: string[] } {
   const lower = text.toLowerCase();
@@ -114,7 +138,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const neighborCat = CATS[cat.neighbor_cats[0]] || CATS['shai_taiyang_mao'];
-    const catPhoto = CAT_IMAGES[catId] || null;
+    const catPhotoPath = CAT_IMAGES[catId] || null;
+    // Convert relative path to absolute URL for Vercel deployment
+    const catPhoto = catPhotoPath ? `https://cat-emotion-detector.vercel.app${catPhotoPath}` : null;
 
     return res.status(200).json({
       success: true,
