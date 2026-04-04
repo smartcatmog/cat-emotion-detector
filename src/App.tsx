@@ -765,9 +765,9 @@ function App() {
 
               {/* Two Main Features */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                {/* Feature 1: Cat Signature & Weekly Record */}
+                {/* Feature 1: Cat Signature - Free for all */}
                 <button
-                  onClick={() => setCurrentView('cat-personality')}
+                  onClick={() => setCurrentView('cat-signature')}
                   className="group relative overflow-hidden rounded-3xl p-8 text-left transition-all hover:shadow-xl"
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -775,47 +775,59 @@ function App() {
                 >
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity" />
                   <div className="relative space-y-4">
-                    <div className="text-5xl">📅</div>
+                    <div className="text-5xl">✨</div>
                     <div>
                       <h2 className="text-2xl font-bold text-white mb-2">
-                        {lang === 'zh' ? '我的猫人格周记' : 'My Cat Personality Week'}
+                        {lang === 'zh' ? '猫系签' : 'Cat Signature'}
                       </h2>
                       <p className="text-white/80 text-sm">
                         {lang === 'zh' 
-                          ? '生成猫系签，记录你的情绪旅程，看见自己的模式' 
-                          : 'Generate cat signatures, track your emotional journey, see your patterns'}
+                          ? '生成你的猫系签，AI 读懂你的情绪' 
+                          : 'Generate your cat signature, AI understands your emotions'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-white/90 text-sm font-medium pt-2">
-                      <span>{lang === 'zh' ? '开始记录' : 'Start tracking'}</span>
+                      <span className="inline-block px-2 py-1 bg-white/20 rounded-full text-xs">
+                        {lang === 'zh' ? '免登录' : 'Free'}
+                      </span>
                       <span>→</span>
                     </div>
                   </div>
                 </button>
 
-                {/* Feature 2: Analyze Cat */}
+                {/* Feature 2: Weekly Record - Login required */}
                 <button
-                  onClick={() => setCurrentView('upload')}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      setCurrentView('cat-personality');
+                    } else {
+                      setShowLoginModal(true);
+                    }
+                  }}
                   className="group relative overflow-hidden rounded-3xl p-8 text-left transition-all hover:shadow-xl"
                   style={{
-                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    background: isAuthenticated 
+                      ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                      : 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)',
                   }}
                 >
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity" />
                   <div className="relative space-y-4">
-                    <div className="text-5xl">🔍</div>
+                    <div className="text-5xl">📅</div>
                     <div>
                       <h2 className="text-2xl font-bold text-white mb-2">
-                        {lang === 'zh' ? '分析你的猫咪' : 'Analyze Your Cat'}
+                        {lang === 'zh' ? '我的周记' : 'My Weekly Record'}
                       </h2>
                       <p className="text-white/80 text-sm">
                         {lang === 'zh' 
-                          ? '上传猫咪照片，AI 解读它的心情和身体语言' 
-                          : 'Upload a photo and AI will decode your cat\'s mood and body language'}
+                          ? '记录你的情绪旅程，看见自己的模式' 
+                          : 'Track your emotional journey, see your patterns'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-white/90 text-sm font-medium pt-2">
-                      <span>{lang === 'zh' ? '开始分析' : 'Start analyzing'}</span>
+                      <span className="inline-block px-2 py-1 bg-white/20 rounded-full text-xs">
+                        {isAuthenticated ? (lang === 'zh' ? '已解锁' : 'Unlocked') : (lang === 'zh' ? '登录解锁' : 'Login to unlock')}
+                      </span>
                       <span>→</span>
                     </div>
                   </div>
