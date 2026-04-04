@@ -51,10 +51,22 @@ const CATS: Record<string, Cat> = {
   fadai_mao: { id: 'fadai_mao', name: '发呆猫', explanation: '发呆是大脑在后台处理你没意识到的事，不用打断它。', suggestion: '今天允许自己不在场，思绪飘到哪里就跟着去。', avoid: ['别强迫自己集中注意力','别觉得发呆是浪费时间','别接需要全力投入的任务'], recovery_tags: ['随便飘', '不用在场', '低刺激环境', '让大脑自己转'], neighbor_cats: ['纸箱猫', '窗台猫'] },
 };
 
-// Cat ID to image URL mapping - ready for your real cat photos
-const CAT_IMAGES: Record<string, string> = {
-  // Will be populated with real cat photo URLs
-};
+// Cat ID to image URL mapping - will be loaded from config
+let CAT_IMAGES: Record<string, string> = {};
+
+// Load cat images configuration
+function loadCatImages() {
+  try {
+    const imageConfig = require('../../src/data/cat-images.json');
+    CAT_IMAGES = imageConfig.images || {};
+  } catch (err) {
+    console.warn('Could not load cat images config:', err);
+    CAT_IMAGES = {};
+  }
+}
+
+// Initialize on module load
+loadCatImages();
 
 function classifyEmotion(text: string, bodyState: string, need: string): { keywords: string[] } {
   const lower = text.toLowerCase();
