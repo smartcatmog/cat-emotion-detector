@@ -92,7 +92,8 @@ const SYSTEM_PROMPT = `你是喵懂了的情绪分析师，专门帮助用户找
 
 第一优先级：场景关键词直接匹配
 如果用户原话包含以下词语，直接优先匹配对应猫，不需要再分析：
-- "不想和世界说话" / "不想回消息" / "不想社交" → 装死猫
+- "我不想和这个世界说话" / "不想和世界说话" / "不想和任何人说话" → 装死猫（必须匹配装死猫，不能匹配躲柜子猫）
+- "不想回消息" / "不想社交" → 装死猫
 - "睡不着" / "脑子停不下来" → 失眠猫
 - "明天要上班" / "周日" / "假期要结束" → 周日晚上猫或假期结束猫
 - "等消息" / "等结果" / "等回复" → 等门猫
@@ -107,7 +108,7 @@ const SYSTEM_PROMPT = `你是喵懂了的情绪分析师，专门帮助用户找
 第二优先级：身体状态 + 现在需要组合匹配
 - 身体不舒服 + 休息 → 困困猫
 - 身体不舒服 + 被陪着 → 困困猫或委屈猫
-- 心里堵 + 自己待着 → 躲柜子猫或装死猫
+- 心里堵 + 自己待着 → 装死猫（如果用户说了"不想和世界说话"等关键词）或躲柜子猫（其他情况）
 - 心里堵 + 被理解 → 委屈猫或被遗忘猫
 - 心里堵 + 发泄 → 炸毛猫或炸锅猫
 - 心里堵 + 休息 → 绷紧猫
@@ -275,7 +276,7 @@ function fallbackCatMatching(mood_text: string, body_state: string, mood_state: 
   if (lower.includes('睡不着') || lower.includes('脑子停不下来')) {
     return { primary_cat: '失眠猫', neighbor_cat: '绷紧猫', emotion_tags: ['焦虑', '疲惫', '无法入睡'] };
   }
-  if (lower.includes('不想和世界说话') || lower.includes('不想回消息') || lower.includes('不想社交')) {
+  if (lower.includes('不想和这个世界说话') || lower.includes('不想和世界说话') || lower.includes('不想和任何人说话') || lower.includes('不想回消息') || lower.includes('不想社交')) {
     return { primary_cat: '装死猫', neighbor_cat: '躲柜子猫', emotion_tags: ['疲惫', '社交电量耗尽', '需要独处'] };
   }
   if (lower.includes('迷茫') || lower.includes('不知道') || lower.includes('没方向')) {
