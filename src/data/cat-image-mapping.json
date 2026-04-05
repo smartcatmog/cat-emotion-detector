@@ -21,115 +21,115 @@
     "舔毛猫": {
       "cat_id": "tian_mao_mao",
       "emotion_labels": ["anxious", "ashamed", "confused"],
-      "image_filename": "需要上传",
+      "image_filename": "舔毛猫.jpg",
       "description": "焦虑、自我安抚、整理自己的状态"
     },
     "委屈猫": {
       "cat_id": "wei_qu_mao",
       "emotion_labels": ["sad", "ashamed", "disappointed"],
-      "image_filename": "需要上传",
+      "image_filename": "委屈猫.jpg",
       "description": "伤心、委屈、被误解的状态"
     },
     "暴冲猫": {
       "cat_id": "bao_chong_mao",
       "emotion_labels": ["zoomies", "dramatic", "hangry"],
-      "image_filename": "需要上传",
+      "image_filename": "暴冲猫.png",
       "description": "停不下来、超转、能量爆表的状态"
     },
     "高冷观察猫": {
       "cat_id": "gaoleng_guancha_mao",
       "emotion_labels": ["sassy", "suspicious", "smug"],
-      "image_filename": "需要上传",
+      "image_filename": "高冷观察猫.png",
       "description": "高冷、抽离、观察一切的状态"
     },
     "晒太阳猫": {
       "cat_id": "shai_taiyang_mao",
       "emotion_labels": ["happy", "loved", "calm"],
-      "image_filename": "需要上传",
+      "image_filename": "晒太阳猫.png",
       "description": "稳定、恢复、享受当下的状态"
     },
     "撒欢猫": {
       "cat_id": "sa_huan_mao",
       "emotion_labels": ["happy", "zoomies", "playful"],
-      "image_filename": "需要上传",
+      "image_filename": "撒花猫.png",
       "description": "兴奋、充满能量、想要表达的状态"
     },
     "黏人猫": {
       "cat_id": "nian_ren_mao",
       "emotion_labels": ["clingy", "loved", "happy"],
-      "image_filename": "需要上传",
+      "image_filename": "黏人猫.png",
       "description": "需要陪伴、黏人、渴望连接的状态"
     },
     "绷紧猫": {
       "cat_id": "beng_jin_mao",
       "emotion_labels": ["anxious", "scared", "tense"],
-      "image_filename": "需要上传",
+      "image_filename": "绷紧猫.png",
       "description": "紧张、绷紧、一直在用力的状态"
     },
     "玻璃猫": {
       "cat_id": "boli_mao",
       "emotion_labels": ["anxious", "scared", "worried"],
-      "image_filename": "需要上传",
+      "image_filename": "玻璃猫.png",
       "description": "脆弱、容易被刺激、随时可能崩溃的状态"
     },
     "假睡猫": {
       "cat_id": "jia_shui_mao",
       "emotion_labels": ["resigned", "suspicious", "confused"],
-      "image_filename": "需要上传",
+      "image_filename": "假睡猫.png",
       "description": "假装不在乎、装睡、自我保护的状态"
     },
     "周日晚上猫": {
       "cat_id": "zhouri_wanshang_mao",
       "emotion_labels": ["anxious", "resigned", "dramatic"],
-      "image_filename": "需要上传",
+      "image_filename": "周末晚上猫.png",
       "description": "对明天的恐惧、周日晚上的焦虑"
     },
     "中午猫": {
       "cat_id": "zhongwu_mao",
       "emotion_labels": ["sleepy", "bored", "calm"],
-      "image_filename": "需要上传",
+      "image_filename": "中午猫.png",
       "description": "下午两点的低谷、存在感低的状态"
     },
     "失眠猫": {
       "cat_id": "shimian_mao",
       "emotion_labels": ["anxious", "dramatic", "tired"],
-      "image_filename": "需要上传",
+      "image_filename": "失眠猫.png",
       "description": "失眠、脑子开夜班、情绪未处理的状态"
     },
     "换季猫": {
       "cat_id": "huanji_mao",
       "emotion_labels": ["melancholy", "tired", "calm"],
-      "image_filename": "需要上传",
+      "image_filename": "换季猫.png",
       "description": "换季不适应、莫名低落的状态"
     },
     "假期结束猫": {
       "cat_id": "jiaqijieshu_mao",
       "emotion_labels": ["melancholy", "resigned", "disappointed"],
-      "image_filename": "需要上传",
+      "image_filename": "假期结束猫.png",
       "description": "假期结束的失落、从放松回到现实"
     },
     "考前猫": {
       "cat_id": "kaoshi_mao",
       "emotion_labels": ["anxious", "dramatic", "scared"],
-      "image_filename": "需要上传",
+      "image_filename": "考前猫.png",
       "description": "考前的紧张、对未知的焦虑"
     },
     "迷路猫": {
       "cat_id": "milu_mao",
       "emotion_labels": ["confused", "anxious", "resigned"],
-      "image_filename": "需要上传",
+      "image_filename": "迷路猫.png",
       "description": "迷茫、不知道方向、看不清楚的状态"
     },
     "生日猫": {
       "cat_id": "shengri_mao",
       "emotion_labels": ["happy", "melancholy", "surprised"],
-      "image_filename": "需要上传",
+      "image_filename": "生日猫.png",
       "description": "生日的复杂情绪、时间流逝的感受"
     },
     "装死猫": {
       "cat_id": "zhuangsi_mao",
       "emotion_labels": ["resigned", "sleepy", "calm"],
-      "image_filename": "需要上传",
+      "image_filename": "装死猫.png",
       "description": "社交电量耗尽、装死、不想回应的状态"
     },
     "等门猫": {
