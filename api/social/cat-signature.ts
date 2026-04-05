@@ -255,9 +255,6 @@ function fallbackCatMatching(mood_text: string, body_state: string, mood_state: 
   if (mood_state === '心情很好' && body_state === '精力充沛') {
     return { primary_cat: '撒欢猫', neighbor_cat: '黏人猫', emotion_tags: ['开心', '能量满格', '想分享'] };
   }
-  if (mood_state === '心情很好') {
-    return { primary_cat: '撒欢猫', neighbor_cat: '黏人猫', emotion_tags: ['开心', '积极', '想分享'] };
-  }
   if (body_state === '精力充沛' && mood_state === '心里有点堵') {
     return { primary_cat: '暴冲猫', neighbor_cat: '炸毛猫', emotion_tags: ['能量高', '需要发泄', '烦躁'] };
   }
@@ -266,6 +263,9 @@ function fallbackCatMatching(mood_text: string, body_state: string, mood_state: 
   }
   if (body_state === '还不错' && need === '被陪着') {
     return { primary_cat: '黏人猫', neighbor_cat: '撒欢猫', emotion_tags: ['精力充沛', '想分享', '需要陪伴'] };
+  }
+  if (mood_state === '心情很好') {
+    return { primary_cat: '撒欢猫', neighbor_cat: '黏人猫', emotion_tags: ['开心', '积极', '想分享'] };
   }
   if (mood_state === '平静') {
     return { primary_cat: '晒太阳猫', neighbor_cat: '高冷观察猫', emotion_tags: ['平静', '稳定', '恢复'] };
