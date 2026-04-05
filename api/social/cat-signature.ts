@@ -15,10 +15,11 @@ interface Cat {
 
 const SYSTEM_PROMPT = `你是喵懂了的情绪分析师，专门帮助用户找到今天最懂他们的那只猫。
 
-用户会提供三个信息：
+用户会提供四个信息：
 1. 今天最压着你的感觉是什么（一句话描述）
-2. 身体状态（身体不舒服 / 心里堵 / 都有 / 说不上来）
-3. 现在需要（休息 / 被理解 / 发泄 / 自己待着 / 被陪着）
+2. 身体状态（6选1）：精力充沛 / 还不错 / 一般般 / 有点累 / 身体不舒服 / 说不上来
+3. 心情状态（6选1）：心情很好 / 平静 / 心里有点堵 / 烦躁 / 低落 / 说不清楚
+4. 现在需要（6选1）：休息 / 被理解 / 发泄 / 自己待着 / 被陪着 / 什么都不想要
 
 你的任务是从以下37只猫中选出最匹配的1只主猫，以及1只邻近猫。
 
@@ -48,6 +49,16 @@ const SYSTEM_PROMPT = `你是喵懂了的情绪分析师，专门帮助用户找
 - 中午猫：下午两点空洞感、存在感低、时间很稠、莫名其妙的低落
 - 失眠猫：身体躺下了脑子开夜班、情绪挂在后台运行、睡不着
 - 换季猫：莫名低落、说不出原因、系统在静默更新
+
+【正面状态匹配规则】
+- 精力充沛 + 心情很好 → 撒欢猫（最优先）
+- 精力充沛 + 心里有点堵 → 暴冲猫（能量高但需要发泄）
+- 还不错 + 平静 → 晒太阳猫（稳定恢复状态）
+- 还不错 + 被陪着 → 黏人猫（精力充沛想分享）
+- 心情很好 + 任何身体状态 → 撒欢猫或黏人猫（优先考虑）
+- 平静 + 任何身体状态 → 晒太阳猫或高冷观察猫（稳定状态）
+
+【负面状态匹配规则】
 - 假期结束猫：好日子最后几小时、开心提前结束了
 - 考前猫：准备了但不安、结果不在自己手里、在乎所以紧张
 - 迷路猫：不知道走向哪里、茫然、方向感丢失、不是焦虑是空
@@ -237,10 +248,30 @@ function classifyEmotion(text: string, bodyState: string, need: string): { keywo
 }
 
 // Fallback matching function when Claude API is not available
-function fallbackCatMatching(mood_text: string, body_state: string, need: string): { primary_cat: string; neighbor_cat: string; emotion_tags: string[] } {
+function fallbackCatMatching(mood_text: string, body_state: string, mood_state: string, need: string): { primary_cat: string; neighbor_cat: string; emotion_tags: string[] } {
   const lower = mood_text.toLowerCase();
   
-  // Scene keyword matching (highest priority)
+  // Positive state matching (highest priority)
+  if (mood_state === '心情很好' && body_state === '精力充沛') {
+    return { primary_cat: '撒欢猫', neighbor_cat: '黏人猫', emotion_tags: ['开心', '能量满格', '想分享'] };
+  }
+  if (mood_state === '心情很好') {
+    return { primary_cat: '撒欢猫', neighbor_cat: '黏人猫', emotion_tags: ['开心', '积极', '想分享'] };
+  }
+  if (body_state === '精力充沛' && mood_state === '心里有点堵') {
+    return { primary_cat: '暴冲猫', neighbor_cat: '炸毛猫', emotion_tags: ['能量高', '需要发泄', '烦躁'] };
+  }
+  if (body_state === '还不错' && mood_state === '平静') {
+    return { primary_cat: '晒太阳猫', neighbor_cat: '高冷观察猫', emotion_tags: ['稳定', '恢复中', '平静'] };
+  }
+  if (body_state === '还不错' && need === '被陪着') {
+    return { primary_cat: '黏人猫', neighbor_cat: '撒欢猫', emotion_tags: ['精力充沛', '想分享', '需要陪伴'] };
+  }
+  if (mood_state === '平静') {
+    return { primary_cat: '晒太阳猫', neighbor_cat: '高冷观察猫', emotion_tags: ['平静', '稳定', '恢复'] };
+  }
+  
+  // Scene keyword matching (high priority)
   if (lower.includes('睡不着') || lower.includes('脑子停不下来')) {
     return { primary_cat: '失眠猫', neighbor_cat: '绷紧猫', emotion_tags: ['焦虑', '疲惫', '无法入睡'] };
   }
@@ -297,7 +328,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { mood_text, body_state, need } = req.body;
+    const { mood_text, body_state, mood_state, need } = req.body;
 
     if (!mood_text || typeof mood_text !== 'string') {
       return res.status(400).json({ error: 'mood_text is required' });
@@ -310,6 +341,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const userMessage = `心情：${mood_text}
 身体状态：${body_state || '说不上来'}
+心情状态：${mood_state || '说不清楚'}
 现在需要：${need || '被理解'}`;
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -334,30 +366,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const errorData = await response.text();
           console.error('Claude API error:', response.status, response.statusText, errorData);
           // Fall back to local matching
-          matchResult = fallbackCatMatching(mood_text, body_state, need);
+          matchResult = fallbackCatMatching(mood_text, body_state, mood_state, need);
         } else {
           const data = await response.json();
           if (!data.content || !data.content[0]) {
             console.error('Invalid Claude response structure:', data);
-            matchResult = fallbackCatMatching(mood_text, body_state, need);
+            matchResult = fallbackCatMatching(mood_text, body_state, mood_state, need);
           } else {
             const resultText = data.content[0].text.trim();
             try {
               matchResult = JSON.parse(resultText);
             } catch (e) {
               console.error('Failed to parse Claude response:', resultText);
-              matchResult = fallbackCatMatching(mood_text, body_state, need);
+              matchResult = fallbackCatMatching(mood_text, body_state, mood_state, need);
             }
           }
         }
       } catch (error) {
         console.error('Claude API call failed:', error);
-        matchResult = fallbackCatMatching(mood_text, body_state, need);
+        matchResult = fallbackCatMatching(mood_text, body_state, mood_state, need);
       }
     } else {
       // Use fallback matching when API key is not available
       console.warn('ANTHROPIC_API_KEY not set, using fallback matching');
-      matchResult = fallbackCatMatching(mood_text, body_state, need);
+      matchResult = fallbackCatMatching(mood_text, body_state, mood_state, need);
     }
 
     // Get the primary cat

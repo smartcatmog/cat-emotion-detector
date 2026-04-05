@@ -25,6 +25,7 @@ export function CatSignaturePage() {
   const { user } = useAuth();
   const [moodInput, setMoodInput] = useState('');
   const [bodyState, setBodyState] = useState('');
+  const [moodState, setMoodState] = useState('');
   const [need, setNeed] = useState('');
   const [signature, setSignature] = useState<CatSignatureResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +52,7 @@ export function CatSignaturePage() {
         body: JSON.stringify({
           mood_text: moodInput.trim(),
           body_state: bodyState,
+          mood_state: moodState,
           need,
         }),
       });
@@ -150,10 +152,10 @@ export function CatSignaturePage() {
           />
         </label>
 
-        {/* Body State */}
+        {/* Body State - Redesigned with positive options */}
         <label className="block">
           <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
-            {lang === 'zh' ? '身体状态' : 'Body State'}
+            {lang === 'zh' ? '身体状态（6选1）' : 'Body State'}
           </p>
           <select
             value={bodyState}
@@ -161,17 +163,39 @@ export function CatSignaturePage() {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="">{lang === 'zh' ? '选择...' : 'Select...'}</option>
-            <option value="身体不舒服">{lang === 'zh' ? '身体不舒服' : 'Physical discomfort'}</option>
-            <option value="心里堵">{lang === 'zh' ? '心里堵' : 'Emotional block'}</option>
-            <option value="都有">{lang === 'zh' ? '都有' : 'Both'}</option>
-            <option value="说不上来">{lang === 'zh' ? '说不上来' : 'Not sure'}</option>
+            <option value="精力充沛">{lang === 'zh' ? '🔋 精力充沛' : '🔋 Full of energy'}</option>
+            <option value="还不错">{lang === 'zh' ? '😊 还不错' : '😊 Pretty good'}</option>
+            <option value="一般般">{lang === 'zh' ? '😐 一般般' : '😐 So-so'}</option>
+            <option value="有点累">{lang === 'zh' ? '😮‍💨 有点累' : '😮‍💨 A bit tired'}</option>
+            <option value="身体不舒服">{lang === 'zh' ? '🤢 身体不舒服' : '🤢 Not feeling well'}</option>
+            <option value="说不上来">{lang === 'zh' ? '💭 说不上来' : '💭 Not sure'}</option>
           </select>
         </label>
 
-        {/* Need */}
+        {/* Mood State - New field */}
         <label className="block">
           <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
-            {lang === 'zh' ? '现在需要' : 'What I need'}
+            {lang === 'zh' ? '心情状态（6选1）' : 'Mood State'}
+          </p>
+          <select
+            value={moodState}
+            onChange={(e) => setMoodState(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="">{lang === 'zh' ? '选择...' : 'Select...'}</option>
+            <option value="心情很好">{lang === 'zh' ? '✨ 心情很好' : '✨ Feeling great'}</option>
+            <option value="平静">{lang === 'zh' ? '🙂 平静' : '🙂 Calm'}</option>
+            <option value="心里有点堵">{lang === 'zh' ? '🌧 心里有点堵' : '🌧 A bit blocked'}</option>
+            <option value="烦躁">{lang === 'zh' ? '😤 烦躁' : '😤 Irritated'}</option>
+            <option value="低落">{lang === 'zh' ? '😔 低落' : '😔 Down'}</option>
+            <option value="说不清楚">{lang === 'zh' ? '🌀 说不清楚' : '🌀 Unclear'}</option>
+          </select>
+        </label>
+
+        {/* What I need */}
+        <label className="block">
+          <p className="font-bold text-gray-900 dark:text-gray-50 mb-2">
+            {lang === 'zh' ? '现在需要（6选1）' : 'What I need'}
           </p>
           <select
             value={need}
@@ -184,6 +208,7 @@ export function CatSignaturePage() {
             <option value="发泄">{lang === 'zh' ? '发泄' : 'Release'}</option>
             <option value="自己待着">{lang === 'zh' ? '自己待着' : 'Alone time'}</option>
             <option value="被陪着">{lang === 'zh' ? '被陪着' : 'Companionship'}</option>
+            <option value="什么都不想要">{lang === 'zh' ? '什么都不想要' : 'Nothing'}</option>
           </select>
         </label>
 
@@ -331,6 +356,7 @@ export function CatSignaturePage() {
                   setSignature(null);
                   setMoodInput('');
                   setBodyState('');
+                  setMoodState('');
                   setNeed('');
                   setFeedback(null);
                 }}

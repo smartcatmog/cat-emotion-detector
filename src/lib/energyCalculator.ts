@@ -78,7 +78,12 @@ export function calculateEnergyValue(
       break;
   }
 
-  // Clamp between 40% and 95% for medium/high energy
+  // For medium energy (绷紧猫 etc), cap at 30%
+  if (catEnergy === 'medium') {
+    return Math.max(40, Math.min(30, score));
+  }
+
+  // Clamp between 40% and 95% for high energy
   return Math.max(40, Math.min(95, score));
 }
 
