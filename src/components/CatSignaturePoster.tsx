@@ -135,7 +135,7 @@ export function CatSignaturePoster({
         }}
       >
         {/* Top Slogan */}
-        <div style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '5px' }}>
+        <div style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '8px' }}>
           说不出来的，猫知道
         </div>
 
@@ -146,10 +146,12 @@ export function CatSignaturePoster({
               src={displayPhoto}
               alt={catName}
               style={{
-                width: '75%',
-                maxHeight: '220px',
-                borderRadius: '20px',
+                width: '85%',
+                aspectRatio: '1/1',
                 objectFit: 'cover',
+                borderRadius: '16px',
+                margin: '0 auto',
+                display: 'block',
               }}
             />
           ) : (
@@ -165,7 +167,7 @@ export function CatSignaturePoster({
         </div>
 
         {/* Cat Name */}
-        <div style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginTop: '12px', marginBottom: '8px' }}>
+        <div style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginTop: '16px', marginBottom: '8px' }}>
           {catName}
         </div>
 
