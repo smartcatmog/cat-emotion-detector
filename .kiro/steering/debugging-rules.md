@@ -48,3 +48,44 @@
 ```
 
 不要依赖第三方 SDK 的客户端方法（如 setSession、onAuthStateChange）来管理状态。
+
+---
+
+## ⚠️ Vercel Hobby 计划限制 - 重要约束
+
+**Vercel Hobby 计划最多只能部署 12 个 Serverless Functions。**
+
+这是一个硬限制，超过会导致部署失败：
+```
+Error: No more than 12 Serverless Functions can be added to a Deployment on the Hobby plan.
+```
+
+### 如何计算 API 函数数量
+- 每个 `api/*.ts` 文件 = 1 个函数
+- 每个 `api/social/*.ts` 文件 = 1 个函数
+- 总数不能超过 12 个
+
+### 当前项目的 API 函数（12 个）
+1. api/auth.ts
+2. api/mint-nft.ts
+3. api/social/calendar.ts
+4. api/social/cat-signature.ts
+5. api/social/checkin.ts
+6. api/social/collection.ts
+7. api/social/comments.ts
+8. api/social/leaderboard.ts
+9. api/social/lootbox.ts
+10. api/social/messages.ts
+11. api/social/notify.ts
+12. api/social/same-mood.ts
+
+### 已删除的冗余 API（为了保持在限制内）
+- ❌ api/analyze.ts - 功能被 cat-signature.ts 替代
+- ❌ api/mood-match.ts - 功能被 cat-signature.ts 替代
+- ❌ api/social/cat-signature-updated.ts - 备份文件
+
+### 重要提醒
+- **不要添加新的 API 文件，除非删除现有的**
+- **删除 API 文件后，必须同时更新 vercel.json 中的 functions 配置**
+- **vercel.json 中的配置必须与实际存在的 API 文件一致**
+- 如果需要更多 API，必须升级到 Vercel Pro 计划
