@@ -88,7 +88,9 @@ export default async function handler(req: any, res: any) {
       }).select('id, content, is_anonymous, created_at').single();
       if (error) return res.status(500).json({ error: error.message });
       // Increment likes on the post
-      await supabase.rpc('increment_likes', { cat_id: post_id }).catch(() => {
+      supabase.rpc('increment_likes', { cat_id: post_id }).then(() => {
+        // success
+      }).catch(() => {
         // fallback: direct update
         supabase.from('treehouse_posts').select('likes_count').eq('id', post_id).single()
           .then(({ data: p }) => supabase.from('treehouse_posts').update({ likes_count: (p?.likes_count || 0) + 1 }).eq('id', post_id));

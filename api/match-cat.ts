@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const config = {
-  runtime: 'nodejs18.x',
+  runtime: 'nodejs',
 };
 
 const SYSTEM_PROMPT = `你是MoodCat的情绪分析师，专门帮助用户找到今天最懂他们的那只猫。
