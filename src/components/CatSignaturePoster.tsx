@@ -37,11 +37,28 @@ export function CatSignaturePoster({
     if (!posterRef.current) return;
 
     try {
+      // Hide carousel arrows during screenshot
+      const arrowButtons = document.querySelectorAll('[class*="carousel"], [class*="arrow"]');
+      const hiddenElements: { element: HTMLElement; display: string }[] = [];
+      
+      arrowButtons.forEach((btn) => {
+        const element = btn as HTMLElement;
+        if (element.style) {
+          hiddenElements.push({ element, display: element.style.display });
+          element.style.display = 'none';
+        }
+      });
+
       const canvas = await html2canvas(posterRef.current, {
         backgroundColor: bgColor,
         scale: 2,
         useCORS: true,
         allowTaint: true,
+      });
+
+      // Restore carousel arrows
+      hiddenElements.forEach(({ element, display }) => {
+        element.style.display = display;
       });
 
       const link = document.createElement('a');
@@ -63,7 +80,7 @@ export function CatSignaturePoster({
           width: '375px',
           height: '600px',
           backgroundColor: bgColor,
-          padding: '30px 20px',
+          padding: '15px 20px 30px 20px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -73,19 +90,19 @@ export function CatSignaturePoster({
         }}
       >
         {/* Top Slogan */}
-        <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+        <div style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '5px' }}>
           说不出来的，猫知道
         </div>
 
-        {/* Cat Photo */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Cat Photo - increased to 75% width */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '-10px' }}>
           {catPhoto ? (
             <img
               src={catPhoto}
               alt={catName}
               style={{
-                width: '70%',
-                maxHeight: '200px',
+                width: '75%',
+                maxHeight: '220px',
                 borderRadius: '20px',
                 objectFit: 'cover',
               }}
@@ -93,8 +110,8 @@ export function CatSignaturePoster({
           ) : (
             <div
               style={{
-                width: '70%',
-                height: '200px',
+                width: '75%',
+                height: '220px',
                 borderRadius: '20px',
                 backgroundColor: '#ddd',
               }}
@@ -103,17 +120,17 @@ export function CatSignaturePoster({
         </div>
 
         {/* Cat Name */}
-        <div style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>
+        <div style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginTop: '12px', marginBottom: '8px' }}>
           {catName}
         </div>
 
-        {/* Tagline */}
-        <div style={{ fontSize: '14px', textAlign: 'center', color: '#555', marginTop: '8px' }}>
+        {/* Tagline - new line between name and energy bar */}
+        <div style={{ fontSize: '14px', textAlign: 'center', color: '#888', marginBottom: '12px', lineHeight: '1.4' }}>
           {tagline}
         </div>
 
         {/* Energy Bar */}
-        <div style={{ width: '100%', marginTop: '15px' }}>
+        <div style={{ width: '100%', marginBottom: '12px' }}>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px', textAlign: 'center' }}>
             今日能量值 {Math.round(energyValue)}%
           </div>
@@ -138,7 +155,7 @@ export function CatSignaturePoster({
         </div>
 
         {/* Explanation */}
-        <div style={{ fontSize: '12px', textAlign: 'center', color: '#666', marginTop: '12px', lineHeight: '1.4' }}>
+        <div style={{ fontSize: '12px', textAlign: 'center', color: '#666', marginBottom: '12px', lineHeight: '1.4' }}>
           {explanation}
         </div>
 
@@ -149,7 +166,6 @@ export function CatSignaturePoster({
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             width: '100%',
-            marginTop: '15px',
             fontSize: '11px',
             color: '#999',
           }}

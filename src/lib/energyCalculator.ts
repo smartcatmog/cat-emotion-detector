@@ -4,7 +4,34 @@ export function calculateEnergyValue(
   need: string,
   catEnergy: 'high' | 'medium' | 'low'
 ): number {
-  let score = 50; // Base score
+  // For low energy cats, return a value in the 15-30% range
+  if (catEnergy === 'low') {
+    // Base low energy at 22%
+    let lowScore = 22;
+    
+    // Slight adjustments based on need
+    switch (need) {
+      case '休息':
+        lowScore = 18; // Lower for rest
+        break;
+      case '被理解':
+        lowScore = 22; // Neutral
+        break;
+      case '发泄':
+        lowScore = 26; // Slightly higher for release
+        break;
+      case '自己待着':
+        lowScore = 20; // Lower for alone time
+        break;
+      case '被陪着':
+        lowScore = 25; // Slightly higher for companionship
+        break;
+    }
+    
+    return Math.max(15, Math.min(30, lowScore));
+  }
+
+  let score = 50; // Base score for medium/high energy
 
   // Body state scoring
   switch (bodyState) {
@@ -49,13 +76,10 @@ export function calculateEnergyValue(
     case 'medium':
       score += 0;
       break;
-    case 'low':
-      score -= 15;
-      break;
   }
 
-  // Clamp between 5% and 95%
-  return Math.max(5, Math.min(95, score));
+  // Clamp between 40% and 95% for medium/high energy
+  return Math.max(40, Math.min(95, score));
 }
 
 // Get background color based on trigger type
@@ -71,8 +95,9 @@ export function getBackgroundColor(triggerType: string): string {
       return '#EFF5F0'; // 浅绿
     case 'general':
     case 'physical':
-      return '#F2F2F2'; // 浅灰白
+    case 'growth':
+      return '#F5F5F3'; // 浅暖灰
     default:
-      return '#FFFFFF';
+      return '#F5F5F3'; // 浅暖灰
   }
 }
