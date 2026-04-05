@@ -87,18 +87,9 @@ export default async function handler(req: any, res: any) {
         post_id, user_id: user_id || null, content: content.trim().slice(0, 300), is_anonymous,
       }).select('id, content, is_anonymous, created_at').single();
       if (error) return res.status(500).json({ error: error.message });
-      // Increment likes on the post (fire and forget)
-      supabase.rpc('increment_likes', { cat_id: post_id }).then(() => {
-        // success - do nothing
-      }).catch(() => {
-        // fallback: direct update
-        supabase.from('treehouse_posts').select('likes_count').eq('id', post_id).single()
-          .then(({ data: p }) => {
-            if (p) {
-              supabase.from('treehouse_posts').update({ likes_count: (p.likes_count || 0) + 1 }).eq('id', post_id);
-            }
-          });
-      });
+      // Increment likes on the post (fire and forget - no error handling needed)
+      // Using void to ignore the PromiseLike return type
+      void supabase.rpc('increment_likes', { cat_id: post_id });
       return res.status(201).json({ data });
     }
   }
