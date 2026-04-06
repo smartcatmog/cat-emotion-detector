@@ -15,17 +15,25 @@ function getStoredSession(): MoodCatUser | null {
     if (!raw) return null;
     const session = JSON.parse(raw);
     // 检查是否过期
-    if (session.expires_at && Date.now() / 1000 > session.expires_at) {
-      localStorage.removeItem(SESSION_KEY);
-      return null;
+    if (session.expires_at) {
+      const expiresAtSeconds = typeof session.expires_at === 'number' && session.expires_at > 10000000000 
+        ? session.expires_at / 1000 
+        : session.expires_at;
+      if (Date.now() / 1000 > expiresAtSeconds) {
+        console.log('[getStoredSession] Session expired');
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
     }
     return session.user || null;
-  } catch {
+  } catch (e) {
+    console.error('[getStoredSession] Error:', e);
     return null;
   }
 }
 
 export function saveSession(user: MoodCatUser, accessToken: string, expiresAt: number) {
+  console.log('[saveSession] Saving session for user:', user.id, 'expiresAt:', expiresAt);
   localStorage.setItem(SESSION_KEY, JSON.stringify({ user, access_token: accessToken, expires_at: expiresAt }));
 }
 
