@@ -56,27 +56,29 @@ export function useAuth() {
     isLoading: true,
   });
 
-  // Initial load from localStorage
-  useEffect(() => {
+  // Helper function to update auth state
+  const updateAuthState = () => {
     const user = getStoredSession();
+    console.log('[useAuth] updateAuthState - user from localStorage:', user);
     if (user) {
       setAuthState({ user, isAnonymous: false, isLoading: false });
     } else {
       const anonId = localStorage.getItem('anon_user_id');
       setAuthState({ user: null, isAnonymous: !!anonId, isLoading: false });
     }
+  };
+
+  // Initial load from localStorage
+  useEffect(() => {
+    console.log('[useAuth] Initial load');
+    updateAuthState();
   }, []);
 
   // Listen for storage changes (e.g., from other tabs or programmatic updates)
   useEffect(() => {
     const handleStorageChange = () => {
-      const user = getStoredSession();
-      if (user) {
-        setAuthState({ user, isAnonymous: false, isLoading: false });
-      } else {
-        const anonId = localStorage.getItem('anon_user_id');
-        setAuthState({ user: null, isAnonymous: !!anonId, isLoading: false });
-      }
+      console.log('[useAuth] Storage change detected');
+      updateAuthState();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -90,6 +92,9 @@ export function useAuth() {
   };
 
   const login = (user: MoodCatUser) => {
+    console.log('[useAuth] login called with user:', user);
+    // 确保 session 已保存到 localStorage（由 LoginModal 调用 saveSession）
+    // 然后更新状态
     setAuthState({ user, isAnonymous: false, isLoading: false });
   };
 
